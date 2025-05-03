@@ -13,7 +13,10 @@
     "test": "vitest",
     "test:watch": "vitest watch",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:ci": "vitest run --reporter=verbose --coverage",
+    "test:report": "vitest run --coverage --outputFile=./test-results.json --reporter=json",
+    "test:html": "vitest run --coverage --reporter=html"
   },
   "dependencies": {
     "react": "^19.0.0",
