@@ -31,3 +31,18 @@ Learn to work in a team, use Kanban based on GitHub, improve our skills in using
 5. Run `npm run "commandOfScript"` in command line
 
 - If you catch error you can try to make `npm install -g node-gyp`
+
+---
+
+## Scripts of project:
+
+- `dev`: dev mode of project,
+- `build`: build of project,
+- `preview`: local launch of production build with Vite,
+- `lint`: ESLint test without fixing,
+- `lint`: ESLint test with fixing,
+- `prepare`: install Git hooks into project using the Husky tool,
+- `test`: testing code with Vitest,
+- `test:watch`: run tests Vitest in file change monitoring mode,
+- `test:ui`: Vitest interactive UI mode,
+- `test:coverage`: run tests Vitest in code coverage mode.

@@ -4,6 +4,7 @@
     "types": ["vitest/globals", "node"],
     "jsx": "react-jsx",
     "allowImportingTsExtensions": true,
+    "noEmit": true,
 
     "strict": true,
     "noImplicitAny": true,
