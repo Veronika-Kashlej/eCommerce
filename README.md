@@ -40,9 +40,12 @@ Learn to work in a team, use Kanban based on GitHub, improve our skills in using
 - `build`: build of project,
 - `preview`: local launch of production build with Vite,
 - `lint`: ESLint test without fixing,
-- `lint`: ESLint test with fixing,
+- `lint:fix`: ESLint test with fixing,
 - `prepare`: install Git hooks into project using the Husky tool,
 - `test`: testing code with Vitest,
-- `test:watch`: run tests Vitest in file change monitoring mode,
+- `test:watch`: run Vitest tests in file change monitoring mode,
 - `test:ui`: Vitest interactive UI mode,
-- `test:coverage`: run tests Vitest in code coverage mode.
+- `test:coverage`: run Vitest tests in code coverage mode,
+- `test:ci`: run CI (Continuius Integration) tests Vitest,
+- `test:report`: run Vitest tests with the generation of a machine-readable report in JSON format, with code coverage measurement
+- `test:html`: run Vitest tests with interactive HTML report generation
