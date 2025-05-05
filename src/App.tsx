@@ -13,10 +13,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Registration />} />
-        <Route path="/error404" element={<Page404 />} />
-        {/* <Route path="*" element={<Page404 />} /> */}
-        {/* TODO - поменять на этот вариант что бы сохрать URL текущей страницы Задание #50 
-        и отображении несуществующего адреса*/}
+        <Route path="*" element={<Page404 />} />
       </Routes>
     </>
   );
