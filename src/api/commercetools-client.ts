@@ -46,7 +46,7 @@ const httpMiddlewareOptions: HttpMiddlewareOptions = {
 export const ctpClient = new ClientBuilder()
   .withClientCredentialsFlow(authMiddlewareOptions)
   .withHttpMiddleware(httpMiddlewareOptions)
-  .withLoggerMiddleware()
+  .withLoggerMiddleware() // todo remove logger after dev
   .build();
 
 export const apiRoot = createApiBuilderFromCtpClient(ctpClient).withProjectKey({

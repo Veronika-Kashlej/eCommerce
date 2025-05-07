@@ -97,28 +97,45 @@ class Api {
    * @param {string} email - Customer's registered email address (must be valid format, e.g., user@example.com)
    * @param {string} password - Customer's password (min 8 chars, 1 uppercase, 1 lowercase, 1 number)
    *
-   * @returns {Promise<{ customer: CustomerSignInResult; token: string }>} - Resolves with customer sign-in result containing:
-   *           - Customer details
-   *           - Authentication token
-   *           - Cart and session information
+   * @returns {Promise<{ response?: ClientResponse, signed: boolean, message: string }>} - Resolves with customer sign-in result containing:
+   *           - ClientResponse
+   *           - signed
+   *           - message
    */
-  public async loginCustomer(email: string, password: string): Promise<ClientResponse> {
+  public async loginCustomer(
+    email: string,
+    password: string
+  ): Promise<{ response?: ClientResponse; signed: boolean; message: string }> {
     const signInData: CustomerSignin = {
       email,
       password,
     };
+    try {
+      const response: ClientResponse = await apiRoot
+        .me()
+        .login()
+        .post({
+          body: signInData,
+        })
+        .execute();
 
-    const response = await apiRoot
-      .me()
-      .login()
-      .post({
-        body: signInData,
-      })
-      .execute();
+      const signed: boolean =
+        response.statusCode && response.statusCode >= 200 && response.statusCode < 300
+          ? true
+          : false;
+      const message: string = signInData ? 'OK' : 'Not Signed';
 
-    if (response.body) console.log(response.body);
-
-    return response;
+      return { response, signed, message };
+    } catch (error) {
+      const message: string =
+        error &&
+        typeof error === 'object' &&
+        'message' in error &&
+        typeof error.message === 'string'
+          ? error.message
+          : 'Unknown error';
+      return { response: undefined, signed: false, message };
+    }
   }
 }
 
