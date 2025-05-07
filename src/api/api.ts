@@ -1,13 +1,23 @@
-'use strict';
-
 import { apiRoot } from './commercetools-client';
-import * as env from './commercetools-client';
 
+import { type TokenStore } from '@commercetools/sdk-client-v2';
 import { CustomerSignInResult, ClientResponse, CustomerSignin } from '@commercetools/platform-sdk';
+
+// interface TokenCache {
+//   get(): TokenStore | null;
+//   set(cache: TokenStore): void;
+//   clear(): void;
+// }
+
+// interface TokenStore {
+//   token: string;
+//   expirationTime: number;
+//   refreshToken?: string;
+// }
 
 class Api {
   private static instance: Api;
-  private tokenCustomer: string | undefined;
+  private tokenCustomer: TokenStore | undefined;
 
   private constructor() {}
 
@@ -18,17 +28,17 @@ class Api {
     return Api.instance;
   }
 
-  public get getTokenCustomer(): string | undefined {
-    return this.tokenCustomer || undefined;
+  public get getTokenCustomer(): TokenStore {
+    return this.tokenCustomer || this.clearTokenCustomer();
   }
 
-  public async getProjectDetails(): Promise<ClientResponse> {
-    try {
-      return await apiRoot.get().execute();
-    } catch (error) {
-      console.error('Error fetching project details:', error);
-      throw error;
-    }
+  public setTokenCustomer(token: TokenStore): void {
+    this.tokenCustomer = token;
+  }
+
+  public clearTokenCustomer(): TokenStore {
+    this.tokenCustomer = { token: '', expirationTime: 0 };
+    return this.getTokenCustomer;
   }
 
   /**
@@ -92,70 +102,25 @@ class Api {
    *           - Authentication token
    *           - Cart and session information
    */
-  public async loginCustomer(
-    email: string,
-    password: string
-  ): Promise<{ customer: CustomerSignInResult; token: string }> {
+  public async loginCustomer(email: string, password: string): Promise<ClientResponse> {
     const signInData: CustomerSignin = {
       email,
       password,
     };
 
-    const response: ClientResponse<CustomerSignInResult> = await apiRoot
+    const response = await apiRoot
+      .me()
       .login()
       .post({
         body: signInData,
       })
       .execute();
 
-    const token: string = await this.getToken(email, password);
+    if (response.body) console.log(response.body);
 
-    return {
-      customer: response.body,
-      token,
-    };
-  }
-
-  private async getToken(email: string, password: string): Promise<string> {
-    const basicAuth: string = btoa(`${env.clientId}:${env.clientSecret}`);
-
-    const response: Response = await fetch(
-      `${env.authUrl}/oauth/${env.projectKey}/customers/token`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: `Basic ${basicAuth}`,
-        },
-        body: new URLSearchParams({
-          grant_type: 'password',
-          username: email,
-          password: password,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Auth failed: token not received`);
-    }
-
-    const data: unknown = await response.json();
-
-    if (
-      data &&
-      typeof data === 'object' &&
-      'access_token' in data &&
-      typeof data.access_token === 'string'
-    ) {
-      this.setTokenCustomer(data.access_token);
-
-      return data.access_token;
-    } else throw new Error(`Token not received`);
-  }
-
-  private setTokenCustomer(token: string): void {
-    this.tokenCustomer = token;
+    return response;
   }
 }
 
-export const api: Api = Api.getInstance();
+const api: Api = Api.getInstance();
+export default api;

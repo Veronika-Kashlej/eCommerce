@@ -1,16 +1,36 @@
 import {
-  Client,
   ClientBuilder,
   type AuthMiddlewareOptions,
   type HttpMiddlewareOptions,
 } from '@commercetools/sdk-client-v2';
-
-import {
-  ByProjectKeyRequestBuilder,
-  createApiBuilderFromCtpClient,
-} from '@commercetools/platform-sdk';
+import { createApiBuilderFromCtpClient } from '@commercetools/platform-sdk';
 
 import env from './env';
+import api from './api';
+
+const authMiddlewareOptions: AuthMiddlewareOptions = {
+  host: env.authUrl,
+  projectKey: env.projectKey,
+  credentials: {
+    clientId: env.clientId,
+    clientSecret: env.clientSecret,
+  },
+  scopes: env.scopes.split(','),
+  fetch: fetch,
+  tokenCache: {
+    get: () => {
+      // const cachedData = localStorage.getItem("commercetoolsToken");
+      // return cachedData ? JSON.parse(cachedData) : null;
+      console.log('get token = ', api.getTokenCustomer);
+      return api.getTokenCustomer;
+    },
+    set: (token) => {
+      // localStorage.setItem("commercetoolsToken", JSON.stringify(token));
+      console.log('set token = ', token);
+      api.setTokenCustomer(token);
+    },
+  },
+};
 
 const httpMiddlewareOptions: HttpMiddlewareOptions = {
   host: env.apiUrl,
@@ -23,28 +43,12 @@ const httpMiddlewareOptions: HttpMiddlewareOptions = {
   fetch: fetch,
 };
 
-const getClient = (): Client => {
-  const authMiddlewareOptions: AuthMiddlewareOptions = {
-    host: env.authUrl,
-    projectKey: env.projectKey,
-    credentials: {
-      clientId: env.clientId,
-      clientSecret: env.clientSecret,
-    },
-    scopes: env.scopes.split(','),
-    fetch: fetch,
-  };
-  return (
-    new ClientBuilder()
-      .withProjectKey(env.projectKey)
-      .withClientCredentialsFlow(authMiddlewareOptions)
-      .withHttpMiddleware(httpMiddlewareOptions)
-      .withUserAgentMiddleware()
-      // .withLoggerMiddleware()
-      .build()
-  );
-};
+export const ctpClient = new ClientBuilder()
+  .withClientCredentialsFlow(authMiddlewareOptions)
+  .withHttpMiddleware(httpMiddlewareOptions)
+  .withLoggerMiddleware()
+  .build();
 
-export const apiRoot: ByProjectKeyRequestBuilder = createApiBuilderFromCtpClient(
-  getClient()
-).withProjectKey({ projectKey: env.projectKey });
+export const apiRoot = createApiBuilderFromCtpClient(ctpClient).withProjectKey({
+  projectKey: env.projectKey,
+});
