@@ -15,6 +15,10 @@ import { CustomerSignInResult, ClientResponse, CustomerSignin } from '@commercet
 //   refreshToken?: string;
 // }
 
+type registeredResponseMessage =
+  | Array<{ detailedErrorMessage: string; type: string; error: string; message: string }>
+  | string;
+
 class Api {
   private static instance: Api;
   private tokenCustomer: TokenStore | undefined;
@@ -55,9 +59,11 @@ class Api {
    * @param {string} address.postalCode - Postal code (format depends on country)
    * @param {string} address.country - Country code (must be valid, e.g., 'US', 'BY', 'UA', 'RU')
    *
-   * @returns {Promise<CustomerSignInResult>} - Resolves with customer sign-in result on success
-   * @throws {Error} - Throws error with validation details or API failure message
-   *
+   * @returns {Promise<{ response?: ClientResponse<CustomerSignInResult>, registered: boolean, message: registeredResponseMessage }>}
+   *   A promise that resolves with an object containing:
+   *   - `response` (optional): The API response if registration was successful.
+   *   - `registered`: A boolean indicating whether registration succeeded (`true` if HTTP status 200-299).
+   *   - `message`: An array of parsed error messages if registration failed, or `'OK'` if successful.
    */
   public async registerCustomer(
     email: string,
@@ -71,24 +77,64 @@ class Api {
       postalCode: string;
       country: string;
     }
-  ): Promise<CustomerSignInResult> {
-    const response: ClientResponse<CustomerSignInResult> = await apiRoot
-      .customers()
-      .post({
-        body: {
-          email,
-          password,
-          firstName,
-          lastName,
-          dateOfBirth,
-          addresses: [address],
-          defaultShippingAddress: undefined,
-          defaultBillingAddress: undefined,
-        },
-      })
-      .execute();
+  ): Promise<{
+    response?: ClientResponse<CustomerSignInResult>;
+    registered: boolean;
+    message: registeredResponseMessage;
+  }> {
+    try {
+      const response: ClientResponse<CustomerSignInResult> = await apiRoot
+        .customers()
+        .post({
+          body: {
+            email,
+            password,
+            firstName,
+            lastName,
+            dateOfBirth,
+            addresses: [address],
+            defaultShippingAddress: undefined,
+            defaultBillingAddress: undefined,
+          },
+        })
+        .execute();
 
-    return response.body;
+      const registered: boolean =
+        response.statusCode && response.statusCode >= 200 && response.statusCode < 300
+          ? true
+          : false;
+
+      const message: string = registered ? 'OK' : 'Not Registered';
+
+      return { response, registered, message };
+    } catch (error) {
+      const message: registeredResponseMessage = [];
+
+      if (
+        error &&
+        typeof error === 'object' &&
+        'body' in error &&
+        error.body &&
+        typeof error.body === 'object' &&
+        'errors' in error.body &&
+        error.body.errors &&
+        Array.isArray(error.body.errors)
+      ) {
+        error.body.errors.forEach(
+          (value: { code: string; detailedErrorMessage: string; message: string }) => {
+            const parsedValue = value.detailedErrorMessage.split(':').map((part) => part.trim());
+            const [type = '', error = '', ...rest] = parsedValue;
+            message.push({
+              detailedErrorMessage: value.detailedErrorMessage,
+              type,
+              error,
+              message: rest.join(':'),
+            });
+          }
+        );
+      }
+      return { response: undefined, registered: false, message };
+    }
   }
 
   /**
@@ -97,7 +143,7 @@ class Api {
    * @param {string} email - Customer's registered email address (must be valid format, e.g., user@example.com)
    * @param {string} password - Customer's password (min 8 chars, 1 uppercase, 1 lowercase, 1 number)
    *
-   * @returns {Promise<{ response?: ClientResponse, signed: boolean, message: string }>} - Resolves with customer sign-in result containing:
+   * @returns {Promise<{ response?: ClientResponse<CustomerSignInResult>, signed: boolean, message: string }>} - Resolves with customer sign-in result containing:
    *           - ClientResponse
    *           - signed
    *           - message
@@ -105,13 +151,17 @@ class Api {
   public async loginCustomer(
     email: string,
     password: string
-  ): Promise<{ response?: ClientResponse; signed: boolean; message: string }> {
+  ): Promise<{
+    response?: ClientResponse<CustomerSignInResult>;
+    signed: boolean;
+    message: string;
+  }> {
     const signInData: CustomerSignin = {
       email,
       password,
     };
     try {
-      const response: ClientResponse = await apiRoot
+      const response: ClientResponse<CustomerSignInResult> = await apiRoot
         .me()
         .login()
         .post({
@@ -123,7 +173,7 @@ class Api {
         response.statusCode && response.statusCode >= 200 && response.statusCode < 300
           ? true
           : false;
-      const message: string = signInData ? 'OK' : 'Not Signed';
+      const message: string = signed ? 'OK' : 'Not Signed';
 
       return { response, signed, message };
     } catch (error) {
