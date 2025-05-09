@@ -45,6 +45,15 @@ class Api {
     this.tokenCustomer = token;
   }
 
+  public get loginned(): boolean {
+    if (this.tokenCustomer && new Date() < new Date(this.tokenCustomer.expirationTime)) return true;
+    return false;
+  }
+
+  public logout(): void {
+    this.clearTokenCustomer();
+  }
+
   public clearTokenCustomer(): TokenStore {
     this.tokenCustomer = { token: '', expirationTime: 0 };
     return this.getTokenCustomer;
