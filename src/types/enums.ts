@@ -5,3 +5,10 @@ export enum Country {
   RU = 'Russia',
   US = 'United States',
 }
+
+export const CountryLabels = {
+  [Country.BY]: 'Belarus',
+  [Country.UK]: 'Ukraine',
+  [Country.RU]: 'Russia',
+  [Country.US]: 'United States',
+} as const;

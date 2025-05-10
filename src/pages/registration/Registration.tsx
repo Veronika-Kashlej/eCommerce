@@ -1,13 +1,8 @@
 import { useState } from 'react';
-import {
-  validateEmail,
-  validateFirstName,
-  validateLastName,
-  validatePassword,
-} from '../../utils/validations';
+import * as validations from '@/utils/validations';
 import './Registration.css';
 import { ValidationResult, IFormData } from '@/types/interfaces';
-import { Country } from '@/types/enums';
+import { Country, CountryLabels } from '@/types/enums';
 
 function Registration() {
   const [formData, setFormData] = useState<IFormData>({
@@ -28,61 +23,101 @@ function Registration() {
     firstName: '',
     lastName: '',
     password: '',
+    dob: '',
+    street: '',
+    city: '',
+    postalCode: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    if (name === 'email') {
-      const validation: ValidationResult = validateEmail(value);
-      setErrors((prev) => ({ ...prev, email: validation.isValid ? '' : validation.message || '' }));
-    }
+    const validationMap: Record<string, (value: string, formData?: IFormData) => ValidationResult> =
+      {
+        email: validations.validateEmail,
+        firstName: validations.validateFirstName,
+        lastName: validations.validateLastName,
+        password: validations.validatePassword,
+        dob: validations.validateDate,
+        street: validations.validateStreet,
+        city: validations.validateCity,
+        postalCode: (value) => validations.validatePostalCode(value, formData.country),
+      };
 
-    if (name === 'firstName') {
-      const validation = validateFirstName(value);
+    const validator = validationMap[name];
+    if (validator) {
+      const validation = validator(value, formData);
       setErrors((prev) => ({
         ...prev,
-        firstName: validation.isValid ? '' : validation.message || '',
+        [name]: validation.isValid ? '' : validation.message || '',
       }));
     }
 
-    if (name === 'lastName') {
-      const validation = validateLastName(value);
-      setErrors((prev) => ({
-        ...prev,
-        lastName: validation.isValid ? '' : validation.message || '',
-      }));
-    }
+    // if (name === 'email') {
+    //   const validation: ValidationResult = validations.validateEmail(value);
+    //   setErrors((prev) => ({ ...prev, email: validation.isValid ? '' : validation.message || '' }));
+    // }
 
-    if (name === 'password') {
-      const validation = validatePassword(value);
-      setErrors((prev) => ({
-        ...prev,
-        password: validation.isValid ? '' : validation.message || '',
-      }));
-    }
+    // if (name === 'firstName') {
+    //   const validation = validations.validateFirstName(value);
+    //   setErrors((prev) => ({
+    //     ...prev,
+    //     firstName: validation.isValid ? '' : validation.message || '',
+    //   }));
+    // }
+
+    // if (name === 'lastName') {
+    //   const validation = validations.validateLastName(value);
+    //   setErrors((prev) => ({
+    //     ...prev,
+    //     lastName: validation.isValid ? '' : validation.message || '',
+    //   }));
+    // }
+
+    // if (name === 'password') {
+    //   const validation = validations.validatePassword(value);
+    //   setErrors((prev) => ({
+    //     ...prev,
+    //     password: validation.isValid ? '' : validation.message || '',
+    //   }));
+    // }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const emailValidation = validateEmail(formData.email);
-    const firstNameValidation = validateFirstName(formData.firstName);
-    const lastNameValidation = validateLastName(formData.lastName);
-    const passwordValidation = validatePassword(formData.password);
+    const emailValidation = validations.validateEmail(formData.email);
+    const firstNameValidation = validations.validateFirstName(formData.firstName);
+    const lastNameValidation = validations.validateLastName(formData.lastName);
+    const passwordValidation = validations.validatePassword(formData.password);
+    const dateValidation = validations.validateDate(formData.dob);
+    const streetValidation = validations.validateStreet(formData.street);
+    const cityValidation = validations.validateCity(formData.city);
+    const postalCodeValidation = validations.validatePostalCode(
+      formData.postalCode,
+      formData.country
+    );
 
     if (
       !emailValidation.isValid ||
       !firstNameValidation.isValid ||
       !lastNameValidation.isValid ||
-      !passwordValidation.isValid
+      !passwordValidation.isValid ||
+      !dateValidation.isValid ||
+      !streetValidation ||
+      !cityValidation ||
+      !postalCodeValidation
     ) {
       setErrors({
         email: emailValidation.message || '',
         firstName: firstNameValidation.message || '',
         lastName: lastNameValidation.message || '',
         password: passwordValidation.message || '',
+        dob: dateValidation.message || '',
+        street: streetValidation.message || '',
+        city: cityValidation.message || '',
+        postalCode: postalCodeValidation.message || '',
       });
       return;
     }
@@ -166,45 +201,50 @@ function Registration() {
 
         <div className="form-group">
           <input
-            className="input"
+            className={`input ${errors.street ? 'error' : ''}`}
             type="text"
             name="street"
             placeholder="Street Address"
             value={formData.street}
             onChange={handleChange}
           />
+          {errors.street && <span className="error-message">{errors.street}</span>}
         </div>
 
         <div className="form-group">
           <input
-            className="input"
+            className={`input ${errors.city ? 'error' : ''}`}
             type="text"
             name="city"
             placeholder="City"
             value={formData.city}
             onChange={handleChange}
           />
+          {errors.city && <span className="error-message">{errors.city}</span>}
         </div>
 
         <div className="form-group">
           <input
-            className="input"
+            className={`input ${errors.postalCode ? 'error' : ''}`}
             type="text"
             name="postalCode"
             placeholder="Postal Code"
             value={formData.postalCode}
             onChange={handleChange}
           />
+          {errors.postalCode && <span className="error-message">{errors.postalCode}</span>}
         </div>
 
         <div className="form-group">
           <select className="input" name="country" value={formData.country} onChange={handleChange}>
-            <option value="">Select Country</option>
-            <option value="US">United States</option>
-            <option value="CA">Canada</option>
-            <option value="UK">United Kingdom</option>
-            <option value="DE">Germany</option>
-            <option value="FR">France</option>
+            <option value={Country.EMPTY}>Select Country</option>
+            {Object.values(Country)
+              .filter((v) => v !== Country.EMPTY)
+              .map((value) => (
+                <option key={value} value={value}>
+                  {CountryLabels[value]}
+                </option>
+              ))}
           </select>
         </div>
 

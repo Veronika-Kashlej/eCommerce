@@ -89,6 +89,16 @@ export const validatePassword = (password: string): ValidationResult => {
 };
 
 //Date  TODO
+export const validateDate = (dob: string): ValidationResult => {
+  if (!dob.trim()) {
+    return {
+      isValid: false,
+      message: 'Date is required and must contain at least one character',
+    };
+  }
+
+  return { isValid: true };
+};
 
 export const validateStreet = (street: string): ValidationResult => {
   if (!street.trim()) {
@@ -148,25 +158,4 @@ export const validatePostalCode = (postalCode: string, country: Country): Valida
   }
 
   return { isValid: true };
-};
-
-export const validateCountry = (country: string): ValidationResult => {
-  const ALL_COUNTRIES = Object.values(Country);
-
-  if (!country.trim()) {
-    return { isValid: false, message: 'Postal Code is required' };
-  }
-
-  const exactMatch = ALL_COUNTRIES.find(
-    (country) => country.toLowerCase() === country.toLowerCase()
-  );
-
-  if (exactMatch) {
-    return { isValid: true };
-  }
-
-  return {
-    isValid: false,
-    message: 'Country not found in the list. Please select from available options.',
-  };
 };
