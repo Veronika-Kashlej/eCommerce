@@ -31,10 +31,27 @@ function Registration() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
 
-    const validationMap: Record<string, (value: string, formData?: IFormData) => ValidationResult> =
-      {
+    setFormData((prev) => {
+      const newFormData = { ...prev, [name]: value };
+
+      if (name === 'country' || name === 'postalCode') {
+        const postalCode = name === 'country' ? prev.postalCode : value;
+        const country = name === 'country' ? value : newFormData.country;
+
+        if (postalCode && country !== Country.EMPTY) {
+          const validation = validations.validatePostalCode(postalCode, country as Country);
+          setErrors((prevErrors) => ({
+            ...prevErrors,
+            postalCode: validation.isValid ? '' : validation.message || '',
+          }));
+        }
+      }
+
+      const validationMap: Record<
+        string,
+        (value: string, formData?: IFormData) => ValidationResult
+      > = {
         email: validations.validateEmail,
         firstName: validations.validateFirstName,
         lastName: validations.validateLastName,
@@ -42,17 +59,39 @@ function Registration() {
         dob: validations.validateDate,
         street: validations.validateStreet,
         city: validations.validateCity,
-        postalCode: (value) => validations.validatePostalCode(value, formData.country),
       };
 
-    const validator = validationMap[name];
-    if (validator) {
-      const validation = validator(value, formData);
-      setErrors((prev) => ({
-        ...prev,
-        [name]: validation.isValid ? '' : validation.message || '',
-      }));
-    }
+      if (name in validationMap) {
+        const validation = validationMap[name](value);
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          [name]: validation.isValid ? '' : validation.message || '',
+        }));
+      }
+
+      return newFormData;
+    });
+
+    // const validationMap: Record<string, (value: string, formData?: IFormData) => ValidationResult> =
+    //   {
+    //     email: validations.validateEmail,
+    //     firstName: validations.validateFirstName,
+    //     lastName: validations.validateLastName,
+    //     password: validations.validatePassword,
+    //     dob: validations.validateDate,
+    //     street: validations.validateStreet,
+    //     city: validations.validateCity,
+    //     postalCode: (value) => validations.validatePostalCode(value, formData.country),
+    //   };
+
+    // const validator = validationMap[name];
+    // if (validator) {
+    //   const validation = validator(value, formData);
+    //   setErrors((prev) => ({
+    //     ...prev,
+    //     [name]: validation.isValid ? '' : validation.message || '',
+    //   }));
+    // }
 
     // if (name === 'email') {
     //   const validation: ValidationResult = validations.validateEmail(value);
