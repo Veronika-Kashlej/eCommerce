@@ -1,9 +1,16 @@
 import { useState } from 'react';
-import { validateEmail, validatePassword } from '../../utils/validations';
+import {
+  validateEmail,
+  validateFirstName,
+  validateLastName,
+  validatePassword,
+} from '../../utils/validations';
 import './Registration.css';
+import { ValidationResult, IFormData } from '@/types/interfaces';
+import { Country } from '@/types/enums';
 
 function Registration() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<IFormData>({
     email: '',
     firstName: '',
     lastName: '',
@@ -12,12 +19,14 @@ function Registration() {
     street: '',
     city: '',
     postalCode: '',
-    country: '',
+    country: Country.EMPTY,
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({
     email: '',
+    firstName: '',
+    lastName: '',
     password: '',
   });
 
@@ -26,8 +35,24 @@ function Registration() {
     setFormData((prev) => ({ ...prev, [name]: value }));
 
     if (name === 'email') {
-      const validation = validateEmail(value);
+      const validation: ValidationResult = validateEmail(value);
       setErrors((prev) => ({ ...prev, email: validation.isValid ? '' : validation.message || '' }));
+    }
+
+    if (name === 'firstName') {
+      const validation = validateFirstName(value);
+      setErrors((prev) => ({
+        ...prev,
+        firstName: validation.isValid ? '' : validation.message || '',
+      }));
+    }
+
+    if (name === 'lastName') {
+      const validation = validateLastName(value);
+      setErrors((prev) => ({
+        ...prev,
+        lastName: validation.isValid ? '' : validation.message || '',
+      }));
     }
 
     if (name === 'password') {
@@ -43,11 +68,20 @@ function Registration() {
     e.preventDefault();
 
     const emailValidation = validateEmail(formData.email);
+    const firstNameValidation = validateFirstName(formData.firstName);
+    const lastNameValidation = validateLastName(formData.lastName);
     const passwordValidation = validatePassword(formData.password);
 
-    if (!emailValidation.isValid || !passwordValidation.isValid) {
+    if (
+      !emailValidation.isValid ||
+      !firstNameValidation.isValid ||
+      !lastNameValidation.isValid ||
+      !passwordValidation.isValid
+    ) {
       setErrors({
         email: emailValidation.message || '',
+        firstName: firstNameValidation.message || '',
+        lastName: lastNameValidation.message || '',
         password: passwordValidation.message || '',
       });
       return;
@@ -65,7 +99,7 @@ function Registration() {
         <div className="form-group">
           <input
             className={`input ${errors.email ? 'error' : ''}`}
-            type="email"
+            type="text"
             name="email"
             placeholder="Email"
             value={formData.email}
@@ -76,24 +110,26 @@ function Registration() {
 
         <div className="form-group">
           <input
-            className="input"
+            className={`input ${errors.firstName ? 'error' : ''}`}
             type="text"
             name="firstName"
             placeholder="First Name"
             value={formData.firstName}
             onChange={handleChange}
           />
+          {errors.firstName && <span className="error-message">{errors.firstName}</span>}
         </div>
 
         <div className="form-group">
           <input
-            className="input"
+            className={`input ${errors.lastName ? 'error' : ''}`}
             type="text"
             name="lastName"
             placeholder="Last Name"
             value={formData.lastName}
             onChange={handleChange}
           />
+          {errors.lastName && <span className="error-message">{errors.lastName}</span>}
         </div>
 
         <div className="form-group password-container">

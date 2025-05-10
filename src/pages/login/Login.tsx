@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { validateEmail, validatePassword } from '../../utils/validations';
 import './Login.css';
-import ValidationResult from '@/types/interfaces';
+import { ValidationResult } from '@/types/interfaces';
 
 function Login() {
   const [email, setEmail] = useState('');
