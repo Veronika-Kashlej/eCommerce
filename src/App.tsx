@@ -2,9 +2,9 @@
 import { Routes, Route } from 'react-router-dom';
 import './App.css';
 import Login from './pages/login/Login';
-import HomePage from './pages/home/home';
+import HomePage from './pages/home/Home';
 import Registration from './pages/registration/Registration';
-import Page404 from '../src/pages/page404/page404';
+import Page404 from './pages/page404/Page404';
 
 function App() {
   return (

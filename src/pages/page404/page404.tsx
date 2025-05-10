@@ -1,9 +1,8 @@
-import './page404.css';
+import './Page404.css';
 import { useNavigate } from 'react-router-dom';
 
 const Page404: React.FC = () => {
   const navigate = useNavigate();
-
   return (
     <div className="page404__container">
       <div className="page404__content">
