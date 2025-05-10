@@ -71,56 +71,6 @@ function Registration() {
 
       return newFormData;
     });
-
-    // const validationMap: Record<string, (value: string, formData?: IFormData) => ValidationResult> =
-    //   {
-    //     email: validations.validateEmail,
-    //     firstName: validations.validateFirstName,
-    //     lastName: validations.validateLastName,
-    //     password: validations.validatePassword,
-    //     dob: validations.validateDate,
-    //     street: validations.validateStreet,
-    //     city: validations.validateCity,
-    //     postalCode: (value) => validations.validatePostalCode(value, formData.country),
-    //   };
-
-    // const validator = validationMap[name];
-    // if (validator) {
-    //   const validation = validator(value, formData);
-    //   setErrors((prev) => ({
-    //     ...prev,
-    //     [name]: validation.isValid ? '' : validation.message || '',
-    //   }));
-    // }
-
-    // if (name === 'email') {
-    //   const validation: ValidationResult = validations.validateEmail(value);
-    //   setErrors((prev) => ({ ...prev, email: validation.isValid ? '' : validation.message || '' }));
-    // }
-
-    // if (name === 'firstName') {
-    //   const validation = validations.validateFirstName(value);
-    //   setErrors((prev) => ({
-    //     ...prev,
-    //     firstName: validation.isValid ? '' : validation.message || '',
-    //   }));
-    // }
-
-    // if (name === 'lastName') {
-    //   const validation = validations.validateLastName(value);
-    //   setErrors((prev) => ({
-    //     ...prev,
-    //     lastName: validation.isValid ? '' : validation.message || '',
-    //   }));
-    // }
-
-    // if (name === 'password') {
-    //   const validation = validations.validatePassword(value);
-    //   setErrors((prev) => ({
-    //     ...prev,
-    //     password: validation.isValid ? '' : validation.message || '',
-    //   }));
-    // }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -228,12 +178,14 @@ function Registration() {
         <div className="form-group">
           <label>Date of Birth</label>
           <input
-            className="input"
+            className={`input ${errors.dob ? 'error' : ''}`}
             type="date"
             name="dob"
             value={formData.dob}
             onChange={handleChange}
+            max={new Date().toISOString().split('T')[0]}
           />
+          {errors.dob && <span className="error-message">{errors.dob}</span>}
         </div>
 
         <h3>Address Information</h3>

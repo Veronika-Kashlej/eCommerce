@@ -88,12 +88,50 @@ export const validatePassword = (password: string): ValidationResult => {
   return { isValid: true };
 };
 
-//Date  TODO
 export const validateDate = (dob: string): ValidationResult => {
   if (!dob.trim()) {
     return {
       isValid: false,
       message: 'Date is required and must contain at least one character',
+    };
+  }
+
+  const dateRegex: RegExp = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(dob)) {
+    return {
+      isValid: false,
+      message: 'Please enter date in YYYY-MM-DD format',
+    };
+  }
+
+  const birthDate: Date = new Date(dob);
+  const currentDate: Date = new Date();
+
+  if (isNaN(birthDate.getTime())) {
+    return {
+      isValid: false,
+      message: 'Invalid date',
+    };
+  }
+
+  if (birthDate > currentDate) {
+    return {
+      isValid: false,
+      message: 'Date cannot be in the future',
+    };
+  }
+
+  let age: number = currentDate.getFullYear() - birthDate.getFullYear();
+  const monthDiff: number = currentDate.getMonth() - birthDate.getMonth();
+
+  if (monthDiff < 0 || (monthDiff === 0 && currentDate.getDate() < birthDate.getDate())) {
+    age--;
+  }
+
+  if (age < 18) {
+    return {
+      isValid: false,
+      message: 'You must be at least 18 years old',
     };
   }
 
