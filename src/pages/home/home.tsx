@@ -1,10 +1,16 @@
 import { Link } from 'react-router-dom';
 import './home.css';
 import { useState } from 'react';
+import api from '@/api/api';
+import { useNavigate } from 'react-router-dom';
 
 const HomePage: React.FC = () => {
-  const [isAuthenticated] = useState(false);
-
+  const navigate = useNavigate();
+  const [isAuthenticated] = useState(api.loginned);
+  function logout() {
+    api.logout();
+    navigate('/login');
+  }
   return (
     <div className="page-container">
       <header className="header">
@@ -19,7 +25,9 @@ const HomePage: React.FC = () => {
               </Link>
             </div>
           ) : (
-            <button className="logout-button">Log Out</button>
+            <button className="logout-button" onClick={() => logout()}>
+              Log Out
+            </button>
           )}
         </nav>
       </header>

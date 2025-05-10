@@ -2,8 +2,12 @@ import { useState } from 'react';
 import { validateEmail, validatePassword } from '../../utils/validations';
 import './Login.css';
 import { ValidationResult } from '@/types/interfaces';
+import { Link } from 'react-router-dom';
+import api from '@/api/api';
+import { useNavigate } from 'react-router-dom';
 
 function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -29,7 +33,7 @@ function Login() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const emailValidation: ValidationResult = validateEmail(email);
     const passwordValidation: ValidationResult = validatePassword(password);
@@ -41,13 +45,24 @@ function Login() {
       });
       return;
     }
+    // Submit logic here
+    api.logout();
+    try {
+      const result = await api.loginCustomer({ email, password });
 
-    // TODO Submit logic here
-    console.log('Form submitted', { email, password });
+      if (result.signed) {
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+    }
   };
 
   return (
     <div className="login-page">
+      <Link to="/" className="home-link">
+        Back to Home
+      </Link>
       <form className="root" onSubmit={handleSubmit}>
         <h2>Log In</h2>
 

@@ -1,3 +1,22 @@
+.home-link {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #4a6bdf;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.home-link:hover {
+  background-color: rgba(74, 107, 223, 0.1);
+}
+
 .registration-page {
   display: flex;
   flex-direction: column;
@@ -14,10 +33,10 @@
   padding: 40px;
   border-radius: 12px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, rgba(243, 229, 245, 0.95) 0%, rgba(225, 190, 231, 0.95) 100%);
 }
 
 .registration-page h2 {
-  color: #f5f5f5;
   margin: 0 0 30px 0;
   text-align: center;
   font-size: 28px;
@@ -25,7 +44,6 @@
 }
 
 .registration-page h3 {
-  color: #f5f5f5;
   margin: 25px 0 20px 0;
   font-size: 20px;
   font-weight: 600;
@@ -38,7 +56,6 @@
 .form-group label {
   display: block;
   margin-bottom: 10px;
-  color: #f5f5f5;
   font-size: 20px;
   font-weight: 600;
 }
@@ -54,7 +71,6 @@
   border-radius: 8px;
   font-size: 16px;
   box-sizing: border-box;
-  color: #f5f5f5;
 }
 
 .registration-page .input::placeholder {
@@ -69,7 +85,6 @@
 }
 
 .registration-page .input[type='date'] {
-  color: #f5f5f5;
   min-height: 48px;
 }
 
@@ -100,7 +115,7 @@
   transition: all 0.3s ease;
 }
 
-.registration-page .button:hover {
+.registration-page .button:hover:not(:disabled) {
   background-color: #3367d6;
   transform: translateY(-1px);
 }
@@ -125,10 +140,11 @@
   text-decoration: underline;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 700px) {
   .registration-page .root {
     padding: 30px 25px;
     box-shadow: none;
+    margin-top: 20px;
   }
 
   .registration-page {
@@ -154,7 +170,7 @@
 .password-toggle {
   position: absolute;
   right: 10px;
-  top: 50%;
+  top: 24px;
   transform: translateY(-50%);
   background: none;
   border: none;

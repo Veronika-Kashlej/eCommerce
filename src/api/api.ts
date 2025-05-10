@@ -115,7 +115,6 @@ class Api {
           : false;
 
       const message: string = registered ? 'OK' : 'Not Registered';
-
       return { response, registered, message };
     } catch (error) {
       const message: registeredResponseMessage = [];

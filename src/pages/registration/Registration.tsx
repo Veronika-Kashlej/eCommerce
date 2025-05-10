@@ -3,8 +3,12 @@ import * as validations from '@/utils/validations';
 import './Registration.css';
 import { ValidationResult, IFormData } from '@/types/interfaces';
 import { Country, CountryLabels } from '@/types/enums';
+import { Link } from 'react-router-dom';
+import api from '@/api/api';
+import { useNavigate } from 'react-router-dom';
 
 function Registration() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<IFormData>({
     email: '',
     firstName: '',
@@ -73,7 +77,7 @@ function Registration() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const emailValidation = validations.validateEmail(formData.email);
@@ -112,11 +116,57 @@ function Registration() {
     }
 
     // Submit logic here
-    console.log('Form submitted', formData);
+    api.logout();
+    try {
+      const countryEntry = Object.entries(Country).find(([, value]) => value === formData.country);
+
+      if (!countryEntry) {
+        throw new Error('Invalid country selected');
+      }
+
+      const countryCode = countryEntry[0];
+
+      const userData = {
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        dateOfBirth: formData.dob,
+        addresses: [
+          {
+            streetName: formData.street,
+            city: formData.city,
+            postalCode: formData.postalCode,
+            country: countryCode,
+          },
+        ],
+      };
+
+      const registrationResult = await api.registerCustomer(userData);
+      if (!registrationResult.registered) {
+        throw new Error(registrationResult.message.toString());
+      }
+
+      const loginResult = await api.loginCustomer({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (!loginResult.signed) {
+        throw new Error(loginResult.message);
+      }
+
+      navigate('/');
+    } catch (error) {
+      console.error('Registration failed:', error);
+    }
   };
 
   return (
     <div className="registration-page">
+      <Link to="/" className="home-link">
+        Back to Home
+      </Link>
       <form className="root" onSubmit={handleSubmit}>
         <h2>Create Account</h2>
 
