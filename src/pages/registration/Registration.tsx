@@ -295,9 +295,9 @@ function Registration() {
 
         <div className="login-prompt">
           <span>Already have an account?</span>
-          <a href="/login" className="login-link">
+          <Link to="/login" className="login-link">
             Log In
-          </a>
+          </Link>
         </div>
       </form>
     </div>
