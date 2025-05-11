@@ -46,7 +46,24 @@ function Login() {
       return;
     }
     // Submit logic here
-    api.logout();
+    try {
+      const checkCustomerEmail = await api.getCustomerByEmail(email);
+
+      if (!checkCustomerEmail.found) {
+        setErrors({ email: checkCustomerEmail.message, password: '' });
+      } else {
+        const checkCustomer = await api.loginCustomer({ email, password });
+
+        if (checkCustomer.signed) {
+          navigate('/');
+        } else {
+          setErrors({ email: '', password: checkCustomer.message });
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+
     try {
       const result = await api.loginCustomer({ email, password });
 
