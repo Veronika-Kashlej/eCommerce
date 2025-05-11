@@ -6,6 +6,7 @@ import {
   ClientResponse,
   CustomerSignin,
   CustomerDraft,
+  CustomerPagedQueryResponse,
 } from '@commercetools/platform-sdk';
 
 // interface TokenCache {
@@ -92,6 +93,8 @@ class Api {
     registered: boolean;
     message: registeredResponseMessage;
   }> {
+    this.logout();
+
     try {
       const response: ClientResponse<CustomerSignInResult> = await apiRoot
         .customers()
@@ -115,6 +118,7 @@ class Api {
           : false;
 
       const message: string = registered ? 'OK' : 'Not Registered';
+
       return { response, registered, message };
     } catch (error) {
       const message: registeredResponseMessage = [];
@@ -177,6 +181,20 @@ class Api {
     signed: boolean;
     message: string;
   }> {
+    this.logout();
+
+    try {
+      const customer = await this.getCustomerByEmail(data.email);
+      if (!customer.found)
+        return {
+          response: undefined,
+          signed: false,
+          message: `Customer with email ${data.email} not found`,
+        };
+    } catch {
+      return { response: undefined, signed: false, message: `Server connection failure` };
+    }
+
     try {
       const response: ClientResponse<CustomerSignInResult> = await apiRoot
         .me()
@@ -194,14 +212,71 @@ class Api {
 
       return { response, signed, message };
     } catch (error) {
-      const message: string =
+      let message: string =
         error &&
         typeof error === 'object' &&
         'message' in error &&
         typeof error.message === 'string'
           ? error.message
           : 'Unknown error';
+      if (message === 'Account with the given credentials not found.')
+        message = 'Customer password incorrect';
+
       return { response: undefined, signed: false, message };
+    }
+  }
+
+  /**
+   * Finds a customer by email address
+   *
+   * @param {string} email - The email address to search for.
+   * @returns {Promise<{response?: ClientResponse<CustomerPagedQueryResponse>, found: boolean, message: string, id?: string}>}
+   *   An object containing:
+   *   - `response` (optional): Raw API response if successful
+   *   - `found`: Boolean indicating if customer exists
+   *   - `message`: Status message ('Customer found'/'Customer not found'/'Server connection failure')
+   *   - `id` (optional): Customer ID if found
+   */
+  public async getCustomerByEmail(email: string): Promise<{
+    response?: ClientResponse<CustomerPagedQueryResponse>;
+    found: boolean;
+    message: string;
+    id?: string;
+  }> {
+    try {
+      const response: ClientResponse<CustomerPagedQueryResponse> = await apiRoot
+        .customers()
+        .get({
+          queryArgs: {
+            where: `email="${email}"`,
+            limit: 1,
+          },
+        })
+        .execute();
+
+      const found: boolean =
+        response.statusCode &&
+        response.statusCode >= 200 &&
+        response.statusCode < 300 &&
+        response.body.count !== 0
+          ? true
+          : false;
+      const message: string = found ? 'Customer found' : 'Customer not found';
+
+      return {
+        response,
+        found,
+        message,
+        id: response.body.results.length ? response.body.results[0].id : undefined,
+      };
+    } catch (error) {
+      console.error(error);
+      return {
+        response: undefined,
+        found: false,
+        message: 'Server connection failure',
+        id: undefined,
+      };
     }
   }
 }
