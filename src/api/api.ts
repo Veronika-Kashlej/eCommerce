@@ -6,6 +6,7 @@ import {
   ClientResponse,
   CustomerSignin,
   CustomerDraft,
+  CustomerPagedQueryResponse,
 } from '@commercetools/platform-sdk';
 
 // interface TokenCache {
@@ -92,6 +93,8 @@ class Api {
     registered: boolean;
     message: registeredResponseMessage;
   }> {
+    this.logout();
+
     try {
       const response: ClientResponse<CustomerSignInResult> = await apiRoot
         .customers()
@@ -178,6 +181,8 @@ class Api {
     signed: boolean;
     message: string;
   }> {
+    this.logout();
+
     try {
       const response: ClientResponse<CustomerSignInResult> = await apiRoot
         .me()
@@ -203,6 +208,44 @@ class Api {
           ? error.message
           : 'Unknown error';
       return { response: undefined, signed: false, message };
+    }
+  }
+
+  public async getCustomerByEmail(email: string): Promise<{
+    response?: ClientResponse<CustomerPagedQueryResponse>;
+    found: boolean;
+    message: string;
+    id?: string;
+  }> {
+    try {
+      const response: ClientResponse<CustomerPagedQueryResponse> = await apiRoot
+        .customers()
+        .get({
+          queryArgs: {
+            where: `email="${email}"`,
+            limit: 1,
+          },
+        })
+        .execute();
+
+      const found: boolean =
+        response.statusCode &&
+        response.statusCode >= 200 &&
+        response.statusCode < 300 &&
+        response.body.count !== 0
+          ? true
+          : false;
+      const message: string = found ? 'Customer found' : 'Customer not found';
+
+      return { response, found, message, id: response.body.results[0].id };
+    } catch (error) {
+      console.warn('Server connection failure. ', error);
+      return {
+        response: undefined,
+        found: false,
+        message: 'Server connection failure',
+        id: undefined,
+      };
     }
   }
 }
