@@ -31,6 +31,7 @@ function Registration() {
     street: '',
     city: '',
     postalCode: '',
+    country: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -111,12 +112,12 @@ function Registration() {
         street: streetValidation.message || '',
         city: cityValidation.message || '',
         postalCode: postalCodeValidation.message || '',
+        country: '', //todo add countryCodeValidation
       });
       return;
     }
 
     // Submit logic here
-    api.logout();
     try {
       const countryEntry = Object.entries(Country).find(([, value]) => value === formData.country);
 
@@ -143,22 +144,50 @@ function Registration() {
       };
 
       const registrationResult = await api.registerCustomer(userData);
+
       if (!registrationResult.registered) {
-        throw new Error(registrationResult.message.toString());
+        // throw new Error(registrationResult.message.toString());
+        console.log('registrationResult = ', registrationResult.message);
+        if (Array.isArray(registrationResult.message)) {
+          registrationResult.message.forEach((element) => {
+            console.log('registration error = ', element);
+
+            switch (element.code) {
+              case 'DuplicateField':
+                console.log('registration error = ', element.code, ' - ', element.message);
+                setErrors((prevErrors) => ({
+                  ...prevErrors,
+                  email: element.message,
+                }));
+                break;
+
+              case 'addresses -> country':
+                console.log('registration error = ', element.code, ' - ', element.message);
+                setErrors((prevErrors) => ({
+                  ...prevErrors,
+                  country: element.message, //todo replace by simple message BY RU UA etc.
+                }));
+                break;
+
+              default:
+                break;
+            }
+          });
+        }
+      } else {
+        const loginResult = await api.loginCustomer({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (!loginResult.signed) {
+          throw new Error(loginResult.message);
+        }
+
+        navigate('/');
       }
-
-      const loginResult = await api.loginCustomer({
-        email: formData.email,
-        password: formData.password,
-      });
-
-      if (!loginResult.signed) {
-        throw new Error(loginResult.message);
-      }
-
-      navigate('/');
     } catch (error) {
-      console.error('Registration failed:', error);
+      console.log('Registration failed:', error);
     }
   };
 
@@ -287,6 +316,7 @@ function Registration() {
                 </option>
               ))}
           </select>
+          {errors.country && <span className="error-message">{errors.country}</span>}
         </div>
 
         <button className="button" type="submit" disabled={!formData.email || !formData.password}>

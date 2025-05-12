@@ -151,7 +151,7 @@ export const validateStreet = (street: string): ValidationResult => {
 
 export const validateCity = (city: string): ValidationResult => {
   if (!city.trim()) {
-    return { isValid: false, message: 'Last Name is required' };
+    return { isValid: false, message: 'City Name is required' };
   }
 
   const cityRegex: RegExp = /^[\p{L}]+$/u;

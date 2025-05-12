@@ -5,6 +5,7 @@ import { ValidationResult } from '@/types/interfaces';
 import { Link } from 'react-router-dom';
 import api from '@/api/api';
 import { useNavigate } from 'react-router-dom';
+import { modalWindow } from '@/components/modal/modalWindow';
 
 function Login() {
   const navigate = useNavigate();
@@ -48,6 +49,7 @@ function Login() {
     // Submit logic here
     try {
       const checkCustomerEmail = await api.getCustomerByEmail(email);
+      api.clearTokenCustomer();
 
       if (!checkCustomerEmail.found) {
         setErrors({ email: checkCustomerEmail.message, password: '' });
@@ -57,21 +59,16 @@ function Login() {
         if (checkCustomer.signed) {
           navigate('/');
         } else {
-          setErrors({ email: '', password: checkCustomer.message });
+          if (checkCustomer.message === 'Account with the given credentials not found.') {
+            setErrors({ email: '', password: 'Customer password incorrect' });
+          } else {
+            // any other errors
+            modalWindow.alert(checkCustomer.message, 'Server notification!');
+          }
         }
       }
     } catch (error) {
       console.log(error);
-    }
-
-    try {
-      const result = await api.loginCustomer({ email, password });
-
-      if (result.signed) {
-        navigate('/');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
     }
   };
 
