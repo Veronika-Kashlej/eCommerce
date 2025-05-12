@@ -13,8 +13,8 @@ function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({
-    email: '',
-    password: '',
+    email: '*required field',
+    password: '*required field',
   });
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {

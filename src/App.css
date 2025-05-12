@@ -4,3 +4,9 @@
   padding: 2rem;
   text-align: center;
 }
+
+/* .button:disabled{
+  color: lightgray !important;
+  background-color: grey !important;
+  cursor: unset !important;
+} */

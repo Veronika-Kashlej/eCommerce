@@ -6,6 +6,7 @@ import { Country, CountryLabels } from '@/types/enums';
 import { Link } from 'react-router-dom';
 import api from '@/api/api';
 import { useNavigate } from 'react-router-dom';
+import { modalWindow } from '@/components/modal/modalWindow';
 
 function Registration() {
   const navigate = useNavigate();
@@ -23,15 +24,15 @@ function Registration() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({
-    email: '',
-    firstName: '',
-    lastName: '',
-    password: '',
-    dob: '',
-    street: '',
-    city: '',
-    postalCode: '',
-    country: '',
+    email: '*required field',
+    firstName: '*required field',
+    lastName: '*required field',
+    password: '*required field',
+    dob: '*required field',
+    street: '*required field',
+    city: '*required field',
+    postalCode: '*required field',
+    country: '*required field',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -99,9 +100,9 @@ function Registration() {
       !lastNameValidation.isValid ||
       !passwordValidation.isValid ||
       !dateValidation.isValid ||
-      !streetValidation ||
-      !cityValidation ||
-      !postalCodeValidation
+      !streetValidation.isValid ||
+      !cityValidation.isValid ||
+      !postalCodeValidation.isValid
     ) {
       setErrors({
         email: emailValidation.message || '',
@@ -146,18 +147,37 @@ function Registration() {
       const registrationResult = await api.registerCustomer(userData);
 
       if (!registrationResult.registered) {
-        // throw new Error(registrationResult.message.toString());
-        console.log('registrationResult = ', registrationResult.message);
+        api.clearTokenCustomer();
+
         if (Array.isArray(registrationResult.message)) {
           registrationResult.message.forEach((element) => {
             console.log('registration error = ', element);
 
             switch (element.code) {
               case 'DuplicateField':
-                console.log('registration error = ', element.code, ' - ', element.message);
                 setErrors((prevErrors) => ({
                   ...prevErrors,
                   email: element.message,
+                }));
+                break;
+
+              case 'InvalidOperation':
+                if (element.detailedErrorMessage === "'password' should not be empty.")
+                  setErrors((prevErrors) => ({
+                    ...prevErrors,
+                    password: element.message,
+                  }));
+                if (element.detailedErrorMessage === 'The provided value is not a valid email')
+                  setErrors((prevErrors) => ({
+                    ...prevErrors,
+                    email: element.message,
+                  }));
+                break;
+
+              case 'dateOfBirth':
+                setErrors((prevErrors) => ({
+                  ...prevErrors,
+                  dob: element.detailedErrorMessage,
                 }));
                 break;
 
@@ -165,11 +185,13 @@ function Registration() {
                 console.log('registration error = ', element.code, ' - ', element.message);
                 setErrors((prevErrors) => ({
                   ...prevErrors,
-                  country: element.message, //todo replace by simple message BY RU UA etc.
+                  country: 'Expected one: BY, RU, UA, US',
                 }));
                 break;
 
               default:
+                // something unexpected
+                modalWindow.alert(element.detailedErrorMessage, 'Registration failed');
                 break;
             }
           });
@@ -188,6 +210,7 @@ function Registration() {
       }
     } catch (error) {
       console.log('Registration failed:', error);
+      modalWindow.alert(`We didn't expect this error, but it appeared.`, 'Registration failed');
     }
   };
 
