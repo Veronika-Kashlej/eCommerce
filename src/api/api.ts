@@ -9,6 +9,8 @@ import {
   CustomerPagedQueryResponse,
 } from '@commercetools/platform-sdk';
 
+import waiting from '@/components/waiting/waiting';
+
 // interface TokenCache {
 //   get(): TokenStore | null;
 //   set(cache: TokenStore): void;
@@ -93,6 +95,9 @@ class Api {
     registered: boolean;
     message: registeredResponseMessage;
   }> {
+    const loader = waiting();
+    loader.show();
+
     this.logout();
 
     try {
@@ -161,6 +166,8 @@ class Api {
         );
       }
       return { response: undefined, registered: false, message };
+    } finally {
+      loader.remove();
     }
   }
 
@@ -181,25 +188,12 @@ class Api {
     signed: boolean;
     message: string;
   }> {
+    const loader = waiting();
+    loader.show();
+
     this.logout();
 
-    // try {
-    //   console.log('check user');
-
-    //   const customer = await this.getCustomerByEmail(data.email);
-    //   if (!customer.found)
-    //     return {
-    //       response: undefined,
-    //       signed: false,
-    //       message: `Customer with email ${data.email} not found`,
-    //     };
-    // } catch {
-    //   return { response: undefined, signed: false, message: `Server connection failure` };
-    // }
-
     try {
-      console.log('login user');
-
       const response: ClientResponse<CustomerSignInResult> = await apiRoot
         .me()
         .login()
@@ -227,6 +221,8 @@ class Api {
       //   message = 'Customer password incorrect';
 
       return { response: undefined, signed: false, message };
+    } finally {
+      loader.remove();
     }
   }
 
@@ -247,6 +243,9 @@ class Api {
     message: string;
     id?: string;
   }> {
+    const loader = waiting();
+    loader.show();
+
     try {
       const response: ClientResponse<CustomerPagedQueryResponse> = await apiRoot
         .customers()
@@ -281,6 +280,8 @@ class Api {
         message: 'Server connection failure',
         id: undefined,
       };
+    } finally {
+      loader.remove();
     }
   }
 }
