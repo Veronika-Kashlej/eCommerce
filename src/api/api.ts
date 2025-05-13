@@ -9,8 +9,6 @@ import {
   CustomerPagedQueryResponse,
 } from '@commercetools/platform-sdk';
 
-import waiting from '@/components/waiting/waiting';
-
 // interface TokenCache {
 //   get(): TokenStore | null;
 //   set(cache: TokenStore): void;
@@ -95,9 +93,6 @@ class Api {
     registered: boolean;
     message: registeredResponseMessage;
   }> {
-    const loader = waiting();
-    loader.show();
-
     this.logout();
 
     try {
@@ -166,8 +161,6 @@ class Api {
         );
       }
       return { response: undefined, registered: false, message };
-    } finally {
-      loader.remove();
     }
   }
 
@@ -188,9 +181,6 @@ class Api {
     signed: boolean;
     message: string;
   }> {
-    const loader = waiting();
-    loader.show();
-
     this.logout();
 
     try {
@@ -221,8 +211,6 @@ class Api {
       //   message = 'Customer password incorrect';
 
       return { response: undefined, signed: false, message };
-    } finally {
-      loader.remove();
     }
   }
 
@@ -243,9 +231,6 @@ class Api {
     message: string;
     id?: string;
   }> {
-    const loader = waiting();
-    loader.show();
-
     try {
       const response: ClientResponse<CustomerPagedQueryResponse> = await apiRoot
         .customers()
@@ -280,8 +265,6 @@ class Api {
         message: 'Server connection failure',
         id: undefined,
       };
-    } finally {
-      loader.remove();
     }
   }
 }

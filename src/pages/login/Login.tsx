@@ -5,7 +5,8 @@ import { ValidationResult } from '@/types/interfaces';
 import { Link } from 'react-router-dom';
 import api from '@/api/api';
 import { useNavigate } from 'react-router-dom';
-import { modalWindow } from '@/components/modal/modalWindow';
+import modalWindow from '@/components/modal/modalWindow';
+import WaitingModal from '@/components/waiting/waiting';
 
 function Login() {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ function Login() {
     email: '*required field',
     password: '*required field',
   });
+  const [isWaitingOpen, setIsWaitingOpen] = useState(false);
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value: string = e.target.value;
@@ -47,6 +49,7 @@ function Login() {
       return;
     }
     // Submit logic here
+    setIsWaitingOpen(true);
     try {
       const checkCustomerEmail = await api.getCustomerByEmail(email);
       api.clearTokenCustomer();
@@ -69,6 +72,8 @@ function Login() {
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsWaitingOpen(false);
     }
   };
 
@@ -120,6 +125,8 @@ function Login() {
           </Link>
         </div>
       </form>
+
+      <WaitingModal isOpen={isWaitingOpen} />
     </div>
   );
 }

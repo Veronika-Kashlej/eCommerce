@@ -1,16 +1,25 @@
-.waiting {
+.waiting-backdrop {
+  display: flex;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   border: none;
-  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 99;
+  justify-content: center;
+  align-items: center;
+}
+
+.waiting-modal {
+  border: none;
   background-color: transparent;
   font-size: 3rem;
-  animation: rotate 2s linear infinite;
+  animation: waiting-rotate 2s linear infinite;
 }
 
-.waiting::backdrop {
-  background: rgba(0, 0, 0, 0.7);
-}
-
-@keyframes rotate {
+@keyframes waiting-rotate {
   to {
     transform: rotate(360deg);
   }

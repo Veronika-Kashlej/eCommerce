@@ -6,9 +6,12 @@ import { Country, CountryLabels } from '@/types/enums';
 import { Link } from 'react-router-dom';
 import api from '@/api/api';
 import { useNavigate } from 'react-router-dom';
-import { modalWindow } from '@/components/modal/modalWindow';
+import modalWindow from '@/components/modal/modalWindow';
+import WaitingModal from '@/components/waiting/waiting';
 
 function Registration() {
+  const [isWaitingOpen, setIsWaitingOpen] = useState(false);
+
   const navigate = useNavigate();
   const [formData, setFormData] = useState<IFormData>({
     email: '',
@@ -119,6 +122,8 @@ function Registration() {
     }
 
     // Submit logic here
+    setIsWaitingOpen(true);
+
     try {
       const countryEntry = Object.entries(Country).find(([, value]) => value === formData.country);
 
@@ -211,6 +216,8 @@ function Registration() {
     } catch (error) {
       console.log('Registration failed:', error);
       modalWindow.alert(`We didn't expect this error, but it appeared.`, 'Registration failed');
+    } finally {
+      setIsWaitingOpen(false);
     }
   };
 
@@ -353,6 +360,8 @@ function Registration() {
           </Link>
         </div>
       </form>
+
+      <WaitingModal isOpen={isWaitingOpen} />
     </div>
   );
 }
