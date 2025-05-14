@@ -8,8 +8,15 @@ import api from '@/api/api';
 import { useNavigate } from 'react-router-dom';
 import modalWindow from '@/components/modal/modalWindow';
 import WaitingModal from '@/components/waiting/waiting';
+import { CustomerDraft } from '@commercetools/platform-sdk';
 
 function Registration() {
+  const [defaultAddressSettings, setDefaultAddressSettings] = useState({
+    //!!!!!!!!!!!
+    shipping: false,
+    billing: false,
+  });
+
   const [isWaitingOpen, setIsWaitingOpen] = useState(false);
 
   const navigate = useNavigate();
@@ -133,7 +140,7 @@ function Registration() {
 
       const countryCode = countryEntry[0];
 
-      const userData = {
+      const userData: CustomerDraft = {
         email: formData.email,
         password: formData.password,
         firstName: formData.firstName,
@@ -147,6 +154,8 @@ function Registration() {
             country: countryCode,
           },
         ],
+        defaultShippingAddress: defaultAddressSettings.shipping ? 0 : undefined, //!!!!!!!!!!!!!!
+        defaultBillingAddress: defaultAddressSettings.billing ? 0 : undefined,
       };
 
       const registrationResult = await api.registerCustomer(userData);
@@ -347,6 +356,36 @@ function Registration() {
               ))}
           </select>
           {errors.country && <span className="error-message">{errors.country}</span>}
+        </div>
+
+        <div className="default-address-options">
+          <label className="default-address-label">
+            <input
+              type="checkbox"
+              checked={defaultAddressSettings.shipping}
+              onChange={(e) =>
+                setDefaultAddressSettings((prev) => ({
+                  ...prev,
+                  shipping: e.target.checked,
+                }))
+              }
+            />
+            Set as default shipping address
+          </label>
+
+          <label className="default-address-label">
+            <input
+              type="checkbox"
+              checked={defaultAddressSettings.billing}
+              onChange={(e) =>
+                setDefaultAddressSettings((prev) => ({
+                  ...prev,
+                  billing: e.target.checked,
+                }))
+              }
+            />
+            Set as default billing address
+          </label>
         </div>
 
         <button className="button" type="submit" disabled={!formData.email || !formData.password}>
