@@ -151,7 +151,7 @@ export const validateStreet = (street: string): ValidationResult => {
 
 export const validateCity = (city: string): ValidationResult => {
   if (!city.trim()) {
-    return { isValid: false, message: 'Last Name is required' };
+    return { isValid: false, message: 'City is required' };
   }
 
   const cityRegex: RegExp = /^[\p{L}]+$/u;
@@ -180,10 +180,12 @@ export const validatePostalCode = (postalCode: string, country: Country): Valida
 
     switch (country) {
       case Country.BY:
+        message = 'Enter 6 digits (example: 123456)';
+        break;
       case Country.RU:
         message = 'Enter 6 digits (example: 220000)';
         break;
-      case Country.UK:
+      case Country.UA:
         message = 'Enter 5 digits (example: 12345)';
         break;
       case Country.US:

@@ -25,6 +25,6 @@ export const postalCodePatterns: PostalCodePatterns = {
   [Country.EMPTY]: /^\d{0}$/,
   [Country.BY]: /^\d{6}$/,
   [Country.RU]: /^\d{6}$/,
-  [Country.UK]: /^\d{5}$/,
+  [Country.UA]: /^\d{5}$/,
   [Country.US]: /^\d{5}(-\d{4})?$/,
 };

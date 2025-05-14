@@ -12,7 +12,7 @@ type ModalOptions = {
 let modalRoot: HTMLDivElement | undefined;
 let root: Root | undefined;
 
-export const modalWindow = {
+const modalWindow = {
   show: (options: ModalOptions): void => {
     if (!modalRoot) {
       modalRoot = document.createElement('div');
@@ -87,3 +87,5 @@ export const modalWindow = {
     });
   },
 };
+
+export default modalWindow;

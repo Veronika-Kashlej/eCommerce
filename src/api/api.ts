@@ -184,18 +184,6 @@ class Api {
     this.logout();
 
     try {
-      const customer = await this.getCustomerByEmail(data.email);
-      if (!customer.found)
-        return {
-          response: undefined,
-          signed: false,
-          message: `Customer with email ${data.email} not found`,
-        };
-    } catch {
-      return { response: undefined, signed: false, message: `Server connection failure` };
-    }
-
-    try {
       const response: ClientResponse<CustomerSignInResult> = await apiRoot
         .me()
         .login()
@@ -212,15 +200,15 @@ class Api {
 
       return { response, signed, message };
     } catch (error) {
-      let message: string =
+      const message: string =
         error &&
         typeof error === 'object' &&
         'message' in error &&
         typeof error.message === 'string'
           ? error.message
           : 'Unknown error';
-      if (message === 'Account with the given credentials not found.')
-        message = 'Customer password incorrect';
+      // if (message === 'Account with the given credentials not found.')
+      //   message = 'Customer password incorrect';
 
       return { response: undefined, signed: false, message };
     }

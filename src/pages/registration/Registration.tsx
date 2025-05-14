@@ -6,8 +6,12 @@ import { Country, CountryLabels } from '@/types/enums';
 import { Link } from 'react-router-dom';
 import api from '@/api/api';
 import { useNavigate } from 'react-router-dom';
+import modalWindow from '@/components/modal/modalWindow';
+import WaitingModal from '@/components/waiting/waiting';
 
 function Registration() {
+  const [isWaitingOpen, setIsWaitingOpen] = useState(false);
+
   const navigate = useNavigate();
   const [formData, setFormData] = useState<IFormData>({
     email: '',
@@ -23,14 +27,15 @@ function Registration() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({
-    email: '',
-    firstName: '',
-    lastName: '',
-    password: '',
-    dob: '',
-    street: '',
-    city: '',
-    postalCode: '',
+    email: '*required field',
+    firstName: '*required field',
+    lastName: '*required field',
+    password: '*required field',
+    dob: '*required field',
+    street: '*required field',
+    city: '*required field',
+    postalCode: '*required field',
+    country: '*required field',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -98,9 +103,9 @@ function Registration() {
       !lastNameValidation.isValid ||
       !passwordValidation.isValid ||
       !dateValidation.isValid ||
-      !streetValidation ||
-      !cityValidation ||
-      !postalCodeValidation
+      !streetValidation.isValid ||
+      !cityValidation.isValid ||
+      !postalCodeValidation.isValid
     ) {
       setErrors({
         email: emailValidation.message || '',
@@ -111,12 +116,14 @@ function Registration() {
         street: streetValidation.message || '',
         city: cityValidation.message || '',
         postalCode: postalCodeValidation.message || '',
+        country: '', //todo add countryCodeValidation
       });
       return;
     }
 
     // Submit logic here
-    api.logout();
+    setIsWaitingOpen(true);
+
     try {
       const countryEntry = Object.entries(Country).find(([, value]) => value === formData.country);
 
@@ -143,22 +150,74 @@ function Registration() {
       };
 
       const registrationResult = await api.registerCustomer(userData);
+
       if (!registrationResult.registered) {
-        throw new Error(registrationResult.message.toString());
+        api.clearTokenCustomer();
+
+        if (Array.isArray(registrationResult.message)) {
+          registrationResult.message.forEach((element) => {
+            console.log('registration error = ', element);
+
+            switch (element.code) {
+              case 'DuplicateField':
+                setErrors((prevErrors) => ({
+                  ...prevErrors,
+                  email: element.message,
+                }));
+                break;
+
+              case 'InvalidOperation':
+                if (element.detailedErrorMessage === "'password' should not be empty.")
+                  setErrors((prevErrors) => ({
+                    ...prevErrors,
+                    password: element.message,
+                  }));
+                if (element.detailedErrorMessage === 'The provided value is not a valid email')
+                  setErrors((prevErrors) => ({
+                    ...prevErrors,
+                    email: element.message,
+                  }));
+                break;
+
+              case 'dateOfBirth':
+                setErrors((prevErrors) => ({
+                  ...prevErrors,
+                  dob: element.detailedErrorMessage,
+                }));
+                break;
+
+              case 'addresses -> country':
+                console.log('registration error = ', element.code, ' - ', element.message);
+                setErrors((prevErrors) => ({
+                  ...prevErrors,
+                  country: 'Expected one: BY, RU, UA, US',
+                }));
+                break;
+
+              default:
+                // something unexpected
+                modalWindow.alert(element.detailedErrorMessage, 'Registration failed');
+                break;
+            }
+          });
+        }
+      } else {
+        const loginResult = await api.loginCustomer({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (!loginResult.signed) {
+          throw new Error(loginResult.message);
+        }
+
+        navigate('/');
       }
-
-      const loginResult = await api.loginCustomer({
-        email: formData.email,
-        password: formData.password,
-      });
-
-      if (!loginResult.signed) {
-        throw new Error(loginResult.message);
-      }
-
-      navigate('/');
     } catch (error) {
-      console.error('Registration failed:', error);
+      console.log('Registration failed:', error);
+      modalWindow.alert(`We didn't expect this error, but it appeared.`, 'Registration failed');
+    } finally {
+      setIsWaitingOpen(false);
     }
   };
 
@@ -287,6 +346,7 @@ function Registration() {
                 </option>
               ))}
           </select>
+          {errors.country && <span className="error-message">{errors.country}</span>}
         </div>
 
         <button className="button" type="submit" disabled={!formData.email || !formData.password}>
@@ -300,6 +360,8 @@ function Registration() {
           </Link>
         </div>
       </form>
+
+      <WaitingModal isOpen={isWaitingOpen} />
     </div>
   );
 }

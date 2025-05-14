@@ -5,6 +5,8 @@ import { ValidationResult } from '@/types/interfaces';
 import { Link } from 'react-router-dom';
 import api from '@/api/api';
 import { useNavigate } from 'react-router-dom';
+import modalWindow from '@/components/modal/modalWindow';
+import WaitingModal from '@/components/waiting/waiting';
 
 function Login() {
   const navigate = useNavigate();
@@ -12,9 +14,10 @@ function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({
-    email: '',
-    password: '',
+    email: '*required field',
+    password: '*required field',
   });
+  const [isWaitingOpen, setIsWaitingOpen] = useState(false);
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value: string = e.target.value;
@@ -46,15 +49,31 @@ function Login() {
       return;
     }
     // Submit logic here
-    api.logout();
+    setIsWaitingOpen(true);
     try {
-      const result = await api.loginCustomer({ email, password });
+      const checkCustomerEmail = await api.getCustomerByEmail(email);
+      api.clearTokenCustomer();
 
-      if (result.signed) {
-        navigate('/');
+      if (!checkCustomerEmail.found) {
+        setErrors({ email: checkCustomerEmail.message, password: '' });
+      } else {
+        const checkCustomer = await api.loginCustomer({ email, password });
+
+        if (checkCustomer.signed) {
+          navigate('/');
+        } else {
+          if (checkCustomer.message === 'Account with the given credentials not found.') {
+            setErrors({ email: '', password: 'Customer password incorrect' });
+          } else {
+            // any other errors
+            modalWindow.alert(checkCustomer.message, 'Server notification!');
+          }
+        }
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.log(error);
+    } finally {
+      setIsWaitingOpen(false);
     }
   };
 
@@ -106,6 +125,8 @@ function Login() {
           </Link>
         </div>
       </form>
+
+      <WaitingModal isOpen={isWaitingOpen} />
     </div>
   );
 }
