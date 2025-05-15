@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as validations from '@/utils/validations';
 import './Registration.css';
 import { ValidationResult, IFormData } from '@/types/interfaces';
@@ -53,6 +53,14 @@ function Registration() {
     billingCountry: '*required field',
   });
 
+  useEffect(() => {
+    setErrors((prev) => ({
+      ...prev,
+      shippingCountry: formData.shippingCountry === Country.EMPTY ? '*required field' : '',
+      billingCountry: formData.billingCountry === Country.EMPTY ? '*required field' : '',
+    }));
+  }, [formData.shippingCountry, formData.billingCountry]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
@@ -62,6 +70,33 @@ function Registration() {
 
       if (name === 'shippingCountry' || name === 'billingCountry') {
         newFormData[name as 'shippingCountry' | 'billingCountry'] = value as Country;
+
+        if (value === Country.EMPTY) {
+          if (name === 'shippingCountry') {
+            newFormData.shippingStreet = '';
+            newFormData.shippingCity = '';
+            newFormData.shippingPostalCode = '';
+          } else if (name === 'billingCountry') {
+            newFormData.billingStreet = '';
+            newFormData.billingCity = '';
+            newFormData.billingPostalCode = '';
+          }
+        }
+        setErrors((prevErrors) => {
+          const newErrors = { ...prevErrors };
+          if (name === 'shippingCountry' && value === Country.EMPTY) {
+            newErrors.shippingStreet = '*required field';
+            newErrors.shippingCity = '*required field';
+            newErrors.shippingPostalCode = '*required field';
+          }
+
+          if (name === 'billingCountry' && value === Country.EMPTY) {
+            newErrors.billingStreet = '*required field';
+            newErrors.billingCity = '*required field';
+            newErrors.billingPostalCode = '*required field';
+          }
+          return newErrors;
+        });
       } else {
         newFormData[name as Exclude<keyof IFormData, 'shippingCountry' | 'billingCountry'>] = value;
       }
@@ -271,6 +306,15 @@ function Registration() {
         });
       }
 
+      if (useSameAddress) {
+        addresses.push({
+          streetName: formData.shippingStreet,
+          city: formData.shippingCity,
+          postalCode: formData.shippingPostalCode,
+          country: shippingCountryCode,
+        });
+      }
+
       const userData: CustomerDraft = {
         email: formData.email,
         password: formData.password,
@@ -279,9 +323,10 @@ function Registration() {
         dateOfBirth: formData.dob,
         addresses,
         shippingAddresses: [0],
-        billingAddresses: useSameAddress ? [0] : [1],
+        //billingAddresses: useSameAddress ? [0] : [1],
+        billingAddresses: [1],
         defaultShippingAddress: defaultAddressSettings.shipping ? 0 : undefined,
-        defaultBillingAddress: defaultAddressSettings.billing ? 0 : undefined,
+        defaultBillingAddress: defaultAddressSettings.billing ? 1 : undefined,
       };
 
       const registrationResult = await api.registerCustomer(userData);
@@ -435,46 +480,6 @@ function Registration() {
           <h3>Shipping Address</h3>
 
           <div className="form-group">
-            <input
-              className={`input ${errors.shippingStreet ? 'error' : ''}`}
-              type="text"
-              name="shippingStreet"
-              placeholder="Street Address"
-              value={formData.shippingStreet}
-              onChange={handleChange}
-            />
-            {errors.shippingStreet && (
-              <span className="error-message">{errors.shippingStreet}</span>
-            )}
-          </div>
-
-          <div className="form-group">
-            <input
-              className={`input ${errors.shippingCity ? 'error' : ''}`}
-              type="text"
-              name="shippingCity"
-              placeholder="City"
-              value={formData.shippingCity}
-              onChange={handleChange}
-            />
-            {errors.shippingCity && <span className="error-message">{errors.shippingCity}</span>}
-          </div>
-
-          <div className="form-group">
-            <input
-              className={`input ${errors.shippingPostalCode ? 'error' : ''}`}
-              type="text"
-              name="shippingPostalCode"
-              placeholder="Postal Code"
-              value={formData.shippingPostalCode}
-              onChange={handleChange}
-            />
-            {errors.shippingPostalCode && (
-              <span className="error-message">{errors.shippingPostalCode}</span>
-            )}
-          </div>
-
-          <div className="form-group">
             <select
               className={`input ${errors.shippingCountry ? 'error' : ''}`}
               name="shippingCountry"
@@ -494,6 +499,49 @@ function Registration() {
               <span className="error-message">{errors.shippingCountry}</span>
             )}
           </div>
+
+          <div className="form-group">
+            <input
+              className={`input ${errors.shippingStreet ? 'error' : ''}`}
+              type="text"
+              name="shippingStreet"
+              placeholder="Street Address"
+              value={formData.shippingStreet}
+              onChange={handleChange}
+              disabled={formData.shippingCountry === Country.EMPTY}
+            />
+            {errors.shippingStreet && (
+              <span className="error-message">{errors.shippingStreet}</span>
+            )}
+          </div>
+
+          <div className="form-group">
+            <input
+              className={`input ${errors.shippingCity ? 'error' : ''}`}
+              type="text"
+              name="shippingCity"
+              placeholder="City"
+              value={formData.shippingCity}
+              onChange={handleChange}
+              disabled={formData.shippingCountry === Country.EMPTY}
+            />
+            {errors.shippingCity && <span className="error-message">{errors.shippingCity}</span>}
+          </div>
+
+          <div className="form-group">
+            <input
+              className={`input ${errors.shippingPostalCode ? 'error' : ''}`}
+              type="text"
+              name="shippingPostalCode"
+              placeholder="Postal Code"
+              value={formData.shippingPostalCode}
+              onChange={handleChange}
+              disabled={formData.shippingCountry === Country.EMPTY}
+            />
+            {errors.shippingPostalCode && (
+              <span className="error-message">{errors.shippingPostalCode}</span>
+            )}
+          </div>
         </fieldset>
 
         <div className="same-address-checkbox">
@@ -506,46 +554,6 @@ function Registration() {
         {!useSameAddress && (
           <fieldset>
             <h3>Billing Address</h3>
-
-            <div className="form-group">
-              <input
-                className={`input ${errors.billingStreet ? 'error' : ''}`}
-                type="text"
-                name="billingStreet"
-                placeholder="Street Address"
-                value={formData.billingStreet}
-                onChange={handleChange}
-              />
-              {errors.billingStreet && (
-                <span className="error-message">{errors.billingStreet}</span>
-              )}
-            </div>
-
-            <div className="form-group">
-              <input
-                className={`input ${errors.billingCity ? 'error' : ''}`}
-                type="text"
-                name="billingCity"
-                placeholder="City"
-                value={formData.billingCity}
-                onChange={handleChange}
-              />
-              {errors.billingCity && <span className="error-message">{errors.billingCity}</span>}
-            </div>
-
-            <div className="form-group">
-              <input
-                className={`input ${errors.billingPostalCode ? 'error' : ''}`}
-                type="text"
-                name="billingPostalCode"
-                placeholder="Postal Code"
-                value={formData.billingPostalCode}
-                onChange={handleChange}
-              />
-              {errors.billingPostalCode && (
-                <span className="error-message">{errors.billingPostalCode}</span>
-              )}
-            </div>
 
             <div className="form-group">
               <select
@@ -565,6 +573,49 @@ function Registration() {
               </select>
               {errors.billingCountry && (
                 <span className="error-message">{errors.billingCountry}</span>
+              )}
+            </div>
+
+            <div className="form-group">
+              <input
+                className={`input ${errors.billingStreet ? 'error' : ''}`}
+                type="text"
+                name="billingStreet"
+                placeholder="Street Address"
+                value={formData.billingStreet}
+                onChange={handleChange}
+                disabled={formData.billingCountry === Country.EMPTY}
+              />
+              {errors.billingStreet && (
+                <span className="error-message">{errors.billingStreet}</span>
+              )}
+            </div>
+
+            <div className="form-group">
+              <input
+                className={`input ${errors.billingCity ? 'error' : ''}`}
+                type="text"
+                name="billingCity"
+                placeholder="City"
+                value={formData.billingCity}
+                onChange={handleChange}
+                disabled={formData.billingCountry === Country.EMPTY}
+              />
+              {errors.billingCity && <span className="error-message">{errors.billingCity}</span>}
+            </div>
+
+            <div className="form-group">
+              <input
+                className={`input ${errors.billingPostalCode ? 'error' : ''}`}
+                type="text"
+                name="billingPostalCode"
+                placeholder="Postal Code"
+                value={formData.billingPostalCode}
+                onChange={handleChange}
+                disabled={formData.billingCountry === Country.EMPTY}
+              />
+              {errors.billingPostalCode && (
+                <span className="error-message">{errors.billingPostalCode}</span>
               )}
             </div>
           </fieldset>
