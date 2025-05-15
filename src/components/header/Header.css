@@ -1,9 +1,11 @@
 .header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   background: linear-gradient(135deg, #6e8efb, #a777e3);
   padding: 1rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  height: var(--header-height);
 }
 
 .nav {

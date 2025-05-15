@@ -22,13 +22,15 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  /* min-height: 100vh; */
+  flex-grow: 1;
+  overflow-y: auto;
   padding: 20px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .registration-page .root {
-  width: 100%;
+  width: 80%;
   max-width: 500px;
   padding: 40px;
   border-radius: 12px;
@@ -50,7 +52,7 @@
 }
 
 .form-group {
-  margin-bottom: 24px;
+  margin-bottom: 15px;
 }
 
 .form-group label {
