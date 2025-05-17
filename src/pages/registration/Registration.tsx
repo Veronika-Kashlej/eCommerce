@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as validations from '@/utils/validations';
 import './Registration.css';
 import { ValidationResult, IFormData } from '@/types/interfaces';
@@ -8,8 +8,15 @@ import api from '@/api/api';
 import { useNavigate } from 'react-router-dom';
 import modalWindow from '@/components/modal/modalWindow';
 import WaitingModal from '@/components/waiting/waiting';
+import { CustomerDraft } from '@commercetools/platform-sdk';
 
 function Registration() {
+  const [useSameAddress, setUseSameAddress] = useState(true);
+  const [defaultAddressSettings, setDefaultAddressSettings] = useState({
+    shipping: false,
+    billing: false,
+  });
+
   const [isWaitingOpen, setIsWaitingOpen] = useState(false);
 
   const navigate = useNavigate();
@@ -19,10 +26,14 @@ function Registration() {
     lastName: '',
     password: '',
     dob: '',
-    street: '',
-    city: '',
-    postalCode: '',
-    country: Country.EMPTY,
+    shippingStreet: '',
+    shippingCity: '',
+    shippingPostalCode: '',
+    shippingCountry: Country.EMPTY,
+    billingStreet: '',
+    billingCity: '',
+    billingPostalCode: '',
+    billingCountry: Country.EMPTY,
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -32,27 +43,105 @@ function Registration() {
     lastName: '*required field',
     password: '*required field',
     dob: '*required field',
-    street: '*required field',
-    city: '*required field',
-    postalCode: '*required field',
-    country: '*required field',
+    shippingStreet: '*required field',
+    shippingCity: '*required field',
+    shippingPostalCode: '*required field',
+    shippingCountry: '*required field',
+    billingStreet: '*required field',
+    billingCity: '*required field',
+    billingPostalCode: '*required field',
+    billingCountry: '*required field',
   });
+
+  useEffect(() => {
+    setErrors((prev) => ({
+      ...prev,
+      shippingCountry: formData.shippingCountry === Country.EMPTY ? '*required field' : '',
+      billingCountry: formData.billingCountry === Country.EMPTY ? '*required field' : '',
+    }));
+  }, [formData.shippingCountry, formData.billingCountry]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
     setFormData((prev) => {
-      const newFormData = { ...prev, [name]: value };
+      //const newFormData = { ...prev, [name]: value };
+      const newFormData = { ...prev };
 
-      if (name === 'country' || name === 'postalCode') {
-        const postalCode = name === 'country' ? prev.postalCode : value;
-        const country = name === 'country' ? value : newFormData.country;
+      if (name === 'shippingCountry' || name === 'billingCountry') {
+        newFormData[name as 'shippingCountry' | 'billingCountry'] = value as Country;
+
+        if (value === Country.EMPTY) {
+          if (name === 'shippingCountry') {
+            newFormData.shippingStreet = '';
+            newFormData.shippingCity = '';
+            newFormData.shippingPostalCode = '';
+          } else if (name === 'billingCountry') {
+            newFormData.billingStreet = '';
+            newFormData.billingCity = '';
+            newFormData.billingPostalCode = '';
+          }
+        }
+        setErrors((prevErrors) => {
+          const newErrors = { ...prevErrors };
+          if (name === 'shippingCountry' && value === Country.EMPTY) {
+            newErrors.shippingStreet = '*required field';
+            newErrors.shippingCity = '*required field';
+            newErrors.shippingPostalCode = '*required field';
+          }
+
+          if (name === 'billingCountry' && value === Country.EMPTY) {
+            newErrors.billingStreet = '*required field';
+            newErrors.billingCity = '*required field';
+            newErrors.billingPostalCode = '*required field';
+          }
+          return newErrors;
+        });
+      } else {
+        newFormData[name as Exclude<keyof IFormData, 'shippingCountry' | 'billingCountry'>] = value;
+      }
+
+      if (useSameAddress && name.startsWith('shipping')) {
+        const billingField = name.replace('shipping', 'billing') as keyof IFormData;
+
+        if (billingField === 'billingCountry') {
+          newFormData.billingCountry = value as Country;
+        } else {
+          newFormData[
+            billingField as Exclude<keyof IFormData, 'billingCountry' | 'shippingCountry'>
+          ] = value;
+        }
+
+        if (errors[name as keyof typeof errors]) {
+          setErrors((prevErrors) => ({
+            ...prevErrors,
+            [billingField]: prevErrors[name as keyof typeof errors],
+          }));
+        }
+      }
+
+      if (name === 'shippingCountry' || name === 'shippingPostalCode') {
+        const postalCode = name === 'shippingCountry' ? prev.shippingPostalCode : value;
+        const country = name === 'shippingCountry' ? value : newFormData.shippingCountry;
 
         if (postalCode && country !== Country.EMPTY) {
           const validation = validations.validatePostalCode(postalCode, country as Country);
           setErrors((prevErrors) => ({
             ...prevErrors,
-            postalCode: validation.isValid ? '' : validation.message || '',
+            shippingPostalCode: validation.isValid ? '' : validation.message || '',
+          }));
+        }
+      }
+
+      if (name === 'billingCountry' || name === 'billingPostalCode') {
+        const postalCode = name === 'billingCountry' ? prev.shippingPostalCode : value;
+        const country = name === 'billingCountry' ? value : newFormData.billingCountry;
+
+        if (postalCode && country !== Country.EMPTY) {
+          const validation = validations.validatePostalCode(postalCode, country as Country);
+          setErrors((prevErrors) => ({
+            ...prevErrors,
+            billingPostalCode: validation.isValid ? '' : validation.message || '',
           }));
         }
       }
@@ -66,8 +155,10 @@ function Registration() {
         lastName: validations.validateLastName,
         password: validations.validatePassword,
         dob: validations.validateDate,
-        street: validations.validateStreet,
-        city: validations.validateCity,
+        shippingStreet: validations.validateStreet,
+        shippingCity: validations.validateCity,
+        billingStreet: validations.validateStreet,
+        billingCity: validations.validateCity,
       };
 
       if (name in validationMap) {
@@ -76,11 +167,49 @@ function Registration() {
           ...prevErrors,
           [name]: validation.isValid ? '' : validation.message || '',
         }));
+
+        if (useSameAddress && name.startsWith('shipping')) {
+          const billingField = name.replace('shipping', 'billing');
+          setErrors((prevErrors) => ({
+            ...prevErrors,
+            [billingField]: validation.isValid ? '' : validation.message || '',
+          }));
+        }
       }
 
       return newFormData;
     });
   };
+
+  const toggleUseSameAddress = () => {
+    const newUseSameAddress = !useSameAddress;
+    setUseSameAddress(newUseSameAddress);
+
+    if (newUseSameAddress) {
+      setFormData((prev) => ({
+        ...prev,
+        billingStreet: prev.shippingStreet,
+        billingCity: prev.shippingCity,
+        billingPostalCode: prev.shippingPostalCode,
+        billingCountry: prev.shippingCountry,
+      }));
+
+      setErrors((prev) => ({
+        ...prev,
+        billingStreet: prev.shippingStreet,
+        billingCity: prev.shippingCity,
+        billingPostalCode: prev.shippingPostalCode,
+        billingCountry: prev.shippingCountry,
+      }));
+    }
+  };
+
+  // const handleDefaultAddressChange = (type: 'shipping' | 'billing', checked: boolean) => {
+  //   setDefaultAddressSettings((prev) => ({
+  //     ...prev,
+  //     [type]: checked,
+  //   }));
+  // };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,11 +219,17 @@ function Registration() {
     const lastNameValidation = validations.validateLastName(formData.lastName);
     const passwordValidation = validations.validatePassword(formData.password);
     const dateValidation = validations.validateDate(formData.dob);
-    const streetValidation = validations.validateStreet(formData.street);
-    const cityValidation = validations.validateCity(formData.city);
-    const postalCodeValidation = validations.validatePostalCode(
-      formData.postalCode,
-      formData.country
+    const shippingStreetValidation = validations.validateStreet(formData.shippingStreet);
+    const shippingCityValidation = validations.validateCity(formData.shippingCity);
+    const shippingPostalCodeValidation = validations.validatePostalCode(
+      formData.shippingPostalCode,
+      formData.shippingCountry
+    );
+    const billingStreetValidation = validations.validateStreet(formData.billingStreet);
+    const billingCityValidation = validations.validateCity(formData.billingCity);
+    const billingPostalCodeValidation = validations.validatePostalCode(
+      formData.billingPostalCode,
+      formData.billingCountry
     );
 
     if (
@@ -103,9 +238,12 @@ function Registration() {
       !lastNameValidation.isValid ||
       !passwordValidation.isValid ||
       !dateValidation.isValid ||
-      !streetValidation.isValid ||
-      !cityValidation.isValid ||
-      !postalCodeValidation.isValid
+      !shippingStreetValidation.isValid ||
+      !shippingCityValidation.isValid ||
+      !shippingPostalCodeValidation.isValid ||
+      !billingStreetValidation.isValid ||
+      !billingCityValidation.isValid ||
+      !billingPostalCodeValidation.isValid
     ) {
       setErrors({
         email: emailValidation.message || '',
@@ -113,40 +251,74 @@ function Registration() {
         lastName: lastNameValidation.message || '',
         password: passwordValidation.message || '',
         dob: dateValidation.message || '',
-        street: streetValidation.message || '',
-        city: cityValidation.message || '',
-        postalCode: postalCodeValidation.message || '',
-        country: '', //todo add countryCodeValidation
+        shippingStreet: shippingStreetValidation.message || '',
+        shippingCity: shippingCityValidation.message || '',
+        shippingPostalCode: shippingPostalCodeValidation.message || '',
+        shippingCountry: formData.shippingCountry === Country.EMPTY ? '*required field' : '',
+        billingStreet: billingStreetValidation.message || '',
+        billingCity: billingCityValidation.message || '',
+        billingPostalCode: billingPostalCodeValidation.message || '',
+        billingCountry: formData.billingCountry === Country.EMPTY ? '*required field' : '',
       });
       return;
     }
 
-    // Submit logic here
     setIsWaitingOpen(true);
 
     try {
-      const countryEntry = Object.entries(Country).find(([, value]) => value === formData.country);
+      const shippingCountryEntry = Object.entries(Country).find(
+        ([, value]) => value === formData.shippingCountry
+      );
+      const billingCountryEntry = Object.entries(Country).find(
+        ([, value]) => value === formData.billingCountry
+      );
 
-      if (!countryEntry) {
+      if (!shippingCountryEntry || !billingCountryEntry) {
         throw new Error('Invalid country selected');
       }
 
-      const countryCode = countryEntry[0];
+      const shippingCountryCode = shippingCountryEntry[0];
+      const billingCountryCode = billingCountryEntry[0];
 
-      const userData = {
+      const addresses = [
+        {
+          streetName: formData.shippingStreet,
+          city: formData.shippingCity,
+          postalCode: formData.shippingPostalCode,
+          country: shippingCountryCode,
+        },
+      ];
+
+      if (!useSameAddress) {
+        addresses.push({
+          streetName: formData.billingStreet,
+          city: formData.billingCity,
+          postalCode: formData.billingPostalCode,
+          country: billingCountryCode,
+        });
+      }
+
+      if (useSameAddress) {
+        addresses.push({
+          streetName: formData.shippingStreet,
+          city: formData.shippingCity,
+          postalCode: formData.shippingPostalCode,
+          country: shippingCountryCode,
+        });
+      }
+
+      const userData: CustomerDraft = {
         email: formData.email,
         password: formData.password,
         firstName: formData.firstName,
         lastName: formData.lastName,
         dateOfBirth: formData.dob,
-        addresses: [
-          {
-            streetName: formData.street,
-            city: formData.city,
-            postalCode: formData.postalCode,
-            country: countryCode,
-          },
-        ],
+        addresses,
+        shippingAddresses: [0],
+        //billingAddresses: useSameAddress ? [0] : [1],
+        billingAddresses: [1],
+        defaultShippingAddress: defaultAddressSettings.shipping ? 0 : undefined,
+        defaultBillingAddress: defaultAddressSettings.billing ? 1 : undefined,
       };
 
       const registrationResult = await api.registerCustomer(userData);
@@ -190,12 +362,12 @@ function Registration() {
                 console.log('registration error = ', element.code, ' - ', element.message);
                 setErrors((prevErrors) => ({
                   ...prevErrors,
-                  country: 'Expected one: BY, RU, UA, US',
+                  shippingCountry: 'Expected one: BY, RU, UA, US',
+                  billingCountry: 'Expected one: BY, RU, UA, US',
                 }));
                 break;
 
               default:
-                // something unexpected
                 modalWindow.alert(element.detailedErrorMessage, 'Registration failed');
                 break;
             }
@@ -296,57 +468,195 @@ function Registration() {
           />
           {errors.dob && <span className="error-message">{errors.dob}</span>}
         </div>
+        <fieldset>
+          <h3>Shipping Address</h3>
 
-        <h3>Address Information</h3>
+          <div className="form-group">
+            <select
+              className={`input ${errors.shippingCountry ? 'error' : ''}`}
+              name="shippingCountry"
+              value={formData.shippingCountry}
+              onChange={handleChange}
+            >
+              <option value={Country.EMPTY}>Select Country</option>
+              {Object.values(Country)
+                .filter((v) => v !== Country.EMPTY)
+                .map((value) => (
+                  <option key={value} value={value}>
+                    {CountryLabels[value]}
+                  </option>
+                ))}
+            </select>
+            {errors.shippingCountry && (
+              <span className="error-message">{errors.shippingCountry}</span>
+            )}
+          </div>
 
-        <div className="form-group">
-          <input
-            className={`input ${errors.street ? 'error' : ''}`}
-            type="text"
-            name="street"
-            placeholder="Street Address"
-            value={formData.street}
-            onChange={handleChange}
-          />
-          {errors.street && <span className="error-message">{errors.street}</span>}
+          <div className="form-group">
+            <input
+              className={`input ${errors.shippingStreet ? 'error' : ''}`}
+              type="text"
+              name="shippingStreet"
+              placeholder="Street Address"
+              value={formData.shippingStreet}
+              onChange={handleChange}
+              disabled={formData.shippingCountry === Country.EMPTY}
+            />
+            {errors.shippingStreet && (
+              <span className="error-message">{errors.shippingStreet}</span>
+            )}
+          </div>
+
+          <div className="form-group">
+            <input
+              className={`input ${errors.shippingCity ? 'error' : ''}`}
+              type="text"
+              name="shippingCity"
+              placeholder="City"
+              value={formData.shippingCity}
+              onChange={handleChange}
+              disabled={formData.shippingCountry === Country.EMPTY}
+            />
+            {errors.shippingCity && <span className="error-message">{errors.shippingCity}</span>}
+          </div>
+
+          <div className="form-group">
+            <input
+              className={`input ${errors.shippingPostalCode ? 'error' : ''}`}
+              type="text"
+              name="shippingPostalCode"
+              placeholder="Postal Code"
+              value={formData.shippingPostalCode}
+              onChange={handleChange}
+              disabled={formData.shippingCountry === Country.EMPTY}
+            />
+            {errors.shippingPostalCode && (
+              <span className="error-message">{errors.shippingPostalCode}</span>
+            )}
+          </div>
+        </fieldset>
+
+        <div className="default-address-options">
+          <label className="default-address-label">
+            <input
+              type="checkbox"
+              checked={defaultAddressSettings.shipping}
+              onChange={(e) =>
+                setDefaultAddressSettings((prev) => ({
+                  ...prev,
+                  shipping: e.target.checked,
+                }))
+              }
+            />
+            Set as default shipping address
+          </label>
         </div>
 
-        <div className="form-group">
-          <input
-            className={`input ${errors.city ? 'error' : ''}`}
-            type="text"
-            name="city"
-            placeholder="City"
-            value={formData.city}
-            onChange={handleChange}
-          />
-          {errors.city && <span className="error-message">{errors.city}</span>}
+        <div className="same-address-checkbox">
+          <label>
+            <input type="checkbox" checked={useSameAddress} onChange={toggleUseSameAddress} />
+            Use the same address for billing
+          </label>
         </div>
 
-        <div className="form-group">
-          <input
-            className={`input ${errors.postalCode ? 'error' : ''}`}
-            type="text"
-            name="postalCode"
-            placeholder="Postal Code"
-            value={formData.postalCode}
-            onChange={handleChange}
-          />
-          {errors.postalCode && <span className="error-message">{errors.postalCode}</span>}
-        </div>
+        {!useSameAddress && (
+          <fieldset>
+            <h3>Billing Address</h3>
 
-        <div className="form-group">
-          <select className="input" name="country" value={formData.country} onChange={handleChange}>
-            <option value={Country.EMPTY}>Select Country</option>
-            {Object.values(Country)
-              .filter((v) => v !== Country.EMPTY)
-              .map((value) => (
-                <option key={value} value={value}>
-                  {CountryLabels[value]}
-                </option>
-              ))}
-          </select>
-          {errors.country && <span className="error-message">{errors.country}</span>}
+            <div className="form-group">
+              <select
+                className={`input ${errors.billingCountry ? 'error' : ''}`}
+                name="billingCountry"
+                value={formData.billingCountry}
+                onChange={handleChange}
+              >
+                <option value={Country.EMPTY}>Select Country</option>
+                {Object.values(Country)
+                  .filter((v) => v !== Country.EMPTY)
+                  .map((value) => (
+                    <option key={value} value={value}>
+                      {CountryLabels[value]}
+                    </option>
+                  ))}
+              </select>
+              {errors.billingCountry && (
+                <span className="error-message">{errors.billingCountry}</span>
+              )}
+            </div>
+
+            <div className="form-group">
+              <input
+                className={`input ${errors.billingStreet ? 'error' : ''}`}
+                type="text"
+                name="billingStreet"
+                placeholder="Street Address"
+                value={formData.billingStreet}
+                onChange={handleChange}
+                disabled={formData.billingCountry === Country.EMPTY}
+              />
+              {errors.billingStreet && (
+                <span className="error-message">{errors.billingStreet}</span>
+              )}
+            </div>
+
+            <div className="form-group">
+              <input
+                className={`input ${errors.billingCity ? 'error' : ''}`}
+                type="text"
+                name="billingCity"
+                placeholder="City"
+                value={formData.billingCity}
+                onChange={handleChange}
+                disabled={formData.billingCountry === Country.EMPTY}
+              />
+              {errors.billingCity && <span className="error-message">{errors.billingCity}</span>}
+            </div>
+
+            <div className="form-group">
+              <input
+                className={`input ${errors.billingPostalCode ? 'error' : ''}`}
+                type="text"
+                name="billingPostalCode"
+                placeholder="Postal Code"
+                value={formData.billingPostalCode}
+                onChange={handleChange}
+                disabled={formData.billingCountry === Country.EMPTY}
+              />
+              {errors.billingPostalCode && (
+                <span className="error-message">{errors.billingPostalCode}</span>
+              )}
+            </div>
+          </fieldset>
+        )}
+
+        <div className="default-address-options">
+          {/* <label className="default-address-label">
+            <input
+              type="checkbox"
+              checked={defaultAddressSettings.shipping}
+              onChange={(e) =>
+                setDefaultAddressSettings((prev) => ({
+                  ...prev,
+                  shipping: e.target.checked,
+                }))
+              }
+            />
+            Set as default shipping address
+          </label> */}
+
+          <label className="default-address-label">
+            <input
+              type="checkbox"
+              checked={defaultAddressSettings.billing}
+              onChange={(e) =>
+                setDefaultAddressSettings((prev) => ({
+                  ...prev,
+                  billing: e.target.checked,
+                }))
+              }
+            />
+            Set as default billing address
+          </label>
         </div>
 
         <button className="button" type="submit" disabled={!formData.email || !formData.password}>
