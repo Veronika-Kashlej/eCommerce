@@ -106,8 +106,8 @@ class Api {
             lastName: data.lastName,
             dateOfBirth: data.dateOfBirth,
             addresses: data.addresses,
-            defaultShippingAddress: undefined,
-            defaultBillingAddress: undefined,
+            defaultShippingAddress: data.defaultBillingAddress,
+            defaultBillingAddress: data.defaultShippingAddress,
           },
         })
         .execute();
