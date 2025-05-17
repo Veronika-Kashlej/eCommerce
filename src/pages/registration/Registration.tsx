@@ -204,20 +204,12 @@ function Registration() {
     }
   };
 
-  const handleDefaultAddressChange = (type: 'shipping' | 'billing', checked: boolean) => {
-    setDefaultAddressSettings((prev) => {
-      if (checked) {
-        return {
-          shipping: type === 'shipping',
-          billing: type === 'billing',
-        };
-      }
-      return {
-        ...prev,
-        [type]: checked,
-      };
-    });
-  };
+  // const handleDefaultAddressChange = (type: 'shipping' | 'billing', checked: boolean) => {
+  //   setDefaultAddressSettings((prev) => ({
+  //     ...prev,
+  //     [type]: checked,
+  //   }));
+  // };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -544,6 +536,22 @@ function Registration() {
           </div>
         </fieldset>
 
+        <div className="default-address-options">
+          <label className="default-address-label">
+            <input
+              type="checkbox"
+              checked={defaultAddressSettings.shipping}
+              onChange={(e) =>
+                setDefaultAddressSettings((prev) => ({
+                  ...prev,
+                  shipping: e.target.checked,
+                }))
+              }
+            />
+            Set as default shipping address
+          </label>
+        </div>
+
         <div className="same-address-checkbox">
           <label>
             <input type="checkbox" checked={useSameAddress} onChange={toggleUseSameAddress} />
@@ -622,32 +630,30 @@ function Registration() {
         )}
 
         <div className="default-address-options">
-          <label className="default-address-label">
+          {/* <label className="default-address-label">
             <input
               type="checkbox"
               checked={defaultAddressSettings.shipping}
-              // onChange={(e) =>
-              //   setDefaultAddressSettings((prev) => ({
-              //     ...prev,
-              //     shipping: e.target.checked,
-              //   }))
-              // }
-              onChange={(e) => handleDefaultAddressChange('shipping', e.target.checked)}
+              onChange={(e) =>
+                setDefaultAddressSettings((prev) => ({
+                  ...prev,
+                  shipping: e.target.checked,
+                }))
+              }
             />
             Set as default shipping address
-          </label>
+          </label> */}
 
           <label className="default-address-label">
             <input
               type="checkbox"
               checked={defaultAddressSettings.billing}
-              // onChange={(e) =>
-              //   setDefaultAddressSettings((prev) => ({
-              //     ...prev,
-              //     billing: e.target.checked,
-              //   }))
-              // }
-              onChange={(e) => handleDefaultAddressChange('billing', e.target.checked)}
+              onChange={(e) =>
+                setDefaultAddressSettings((prev) => ({
+                  ...prev,
+                  billing: e.target.checked,
+                }))
+              }
             />
             Set as default billing address
           </label>
