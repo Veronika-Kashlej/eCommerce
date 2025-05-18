@@ -298,14 +298,14 @@ function Registration() {
         });
       }
 
-      if (useSameAddress) {
-        addresses.push({
-          streetName: formData.shippingStreet,
-          city: formData.shippingCity,
-          postalCode: formData.shippingPostalCode,
-          country: shippingCountryCode,
-        });
-      }
+      // if (useSameAddress) {
+      //   addresses.push({
+      //     streetName: formData.shippingStreet,
+      //     city: formData.shippingCity,
+      //     postalCode: formData.shippingPostalCode,
+      //     country: shippingCountryCode,
+      //   });
+      // }
 
       const userData: CustomerDraft = {
         email: formData.email,
@@ -316,9 +316,13 @@ function Registration() {
         addresses,
         shippingAddresses: [0],
         //billingAddresses: useSameAddress ? [0] : [1],
-        billingAddresses: [1],
+        billingAddresses: [useSameAddress ? 0 : 1],
         defaultShippingAddress: defaultAddressSettings.shipping ? 0 : undefined,
-        defaultBillingAddress: defaultAddressSettings.billing ? 1 : undefined,
+        defaultBillingAddress: defaultAddressSettings.billing
+          ? useSameAddress
+            ? 0
+            : 1
+          : undefined,
       };
 
       const registrationResult = await api.registerCustomer(userData);
