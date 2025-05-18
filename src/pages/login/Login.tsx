@@ -79,9 +79,6 @@ function Login() {
 
   return (
     <div className="login-page">
-      <Link to="/" className="home-link">
-        Back to Home
-      </Link>
       <form className="root" onSubmit={handleSubmit}>
         <h2>Log In</h2>
 

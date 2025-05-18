@@ -395,9 +395,6 @@ function Registration() {
 
   return (
     <div className="registration-page">
-      <Link to="/" className="home-link">
-        Back to Home
-      </Link>
       <form className="root" onSubmit={handleSubmit}>
         <h2>Create Account</h2>
 

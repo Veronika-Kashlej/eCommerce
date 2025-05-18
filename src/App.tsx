@@ -1,6 +1,6 @@
-// import { useState } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import './App.css';
+import Header from './components/header/Header';
 import Login from './pages/login/Login';
 import Registration from './pages/registration/Registration';
 import Page404 from './pages/page404/page404';
@@ -17,9 +17,10 @@ function App() {
   }, [navigate]);
   return (
     <>
+      <Header />
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={!api.loginned ? <Login /> : <HomePage />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Registration />} />
         <Route path="*" element={<Page404 />} />
       </Routes>
