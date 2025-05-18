@@ -4,9 +4,10 @@ import { type TokenStore } from '@commercetools/sdk-client-v2';
 import {
   CustomerSignInResult,
   ClientResponse,
-  CustomerSignin,
+  // CustomerSignin,
   CustomerDraft,
   CustomerPagedQueryResponse,
+  MyCustomerSignin,
 } from '@commercetools/platform-sdk';
 
 // interface TokenCache {
@@ -167,7 +168,7 @@ class Api {
    *           - signed
    *           - message
    */
-  public async loginCustomer(data: CustomerSignin): Promise<{
+  public async loginCustomer(data: MyCustomerSignin): Promise<{
     response?: ClientResponse<CustomerSignInResult>;
     signed: boolean;
     message: string;
