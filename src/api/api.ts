@@ -4,9 +4,10 @@ import { type TokenStore } from '@commercetools/sdk-client-v2';
 import {
   CustomerSignInResult,
   ClientResponse,
-  CustomerSignin,
+  // CustomerSignin,
   CustomerDraft,
   CustomerPagedQueryResponse,
+  MyCustomerSignin,
 } from '@commercetools/platform-sdk';
 
 // interface TokenCache {
@@ -99,16 +100,7 @@ class Api {
       const response: ClientResponse<CustomerSignInResult> = await apiRoot
         .customers()
         .post({
-          body: {
-            email: data.email,
-            password: data.password,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            dateOfBirth: data.dateOfBirth,
-            addresses: data.addresses,
-            defaultShippingAddress: undefined,
-            defaultBillingAddress: undefined,
-          },
+          body: data,
         })
         .execute();
 
@@ -176,24 +168,12 @@ class Api {
    *           - signed
    *           - message
    */
-  public async loginCustomer(data: CustomerSignin): Promise<{
+  public async loginCustomer(data: MyCustomerSignin): Promise<{
     response?: ClientResponse<CustomerSignInResult>;
     signed: boolean;
     message: string;
   }> {
     this.logout();
-
-    try {
-      const customer = await this.getCustomerByEmail(data.email);
-      if (!customer.found)
-        return {
-          response: undefined,
-          signed: false,
-          message: `Customer with email ${data.email} not found`,
-        };
-    } catch {
-      return { response: undefined, signed: false, message: `Server connection failure` };
-    }
 
     try {
       const response: ClientResponse<CustomerSignInResult> = await apiRoot
@@ -212,15 +192,15 @@ class Api {
 
       return { response, signed, message };
     } catch (error) {
-      let message: string =
+      const message: string =
         error &&
         typeof error === 'object' &&
         'message' in error &&
         typeof error.message === 'string'
           ? error.message
           : 'Unknown error';
-      if (message === 'Account with the given credentials not found.')
-        message = 'Customer password incorrect';
+      // if (message === 'Account with the given credentials not found.')
+      //   message = 'Customer password incorrect';
 
       return { response: undefined, signed: false, message };
     }
@@ -243,6 +223,15 @@ class Api {
     message: string;
     id?: string;
   }> {
+    if (email === '') {
+      return {
+        response: undefined,
+        found: false,
+        message: 'Email is required',
+        id: undefined,
+      };
+    }
+
     try {
       const response: ClientResponse<CustomerPagedQueryResponse> = await apiRoot
         .customers()
@@ -269,8 +258,7 @@ class Api {
         message,
         id: response.body.results.length ? response.body.results[0].id : undefined,
       };
-    } catch (error) {
-      console.error(error);
+    } catch {
       return {
         response: undefined,
         found: false,

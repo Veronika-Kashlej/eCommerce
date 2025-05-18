@@ -11,10 +11,14 @@ export interface IFormData {
   lastName: string;
   password: string;
   dob: string;
-  street: string;
-  city: string;
-  postalCode: string;
-  country: Country;
+  shippingStreet: string;
+  shippingCity: string;
+  shippingPostalCode: string;
+  shippingCountry: Country;
+  billingStreet: string;
+  billingCity: string;
+  billingPostalCode: string;
+  billingCountry: Country;
 }
 
 export type PostalCodePatterns = {
@@ -25,6 +29,6 @@ export const postalCodePatterns: PostalCodePatterns = {
   [Country.EMPTY]: /^\d{0}$/,
   [Country.BY]: /^\d{6}$/,
   [Country.RU]: /^\d{6}$/,
-  [Country.UK]: /^\d{5}$/,
+  [Country.UA]: /^\d{5}$/,
   [Country.US]: /^\d{5}(-\d{4})?$/,
 };
