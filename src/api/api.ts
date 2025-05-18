@@ -99,16 +99,7 @@ class Api {
       const response: ClientResponse<CustomerSignInResult> = await apiRoot
         .customers()
         .post({
-          body: {
-            email: data.email,
-            password: data.password,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            dateOfBirth: data.dateOfBirth,
-            addresses: data.addresses,
-            defaultShippingAddress: data.defaultBillingAddress,
-            defaultBillingAddress: data.defaultShippingAddress,
-          },
+          body: data,
         })
         .execute();
 
@@ -231,6 +222,15 @@ class Api {
     message: string;
     id?: string;
   }> {
+    if (email === '') {
+      return {
+        response: undefined,
+        found: false,
+        message: 'Email is required',
+        id: undefined,
+      };
+    }
+
     try {
       const response: ClientResponse<CustomerPagedQueryResponse> = await apiRoot
         .customers()
@@ -257,8 +257,7 @@ class Api {
         message,
         id: response.body.results.length ? response.body.results[0].id : undefined,
       };
-    } catch (error) {
-      console.error(error);
+    } catch {
       return {
         response: undefined,
         found: false,
