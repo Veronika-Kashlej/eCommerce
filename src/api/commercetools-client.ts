@@ -6,7 +6,7 @@ import {
 import { createApiBuilderFromCtpClient } from '@commercetools/platform-sdk';
 
 import env from './env';
-import api from './api';
+import api, { isTokenStore } from './api';
 
 const authMiddlewareOptions: AuthMiddlewareOptions = {
   host: env.authUrl,
@@ -19,15 +19,13 @@ const authMiddlewareOptions: AuthMiddlewareOptions = {
   fetch: fetch,
   tokenCache: {
     get: () => {
-      // const cachedData = localStorage.getItem("commercetoolsToken");
-      // return cachedData ? JSON.parse(cachedData) : null;
-      console.log('get token = ', api.getTokenCustomer);
-      return api.getTokenCustomer;
+      const cachedData: unknown = localStorage.getItem('commercetoolsToken') || undefined;
+      if (isTokenStore(cachedData)) {
+        return cachedData;
+      } else return api.clearTokenCustomer();
     },
     set: (token) => {
-      // localStorage.setItem("commercetoolsToken", JSON.stringify(token));
-      console.log('set token = ', token);
-      api.setTokenCustomer(token);
+      localStorage.setItem('commercetoolsToken', JSON.stringify(token));
     },
   },
 };
@@ -46,7 +44,7 @@ const httpMiddlewareOptions: HttpMiddlewareOptions = {
 export const ctpClient = new ClientBuilder()
   .withClientCredentialsFlow(authMiddlewareOptions)
   .withHttpMiddleware(httpMiddlewareOptions)
-  .withLoggerMiddleware() // todo remove logger after dev
+  // .withLoggerMiddleware() // todo remove logger after dev
   .build();
 
 export const apiRoot = createApiBuilderFromCtpClient(ctpClient).withProjectKey({
