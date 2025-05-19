@@ -7,6 +7,8 @@ import {
   CustomerDraft,
   CustomerPagedQueryResponse,
   MyCustomerSignin,
+  ByProjectKeyRequestBuilder,
+  // ApiRoot,
 } from '@commercetools/platform-sdk';
 
 type registeredResponseMessage =
@@ -15,8 +17,11 @@ type registeredResponseMessage =
 
 class Api {
   private static instance: Api;
+  private apiRoot: ByProjectKeyRequestBuilder;
 
-  private constructor() {}
+  private constructor() {
+    this.apiRoot = apiRoot.getApiRoot;
+  }
 
   public static getInstance(): Api {
     if (!Api.instance) {
@@ -25,25 +30,27 @@ class Api {
     return Api.instance;
   }
 
-  public get getTokenCustomer(): TokenStore {
+  public get getTokenCustomer(): TokenStore | undefined {
     const store: string | null = localStorage.getItem('commercetoolsToken');
     if (store) {
       const cachedData: unknown = JSON.parse(store);
       if (isTokenStore(cachedData)) return cachedData;
     }
-    return this.clearTokenCustomer();
+    this.clearTokenCustomer();
+    return undefined;
   }
 
   public get loginned(): boolean {
-    const token: TokenStore = this.getTokenCustomer;
-    if (new Date() < new Date(token.expirationTime)) {
+    const token: TokenStore | undefined = this.getTokenCustomer;
+    if (token && new Date() < new Date(token.expirationTime)) {
       return true;
     } else return false;
   }
 
   public async logout(): Promise<void> {
-    await this.revokeToken(this.getTokenCustomer.token);
-    this.clearTokenCustomer();
+    this.resetApiRoot();
+    const token: string | undefined = this.getTokenCustomer?.token;
+    if (token) await this.revokeToken(token);
   }
 
   public async revokeToken(token: string): Promise<void> {
@@ -51,9 +58,13 @@ class Api {
   }
 
   public clearTokenCustomer(): TokenStore {
-    const clear: TokenStore = { token: '', expirationTime: 0, refreshToken: undefined };
-    localStorage.setItem('commercetoolsToken', JSON.stringify(clear));
-    return clear;
+    localStorage.removeItem('commercetoolsToken');
+    return { token: '', expirationTime: 0, refreshToken: undefined };
+  }
+
+  public resetApiRoot(): void {
+    this.clearTokenCustomer();
+    this.apiRoot = apiRoot.resetApiClient();
   }
 
   /**
@@ -92,7 +103,7 @@ class Api {
     await this.logout();
 
     try {
-      const response: ClientResponse<CustomerSignInResult> = await apiRoot
+      const response: ClientResponse<CustomerSignInResult> = await this.apiRoot
         .customers()
         .post({
           body: data,
@@ -171,7 +182,7 @@ class Api {
     await this.logout();
 
     try {
-      const response: ClientResponse<CustomerSignInResult> = await apiRoot
+      const response: ClientResponse<CustomerSignInResult> = await this.apiRoot
         .me()
         .login()
         .post({
@@ -184,11 +195,16 @@ class Api {
           ? true
           : false;
       const message: string = signed ? 'OK' : 'Not Signed';
-      if (!signed) this.clearTokenCustomer();
+      if (!signed) {
+        this.clearTokenCustomer();
+        this.apiRoot = apiRoot.resetApiClient();
+      }
 
       return { response, signed, message };
     } catch (error) {
       this.clearTokenCustomer();
+      this.apiRoot = apiRoot.resetApiClient();
+
       const message: string =
         error &&
         typeof error === 'object' &&
@@ -218,8 +234,6 @@ class Api {
     message: string;
     id?: string;
   }> {
-    console.log('getCustomerByEmail = ', email);
-
     if (email === '') {
       return {
         response: undefined,
@@ -230,7 +244,7 @@ class Api {
     }
 
     try {
-      const response: ClientResponse<CustomerPagedQueryResponse> = await apiRoot
+      const response: ClientResponse<CustomerPagedQueryResponse> = await this.apiRoot
         .customers()
         .get({
           queryArgs: {
@@ -249,17 +263,13 @@ class Api {
           : false;
       const message: string = found ? 'Customer found' : 'Customer not found';
 
-      console.log(response);
-
       return {
         response,
         found,
         message,
         id: response.body.results.length ? response.body.results[0].id : undefined,
       };
-    } catch (e) {
-      console.log(e);
-
+    } catch {
       return {
         response: undefined,
         found: false,

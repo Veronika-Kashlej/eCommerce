@@ -3,7 +3,10 @@ import {
   type AuthMiddlewareOptions,
   type HttpMiddlewareOptions,
 } from '@commercetools/sdk-client-v2';
-import { createApiBuilderFromCtpClient } from '@commercetools/platform-sdk';
+import {
+  ByProjectKeyRequestBuilder,
+  createApiBuilderFromCtpClient,
+} from '@commercetools/platform-sdk';
 
 import env from './env';
 import api, { isTokenStore } from './api';
@@ -20,16 +23,24 @@ const authMiddlewareOptions: AuthMiddlewareOptions = {
   tokenCache: {
     get: () => {
       const store: string | null = localStorage.getItem('commercetoolsToken');
-      if (store) {
-        const cachedData: unknown = localStorage.getItem('commercetoolsToken');
-        if (isTokenStore(cachedData)) {
+      if (!store) return api.clearTokenCustomer();
+
+      try {
+        const cachedData: unknown = JSON.parse(store);
+        if (isTokenStore(cachedData) && new Date(cachedData.expirationTime) > new Date()) {
           return cachedData;
         }
+        return api.clearTokenCustomer();
+      } catch {
+        return api.clearTokenCustomer();
       }
-      return api.clearTokenCustomer();
     },
     set: (token) => {
-      localStorage.setItem('commercetoolsToken', JSON.stringify(token));
+      if (token.token && token.token.length > 0) {
+        localStorage.setItem('commercetoolsToken', JSON.stringify(token));
+      } else {
+        localStorage.removeItem('commercetoolsToken');
+      }
     },
   },
 };
@@ -77,6 +88,35 @@ export const ctpClient = new ClientBuilder()
   // .withLoggerMiddleware() // todo remove logger after dev
   .build();
 
-export const apiRoot = createApiBuilderFromCtpClient(ctpClient).withProjectKey({
-  projectKey: env.projectKey,
-});
+class ApiRoot {
+  private apiRoot: ByProjectKeyRequestBuilder;
+
+  constructor() {
+    this.apiRoot = this.createApiRoot();
+  }
+
+  private createApiRoot(): ByProjectKeyRequestBuilder {
+    return (this.apiRoot = createApiBuilderFromCtpClient(ctpClient).withProjectKey({
+      projectKey: env.projectKey,
+    }));
+  }
+
+  public get getApiRoot(): ByProjectKeyRequestBuilder {
+    return this.apiRoot;
+  }
+
+  public resetApiClient(): ByProjectKeyRequestBuilder {
+    const newClient = new ClientBuilder()
+      .withClientCredentialsFlow(authMiddlewareOptions)
+      .withHttpMiddleware(httpMiddlewareOptions)
+      .build();
+
+    this.apiRoot = createApiBuilderFromCtpClient(newClient).withProjectKey({
+      projectKey: env.projectKey,
+    });
+
+    return this.apiRoot;
+  }
+}
+
+export const apiRoot = new ApiRoot();
