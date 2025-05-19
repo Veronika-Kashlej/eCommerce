@@ -65,7 +65,6 @@ function Registration() {
     const { name, value } = e.target;
 
     setFormData((prev) => {
-      //const newFormData = { ...prev, [name]: value };
       const newFormData = { ...prev };
 
       if (name === 'shippingCountry' || name === 'billingCountry') {
@@ -181,8 +180,8 @@ function Registration() {
     });
   };
 
-  const toggleUseSameAddress = () => {
-    const newUseSameAddress = !useSameAddress;
+  const toggleUseSameAddress = (): void => {
+    const newUseSameAddress: boolean = !useSameAddress;
     setUseSameAddress(newUseSameAddress);
 
     if (newUseSameAddress) {
@@ -201,17 +200,25 @@ function Registration() {
         billingPostalCode: prev.shippingPostalCode,
         billingCountry: prev.shippingCountry,
       }));
+    } else {
+      const billingPostalCodeValidation = validations.validatePostalCode(
+        formData.shippingPostalCode,
+        formData.shippingCountry
+      );
+
+      setErrors((prev) => ({
+        ...prev,
+        billingStreet: prev.shippingStreet,
+        billingCity: prev.shippingCity,
+        billingPostalCode: billingPostalCodeValidation.isValid
+          ? ''
+          : billingPostalCodeValidation.message || '',
+        billingCountry: prev.shippingCountry,
+      }));
     }
   };
 
-  // const handleDefaultAddressChange = (type: 'shipping' | 'billing', checked: boolean) => {
-  //   setDefaultAddressSettings((prev) => ({
-  //     ...prev,
-  //     [type]: checked,
-  //   }));
-  // };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
     const emailValidation = validations.validateEmail(formData.email);
@@ -298,14 +305,15 @@ function Registration() {
         });
       }
 
-      // if (useSameAddress) {
-      //   addresses.push({
-      //     streetName: formData.shippingStreet,
-      //     city: formData.shippingCity,
-      //     postalCode: formData.shippingPostalCode,
-      //     country: shippingCountryCode,
-      //   });
-      // }
+      // if you use the second address on the link without duplicating - delete the code below
+      if (useSameAddress) {
+        addresses.push({
+          streetName: formData.shippingStreet,
+          city: formData.shippingCity,
+          postalCode: formData.shippingPostalCode,
+          country: shippingCountryCode,
+        });
+      }
 
       const userData: CustomerDraft = {
         email: formData.email,
@@ -315,14 +323,15 @@ function Registration() {
         dateOfBirth: formData.dob,
         addresses,
         shippingAddresses: [0],
-        //billingAddresses: useSameAddress ? [0] : [1],
-        billingAddresses: [useSameAddress ? 0 : 1],
+        billingAddresses: [1],
+        // billingAddresses: [useSameAddress ? 0 : 1],
         defaultShippingAddress: defaultAddressSettings.shipping ? 0 : undefined,
-        defaultBillingAddress: defaultAddressSettings.billing
-          ? useSameAddress
-            ? 0
-            : 1
-          : undefined,
+        defaultBillingAddress: defaultAddressSettings.billing ? 1 : undefined,
+        // defaultBillingAddress: defaultAddressSettings.billing
+        //   ? useSameAddress
+        //     ? 0
+        //     : 1
+        //   : undefined,
       };
 
       const registrationResult = await api.registerCustomer(userData);
@@ -458,8 +467,9 @@ function Registration() {
         </div>
 
         <div className="form-group">
-          <label>Date of Birth</label>
+          <label htmlFor="dob-input">Date of Birth</label>
           <input
+            id="dob-input"
             className={`input ${errors.dob ? 'error' : ''}`}
             type="date"
             name="dob"
@@ -631,20 +641,6 @@ function Registration() {
         )}
 
         <div className="default-address-options">
-          {/* <label className="default-address-label">
-            <input
-              type="checkbox"
-              checked={defaultAddressSettings.shipping}
-              onChange={(e) =>
-                setDefaultAddressSettings((prev) => ({
-                  ...prev,
-                  shipping: e.target.checked,
-                }))
-              }
-            />
-            Set as default shipping address
-          </label> */}
-
           <label className="default-address-label">
             <input
               type="checkbox"
