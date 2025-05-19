@@ -1,0 +1,302 @@
+import { apiRoot, revokeToken } from './commercetools-client';
+
+import { type TokenStore } from '@commercetools/sdk-client-v2';
+import {
+  CustomerSignInResult,
+  ClientResponse,
+  CustomerDraft,
+  CustomerPagedQueryResponse,
+  MyCustomerSignin,
+  ByProjectKeyRequestBuilder,
+} from '@commercetools/platform-sdk';
+
+type registeredResponseMessage =
+  | Array<{ detailedErrorMessage: string; code: string; error: string; message: string }>
+  | string;
+
+class Api {
+  private static instance: Api;
+  private apiRoot: ByProjectKeyRequestBuilder;
+
+  private constructor() {
+    this.apiRoot = apiRoot.getApiRoot;
+  }
+
+  public static getInstance(): Api {
+    if (!Api.instance) {
+      Api.instance = new Api();
+    }
+    return Api.instance;
+  }
+
+  public get getTokenCustomer(): TokenStore | undefined {
+    const store: string | null = localStorage.getItem('commercetoolsToken');
+    if (store) {
+      const cachedData: unknown = JSON.parse(store);
+      if (isTokenStore(cachedData)) return cachedData;
+    }
+    this.clearTokenCustomer();
+    return undefined;
+  }
+
+  public get loginned(): boolean {
+    const token: TokenStore | undefined = this.getTokenCustomer;
+    if (token && new Date() < new Date(token.expirationTime)) {
+      return true;
+    } else return false;
+  }
+
+  public async logout(): Promise<void> {
+    this.resetApiRoot();
+    const token: string | undefined = this.getTokenCustomer?.token;
+    if (token) await this.revokeToken(token);
+  }
+
+  public async revokeToken(token: string): Promise<void> {
+    await revokeToken(token);
+  }
+
+  public clearTokenCustomer(): TokenStore {
+    localStorage.removeItem('commercetoolsToken');
+    return { token: '', expirationTime: 0, refreshToken: undefined };
+  }
+
+  public resetApiRoot(): void {
+    this.clearTokenCustomer();
+    this.apiRoot = apiRoot.resetApiClient();
+  }
+
+  /**
+   * Registers a new customer with the provided details.
+   *
+   * @param {CustomerDraft} data - Customer registration data containing:
+   * @param {string} data.email - Customer's email address (must be valid format, e.g., user@example.com)
+   * @param {string} data.password - Customer's password (min 8 chars, 1 uppercase, 1 lowercase, 1 number)
+   * @param {string} data.firstName - Customer's first name (no special chars or numbers)
+   * @param {string} data.lastName - Customer's last name (no special chars or numbers)
+   * @param {string} [data.dateOfBirth] - Customer's date of birth (YYYY-MM-DD format, must be ≥13 years old, optional)
+   * @param {Object} [data.addresses] - Customer's address details (optional)
+   * @param {Object[]} [data.addresses] - Array of address objects
+   * @param {string} data.addresses[].street - Street address (min 1 character)
+   * @param {string} data.addresses[].city - City name (no special chars or numbers)
+   * @param {string} data.addresses[].postalCode - Postal code (format depends on country)
+   * @param {string} data.addresses[].country - Country code (must be valid, e.g., 'US', 'BY', 'UA', 'RU')
+   * @param {string} [data.defaultShippingAddress] - Index of default shipping address in addresses array
+   * @param {string} [data.defaultBillingAddress] - Index of default billing address in addresses array
+   *
+   * @returns {Promise<{
+   *   response?: ClientResponse<CustomerSignInResult>;
+   *   registered: boolean;
+   *   message: registeredResponseMessage;
+   * }>}
+   *   A promise that resolves with an object containing:
+   *   - `response` (optional): The API response if registration was successful.
+   *   - `registered`: A boolean indicating whether registration succeeded (`true` if HTTP status 200-299).
+   *   - `message`: An array of parsed error messages if registration failed, or `'OK'` if successful.
+   */
+  public async registerCustomer(data: CustomerDraft): Promise<{
+    response?: ClientResponse<CustomerSignInResult>;
+    registered: boolean;
+    message: registeredResponseMessage;
+  }> {
+    await this.logout();
+
+    try {
+      const response: ClientResponse<CustomerSignInResult> = await this.apiRoot
+        .customers()
+        .post({
+          body: data,
+        })
+        .execute();
+
+      const registered: boolean =
+        response.statusCode && response.statusCode >= 200 && response.statusCode < 300
+          ? true
+          : false;
+
+      const message: string = registered ? 'OK' : 'Not Registered';
+
+      return { response, registered, message };
+    } catch (error) {
+      const message: registeredResponseMessage = [];
+
+      if (
+        error &&
+        typeof error === 'object' &&
+        'body' in error &&
+        error.body &&
+        typeof error.body === 'object' &&
+        'errors' in error.body &&
+        error.body.errors &&
+        Array.isArray(error.body.errors)
+      ) {
+        error.body.errors.forEach(
+          (value: {
+            code: string;
+            detailedErrorMessage?: string;
+            message: string;
+            duplicateValue?: string;
+          }) => {
+            if (value.detailedErrorMessage) {
+              const parsedValue = value.detailedErrorMessage.split(':').map((part) => part.trim());
+              const [code = '', error = '', ...rest] = parsedValue;
+              message.push({
+                detailedErrorMessage: value.detailedErrorMessage,
+                code,
+                error,
+                message: rest.join(':'),
+              });
+            } else {
+              message.push({
+                detailedErrorMessage: value.message,
+                code: value.code,
+                error: value.duplicateValue || value.message,
+                message: value.message,
+              });
+            }
+          }
+        );
+      }
+      return { response: undefined, registered: false, message };
+    }
+  }
+
+  /**
+   * Authenticates a customer with the provided email and password.
+   *
+   * @param {CustomerSignin} data - Customer registration data containing:
+   * @param {string} data.email - Customer's registered email address (must be valid format, e.g., user@example.com)
+   * @param {string} data.password - Customer's password (min 8 chars, 1 uppercase, 1 lowercase, 1 number)
+   *
+   * @returns {Promise<{ response?: ClientResponse<CustomerSignInResult>, signed: boolean, message: string }>} - Resolves with customer sign-in result containing:
+   *           - ClientResponse
+   *           - signed
+   *           - message
+   */
+  public async loginCustomer(data: MyCustomerSignin): Promise<{
+    response?: ClientResponse<CustomerSignInResult>;
+    signed: boolean;
+    message: string;
+  }> {
+    await this.logout();
+
+    try {
+      const response: ClientResponse<CustomerSignInResult> = await this.apiRoot
+        .me()
+        .login()
+        .post({
+          body: data,
+        })
+        .execute();
+
+      const signed: boolean =
+        response.statusCode && response.statusCode >= 200 && response.statusCode < 300
+          ? true
+          : false;
+      const message: string = signed ? 'OK' : 'Not Signed';
+      if (!signed) {
+        this.clearTokenCustomer();
+        this.apiRoot = apiRoot.resetApiClient();
+      }
+
+      return { response, signed, message };
+    } catch (error) {
+      this.clearTokenCustomer();
+      this.apiRoot = apiRoot.resetApiClient();
+
+      const message: string =
+        error &&
+        typeof error === 'object' &&
+        'message' in error &&
+        typeof error.message === 'string'
+          ? error.message
+          : 'Unknown error';
+
+      return { response: undefined, signed: false, message };
+    }
+  }
+
+  /**
+   * Finds a customer by email address
+   *
+   * @param {string} email - The email address to search for.
+   * @returns {Promise<{response?: ClientResponse<CustomerPagedQueryResponse>, found: boolean, message: string, id?: string}>}
+   *   An object containing:
+   *   - `response` (optional): Raw API response if successful
+   *   - `found`: Boolean indicating if customer exists
+   *   - `message`: Status message ('Customer found'/'Customer not found'/'Server connection failure')
+   *   - `id` (optional): Customer ID if found
+   */
+  public async getCustomerByEmail(email: string): Promise<{
+    response?: ClientResponse<CustomerPagedQueryResponse>;
+    found: boolean;
+    message: string;
+    id?: string;
+  }> {
+    if (email === '') {
+      return {
+        response: undefined,
+        found: false,
+        message: 'Email is required',
+        id: undefined,
+      };
+    }
+
+    try {
+      const response: ClientResponse<CustomerPagedQueryResponse> = await this.apiRoot
+        .customers()
+        .get({
+          queryArgs: {
+            where: `email="${email}"`,
+            limit: 1,
+          },
+        })
+        .execute();
+
+      const found: boolean =
+        response.statusCode &&
+        response.statusCode >= 200 &&
+        response.statusCode < 300 &&
+        response.body.count !== 0
+          ? true
+          : false;
+      const message: string = found ? 'Customer found' : 'Customer not found';
+
+      return {
+        response,
+        found,
+        message,
+        id: response.body.results.length ? response.body.results[0].id : undefined,
+      };
+    } catch {
+      return {
+        response: undefined,
+        found: false,
+        message: 'Server connection failure',
+        id: undefined,
+      };
+    }
+  }
+}
+
+export function isTokenStore(data: unknown): data is TokenStore {
+  if (
+    data &&
+    typeof data === 'object' &&
+    'token' in data &&
+    data.token &&
+    typeof data.token === 'string' &&
+    'expirationTime' in data &&
+    data.expirationTime &&
+    typeof data.expirationTime === 'number' &&
+    (('refreshToken' in data &&
+      data.refreshToken &&
+      (typeof data.refreshToken === 'string' || typeof data.refreshToken === 'undefined')) ||
+      !('refreshToken' in data))
+  )
+    return true;
+  return false;
+}
+
+const api: Api = Api.getInstance();
+export default api;

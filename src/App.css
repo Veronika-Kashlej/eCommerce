@@ -1,0 +1,15 @@
+:root {
+  --header-height: 30px;
+  --max-page-width: 1280px;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100%;
+  max-width: var(--max-page-width);
+  margin: 0 auto;
+  text-align: center;
+  overflow: hidden;
+}
