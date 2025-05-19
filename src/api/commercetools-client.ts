@@ -19,10 +19,14 @@ const authMiddlewareOptions: AuthMiddlewareOptions = {
   fetch: fetch,
   tokenCache: {
     get: () => {
-      const cachedData: unknown = localStorage.getItem('commercetoolsToken') || undefined;
-      if (isTokenStore(cachedData)) {
-        return cachedData;
-      } else return api.clearTokenCustomer();
+      const store: string | null = localStorage.getItem('commercetoolsToken');
+      if (store) {
+        const cachedData: unknown = localStorage.getItem('commercetoolsToken');
+        if (isTokenStore(cachedData)) {
+          return cachedData;
+        }
+      }
+      return api.clearTokenCustomer();
     },
     set: (token) => {
       localStorage.setItem('commercetoolsToken', JSON.stringify(token));
@@ -39,6 +43,32 @@ const httpMiddlewareOptions: HttpMiddlewareOptions = {
     retryDelay: 200,
   },
   fetch: fetch,
+};
+
+export const revokeToken = async (token: string) => {
+  try {
+    const basicAuth = btoa(`${env.clientId}:${env.clientSecret}`);
+
+    const response = await fetch(`${env.authUrl}/oauth/token/revoke`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+      body: new URLSearchParams({
+        token: token,
+        token_type_hint: 'access_token',
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return true;
+  } catch (error) {
+    console.error('Token revocation failed:', error);
+    return false;
+  }
 };
 
 export const ctpClient = new ClientBuilder()

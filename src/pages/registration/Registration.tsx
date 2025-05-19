@@ -378,14 +378,14 @@ function Registration() {
           });
         }
       } else {
-        const loginResult = await api.loginCustomer({
-          email: formData.email,
-          password: formData.password,
-        });
+        // const loginResult = await api.loginCustomer({
+        //   email: formData.email,
+        //   password: formData.password,
+        // });
 
-        if (!loginResult.signed) {
-          throw new Error(loginResult.message);
-        }
+        // if (!loginResult.signed) {
+        //   throw new Error(loginResult.message);
+        // }
 
         navigate('/');
       }

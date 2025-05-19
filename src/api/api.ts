@@ -1,4 +1,4 @@
-import { apiRoot } from './commercetools-client';
+import { apiRoot, revokeToken } from './commercetools-client';
 
 import { type TokenStore } from '@commercetools/sdk-client-v2';
 import {
@@ -26,10 +26,12 @@ class Api {
   }
 
   public get getTokenCustomer(): TokenStore {
-    const cachedData: unknown = JSON.parse(localStorage.getItem('commercetoolsToken') || '');
-    if (isTokenStore(cachedData)) {
-      return cachedData;
-    } else return this.clearTokenCustomer();
+    const store: string | null = localStorage.getItem('commercetoolsToken');
+    if (store) {
+      const cachedData: unknown = JSON.parse(store);
+      if (isTokenStore(cachedData)) return cachedData;
+    }
+    return this.clearTokenCustomer();
   }
 
   public get loginned(): boolean {
@@ -39,8 +41,13 @@ class Api {
     } else return false;
   }
 
-  public logout(): void {
+  public async logout(): Promise<void> {
+    await this.revokeToken(this.getTokenCustomer.token);
     this.clearTokenCustomer();
+  }
+
+  public async revokeToken(token: string): Promise<void> {
+    await revokeToken(token);
   }
 
   public clearTokenCustomer(): TokenStore {
@@ -82,7 +89,7 @@ class Api {
     registered: boolean;
     message: registeredResponseMessage;
   }> {
-    this.logout();
+    await this.logout();
 
     try {
       const response: ClientResponse<CustomerSignInResult> = await apiRoot
@@ -161,7 +168,7 @@ class Api {
     signed: boolean;
     message: string;
   }> {
-    this.logout();
+    await this.logout();
 
     try {
       const response: ClientResponse<CustomerSignInResult> = await apiRoot
@@ -211,6 +218,8 @@ class Api {
     message: string;
     id?: string;
   }> {
+    console.log('getCustomerByEmail = ', email);
+
     if (email === '') {
       return {
         response: undefined,
@@ -240,13 +249,17 @@ class Api {
           : false;
       const message: string = found ? 'Customer found' : 'Customer not found';
 
+      console.log(response);
+
       return {
         response,
         found,
         message,
         id: response.body.results.length ? response.body.results[0].id : undefined,
       };
-    } catch {
+    } catch (e) {
+      console.log(e);
+
       return {
         response: undefined,
         found: false,

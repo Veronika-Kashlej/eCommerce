@@ -51,8 +51,10 @@ function Login() {
     // Submit logic here
     setIsWaitingOpen(true);
     try {
-      const checkCustomerEmail = await api.getCustomerByEmail(email);
       api.clearTokenCustomer();
+
+      const checkCustomerEmail = await api.getCustomerByEmail(email);
+      // api.clearTokenCustomer();
 
       if (!checkCustomerEmail.found) {
         setErrors({ email: checkCustomerEmail.message, password: '' });
