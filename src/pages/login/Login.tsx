@@ -5,8 +5,8 @@ import { ValidationResult } from '@/types/interfaces';
 import { Link } from 'react-router-dom';
 import api from '@/api/api';
 import { useNavigate } from 'react-router-dom';
-import modalWindow from '@/components/modal/modalWindow';
-import WaitingModal from '@/components/waiting/waiting';
+import modalWindow from '@/components/modal/ModalWindow';
+import WaitingModal from '@/components/waiting/Waiting';
 
 function Login() {
   const navigate = useNavigate();

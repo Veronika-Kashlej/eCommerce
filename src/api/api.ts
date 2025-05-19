@@ -8,7 +8,6 @@ import {
   CustomerPagedQueryResponse,
   MyCustomerSignin,
   ByProjectKeyRequestBuilder,
-  // ApiRoot,
 } from '@commercetools/platform-sdk';
 
 type registeredResponseMessage =

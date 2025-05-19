@@ -1,11 +1,8 @@
-// import { Link } from 'react-router-dom';
-import './home.css';
+import './Home.css';
 import { useState } from 'react';
 import api from '@/api/api';
-// import { useNavigate } from 'react-router-dom';
 
 const HomePage: React.FC = () => {
-  // const navigate = useNavigate();
   const [isAuthenticated] = useState(api.loginned);
   return (
     <div className="page-container">
