@@ -1,26 +1,14 @@
-import { apiRoot } from './commercetools-client';
+import { apiRoot, revokeToken } from './commercetools-client';
 
 import { type TokenStore } from '@commercetools/sdk-client-v2';
 import {
   CustomerSignInResult,
   ClientResponse,
-  // CustomerSignin,
   CustomerDraft,
   CustomerPagedQueryResponse,
   MyCustomerSignin,
+  ByProjectKeyRequestBuilder,
 } from '@commercetools/platform-sdk';
-
-// interface TokenCache {
-//   get(): TokenStore | null;
-//   set(cache: TokenStore): void;
-//   clear(): void;
-// }
-
-// interface TokenStore {
-//   token: string;
-//   expirationTime: number;
-//   refreshToken?: string;
-// }
 
 type registeredResponseMessage =
   | Array<{ detailedErrorMessage: string; code: string; error: string; message: string }>
@@ -28,9 +16,11 @@ type registeredResponseMessage =
 
 class Api {
   private static instance: Api;
-  private tokenCustomer: TokenStore | undefined;
+  private apiRoot: ByProjectKeyRequestBuilder;
 
-  private constructor() {}
+  private constructor() {
+    this.apiRoot = apiRoot.getApiRoot;
+  }
 
   public static getInstance(): Api {
     if (!Api.instance) {
@@ -39,26 +29,41 @@ class Api {
     return Api.instance;
   }
 
-  public get getTokenCustomer(): TokenStore {
-    return this.tokenCustomer || this.clearTokenCustomer();
-  }
-
-  public setTokenCustomer(token: TokenStore): void {
-    this.tokenCustomer = token;
+  public get getTokenCustomer(): TokenStore | undefined {
+    const store: string | null = localStorage.getItem('commercetoolsToken');
+    if (store) {
+      const cachedData: unknown = JSON.parse(store);
+      if (isTokenStore(cachedData)) return cachedData;
+    }
+    this.clearTokenCustomer();
+    return undefined;
   }
 
   public get loginned(): boolean {
-    if (this.tokenCustomer && new Date() < new Date(this.tokenCustomer.expirationTime)) return true;
-    return false;
+    const token: TokenStore | undefined = this.getTokenCustomer;
+    if (token && new Date() < new Date(token.expirationTime)) {
+      return true;
+    } else return false;
   }
 
-  public logout(): void {
-    this.clearTokenCustomer();
+  public async logout(): Promise<void> {
+    this.resetApiRoot();
+    const token: string | undefined = this.getTokenCustomer?.token;
+    if (token) await this.revokeToken(token);
+  }
+
+  public async revokeToken(token: string): Promise<void> {
+    await revokeToken(token);
   }
 
   public clearTokenCustomer(): TokenStore {
-    this.tokenCustomer = { token: '', expirationTime: 0 };
-    return this.getTokenCustomer;
+    localStorage.removeItem('commercetoolsToken');
+    return { token: '', expirationTime: 0, refreshToken: undefined };
+  }
+
+  public resetApiRoot(): void {
+    this.clearTokenCustomer();
+    this.apiRoot = apiRoot.resetApiClient();
   }
 
   /**
@@ -94,10 +99,10 @@ class Api {
     registered: boolean;
     message: registeredResponseMessage;
   }> {
-    this.logout();
+    await this.logout();
 
     try {
-      const response: ClientResponse<CustomerSignInResult> = await apiRoot
+      const response: ClientResponse<CustomerSignInResult> = await this.apiRoot
         .customers()
         .post({
           body: data,
@@ -173,10 +178,10 @@ class Api {
     signed: boolean;
     message: string;
   }> {
-    this.logout();
+    await this.logout();
 
     try {
-      const response: ClientResponse<CustomerSignInResult> = await apiRoot
+      const response: ClientResponse<CustomerSignInResult> = await this.apiRoot
         .me()
         .login()
         .post({
@@ -189,9 +194,16 @@ class Api {
           ? true
           : false;
       const message: string = signed ? 'OK' : 'Not Signed';
+      if (!signed) {
+        this.clearTokenCustomer();
+        this.apiRoot = apiRoot.resetApiClient();
+      }
 
       return { response, signed, message };
     } catch (error) {
+      this.clearTokenCustomer();
+      this.apiRoot = apiRoot.resetApiClient();
+
       const message: string =
         error &&
         typeof error === 'object' &&
@@ -199,8 +211,6 @@ class Api {
         typeof error.message === 'string'
           ? error.message
           : 'Unknown error';
-      // if (message === 'Account with the given credentials not found.')
-      //   message = 'Customer password incorrect';
 
       return { response: undefined, signed: false, message };
     }
@@ -233,7 +243,7 @@ class Api {
     }
 
     try {
-      const response: ClientResponse<CustomerPagedQueryResponse> = await apiRoot
+      const response: ClientResponse<CustomerPagedQueryResponse> = await this.apiRoot
         .customers()
         .get({
           queryArgs: {
@@ -267,6 +277,25 @@ class Api {
       };
     }
   }
+}
+
+export function isTokenStore(data: unknown): data is TokenStore {
+  if (
+    data &&
+    typeof data === 'object' &&
+    'token' in data &&
+    data.token &&
+    typeof data.token === 'string' &&
+    'expirationTime' in data &&
+    data.expirationTime &&
+    typeof data.expirationTime === 'number' &&
+    (('refreshToken' in data &&
+      data.refreshToken &&
+      (typeof data.refreshToken === 'string' || typeof data.refreshToken === 'undefined')) ||
+      !('refreshToken' in data))
+  )
+    return true;
+  return false;
 }
 
 const api: Api = Api.getInstance();

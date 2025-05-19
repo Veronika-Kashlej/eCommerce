@@ -50,8 +50,8 @@ describe('API Functions registerCustomer', () => {
       post: mockPost,
     });
 
-    vi.spyOn(apiRoot, 'customers').mockImplementation(() => mockCustomers());
-    vi.spyOn(api, 'logout').mockImplementation(() => {});
+    vi.spyOn(apiRoot.getApiRoot, 'customers').mockImplementation(() => mockCustomers());
+    vi.spyOn(api, 'logout').mockImplementation(() => Promise.resolve());
   });
 
   it('should successfully register customer with valid data', async () => {

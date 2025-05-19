@@ -37,7 +37,7 @@ describe('API Functions getCustomerByEmail', () => {
       get: mockGet,
     });
 
-    vi.spyOn(apiRoot, 'customers').mockImplementation(() => mockCustomers());
+    vi.spyOn(apiRoot.getApiRoot, 'customers').mockImplementation(() => mockCustomers());
   });
 
   it('should return customer when email exists', async () => {

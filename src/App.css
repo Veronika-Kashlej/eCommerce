@@ -1,5 +1,6 @@
 :root {
   --header-height: 30px;
+  --max-page-width: 1280px;
 }
 
 #root {
@@ -7,15 +8,8 @@
   flex-direction: column;
   height: 100dvh;
   width: 100%;
-  max-width: 1280px;
+  max-width: var(--max-page-width);
   margin: 0 auto;
-  /* padding: 2rem; */
   text-align: center;
   overflow: hidden;
 }
-
-/* .button:disabled{
-  color: lightgray !important;
-  background-color: grey !important;
-  cursor: unset !important;
-} */

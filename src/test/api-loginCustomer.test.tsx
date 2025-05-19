@@ -33,8 +33,8 @@ describe('API Functions loginCustomer', () => {
       login: mockLogin,
     });
 
-    vi.spyOn(apiRoot, 'me').mockImplementation(() => mockMe());
-    vi.spyOn(api, 'logout').mockImplementation(() => {});
+    vi.spyOn(apiRoot.getApiRoot, 'me').mockImplementation(() => mockMe());
+    vi.spyOn(api, 'logout').mockImplementation(() => Promise.resolve());
   });
 
   it('should successfully login customer with valid credentials', async () => {

@@ -6,8 +6,8 @@ import { Country, CountryLabels } from '@/types/enums';
 import { Link } from 'react-router-dom';
 import api from '@/api/api';
 import { useNavigate } from 'react-router-dom';
-import modalWindow from '@/components/modal/modalWindow';
-import WaitingModal from '@/components/waiting/waiting';
+import modalWindow from '@/components/modal/ModalWindow';
+import WaitingModal from '@/components/waiting/Waiting';
 import { CustomerDraft } from '@commercetools/platform-sdk';
 
 function Registration() {
@@ -484,6 +484,7 @@ function Registration() {
 
           <div className="form-group">
             <select
+              aria-label="Choose an option"
               className={`input ${errors.shippingCountry ? 'error' : ''}`}
               name="shippingCountry"
               value={formData.shippingCountry}
@@ -576,6 +577,7 @@ function Registration() {
 
             <div className="form-group">
               <select
+                aria-label="Choose an option"
                 className={`input ${errors.billingCountry ? 'error' : ''}`}
                 name="billingCountry"
                 value={formData.billingCountry}

@@ -5,8 +5,8 @@ import { ValidationResult } from '@/types/interfaces';
 import { Link } from 'react-router-dom';
 import api from '@/api/api';
 import { useNavigate } from 'react-router-dom';
-import modalWindow from '@/components/modal/modalWindow';
-import WaitingModal from '@/components/waiting/waiting';
+import modalWindow from '@/components/modal/ModalWindow';
+import WaitingModal from '@/components/waiting/Waiting';
 
 function Login() {
   const navigate = useNavigate();
@@ -51,8 +51,10 @@ function Login() {
     // Submit logic here
     setIsWaitingOpen(true);
     try {
-      const checkCustomerEmail = await api.getCustomerByEmail(email);
       api.clearTokenCustomer();
+
+      const checkCustomerEmail = await api.getCustomerByEmail(email);
+      // api.clearTokenCustomer();
 
       if (!checkCustomerEmail.found) {
         setErrors({ email: checkCustomerEmail.message, password: '' });

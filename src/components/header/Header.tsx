@@ -5,8 +5,8 @@ import { useNavigate } from 'react-router-dom';
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
-  function logout() {
-    api.logout();
+  async function logout() {
+    await api.logout();
     navigate('/login');
   }
   return (
