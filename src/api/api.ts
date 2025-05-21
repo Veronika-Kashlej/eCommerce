@@ -8,7 +8,10 @@ import {
   CustomerPagedQueryResponse,
   MyCustomerSignin,
   ByProjectKeyRequestBuilder,
+  ProductPagedQueryResponse,
 } from '@commercetools/platform-sdk';
+
+import { ProductsQueryArgs } from './api-interfaces';
 
 type registeredResponseMessage =
   | Array<{ detailedErrorMessage: string; code: string; error: string; message: string }>
@@ -276,6 +279,62 @@ class Api {
         id: undefined,
       };
     }
+  }
+
+  /**
+   * Retrieves a paginated list of products from Commercetools based on query parameters.
+   *
+   * @param {ProductsQueryArgs} queryArgs - Query parameters for filtering, sorting and pagination.
+   * @param {number} [queryArgs.limit=20] - Maximum number of products to return (default: 20).
+   * @param {number} [queryArgs.offset=0] - Number of products to skip (for pagination).
+   * @param {string|string[]} [queryArgs.where] - Query predicate in Commercetools Predicate Language.
+   * @param {string|string[]} [queryArgs.expand] - References to expand (e.g., ['productType', 'taxCategory']).
+   * @param {string|string[]} [queryArgs.sort] - Sort criteria (e.g., 'createdAt desc').
+   * @param {boolean} [queryArgs.staged] - Whether to include staged changes (default: false).
+   * @param {string} [queryArgs.priceCurrency] - Currency code for price selection.
+   * @param {string} [queryArgs.priceCountry] - Country code for price selection.
+   *
+   * @returns {Promise<ClientResponse<ProductPagedQueryResponse>|undefined>}
+   *   - Returns the API response with products data if successful.
+   *   - Returns undefined and logs error if the request fails.
+   *
+   * @throws {Error}
+   *   - Throws and logs errors from Commercetools API (network issues, invalid queries etc.)
+   *
+   * @example
+   * Get first 10 published products
+   * getProductsList({
+   *   limit: 10,
+   *   where: 'masterData(published=true)'
+   * });
+   *
+   * @example
+   * Get products sorted by creation date (newest first)
+   * getProductsList({
+   *   sort: 'createdAt desc',
+   *   expand: ['productType']
+   * });
+   */
+  public async getProductsList(
+    queryArgs: ProductsQueryArgs
+  ): Promise<ClientResponse<ProductPagedQueryResponse> | undefined> {
+    if (this.loginned)
+      try {
+        const response = await this.apiRoot
+          .products()
+          .get({
+            queryArgs: {
+              ...queryArgs,
+            },
+          })
+          .execute();
+
+        console.log(response.body.results);
+
+        return response;
+      } catch (error) {
+        console.error('Error while receiving goods:', error);
+      }
   }
 }
 
