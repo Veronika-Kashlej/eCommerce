@@ -260,63 +260,8 @@ class Api {
    *   - `message`: Status message ('Customer found'/'Customer not found'/'Server connection failure')
    *   - `id` (optional): Customer ID if found
    */
-  public async getCustomerByEmail(email: string): Promise<
-    | {
-        response?: ClientResponse<CustomerPagedQueryResponse>;
-        found: boolean;
-        message: string;
-        id?: string;
-      }
-    | undefined
-  > {
-    if (this.apiRoot && this.loginned)
-      try {
-        if (email === '') {
-          return {
-            response: undefined,
-            found: false,
-            message: 'Email is required',
-            id: undefined,
-          };
-        }
-        const response: ClientResponse<CustomerPagedQueryResponse> = await this.apiRoot
-          .customers()
-          .get({
-            queryArgs: {
-              where: `email="${email}"`,
-              limit: 1,
-            },
-          })
-          .execute();
 
-        const found: boolean =
-          response.statusCode &&
-          response.statusCode >= 200 &&
-          response.statusCode < 300 &&
-          response.body.count !== 0
-            ? true
-            : false;
-        const message: string = found ? 'Customer found' : 'Customer not found';
-
-        return {
-          response,
-          found,
-          message,
-          id: response.body.results.length ? response.body.results[0].id : undefined,
-        };
-      } catch (e) {
-        console.log(e);
-
-        return {
-          response: undefined,
-          found: false,
-          message: 'Server connection failure',
-          id: undefined,
-        };
-      }
-  }
-
-  public async getAnonymCustomerByEmail(email: string): Promise<{
+  public async getCustomerByEmail(email: string): Promise<{
     response?: ClientResponse<CustomerPagedQueryResponse>;
     found: boolean;
     message: string;

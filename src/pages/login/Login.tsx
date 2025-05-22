@@ -51,7 +51,7 @@ function Login() {
     // Submit logic here
     setIsWaitingOpen(true);
     try {
-      const checkCustomerEmail = await api.getAnonymCustomerByEmail(email);
+      const checkCustomerEmail = await api.getCustomerByEmail(email);
 
       if (!checkCustomerEmail.found) {
         setErrors({ email: checkCustomerEmail.message, password: '' });
