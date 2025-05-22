@@ -1,17 +1,14 @@
 import {
   ClientBuilder,
+  type PasswordAuthMiddlewareOptions,
   type AuthMiddlewareOptions,
   type HttpMiddlewareOptions,
 } from '@commercetools/sdk-client-v2';
-import {
-  ByProjectKeyRequestBuilder,
-  createApiBuilderFromCtpClient,
-} from '@commercetools/platform-sdk';
 
 import env from './env';
 import api, { isTokenStore } from './api';
 
-const authMiddlewareOptions: AuthMiddlewareOptions = {
+export const authMiddlewareOptions: AuthMiddlewareOptions = {
   host: env.authUrl,
   projectKey: env.projectKey,
   credentials: {
@@ -22,13 +19,18 @@ const authMiddlewareOptions: AuthMiddlewareOptions = {
   fetch: fetch,
   tokenCache: {
     get: () => {
-      const store: string | null = localStorage.getItem('commercetoolsToken');
+      const store: string | null = localStorage.getItem('anonymToken');
       if (!store) return api.clearTokenCustomer();
 
       try {
         const cachedData: unknown = JSON.parse(store);
-        if (isTokenStore(cachedData) && new Date(cachedData.expirationTime) > new Date()) {
-          return cachedData;
+        if (isTokenStore(cachedData)) {
+          if (new Date(cachedData.expirationTime) > new Date()) {
+            return cachedData;
+          }
+          if (cachedData.refreshToken) {
+            return cachedData;
+          }
         }
         return api.clearTokenCustomer();
       } catch {
@@ -36,7 +38,50 @@ const authMiddlewareOptions: AuthMiddlewareOptions = {
       }
     },
     set: (token) => {
-      if (token.token && token.token.length > 0) {
+      if (token.token) {
+        localStorage.setItem('anonymToken', JSON.stringify(token));
+      } else {
+        localStorage.removeItem('anonymToken');
+      }
+    },
+  },
+};
+
+const passwordAuthMiddlewareOptions: PasswordAuthMiddlewareOptions = {
+  host: env.authUrl,
+  projectKey: env.projectKey,
+  credentials: {
+    clientId: env.clientId,
+    clientSecret: env.clientSecret,
+    user: {
+      username: '',
+      password: '',
+    },
+  },
+  scopes: env.scopes.split(','),
+  fetch: fetch,
+  tokenCache: {
+    get: () => {
+      const store: string | null = localStorage.getItem('commercetoolsToken');
+      if (!store) return api.clearTokenCustomer();
+
+      try {
+        const cachedData: unknown = JSON.parse(store);
+        if (isTokenStore(cachedData)) {
+          if (new Date(cachedData.expirationTime) > new Date()) {
+            return cachedData;
+          }
+          if (cachedData.refreshToken) {
+            return cachedData;
+          }
+        }
+        return api.clearTokenCustomer();
+      } catch {
+        return api.clearTokenCustomer();
+      }
+    },
+    set: (token) => {
+      if (token.token) {
         localStorage.setItem('commercetoolsToken', JSON.stringify(token));
       } else {
         localStorage.removeItem('commercetoolsToken');
@@ -45,7 +90,23 @@ const authMiddlewareOptions: AuthMiddlewareOptions = {
   },
 };
 
-const httpMiddlewareOptions: HttpMiddlewareOptions = {
+export const createPasswordClient = (username: string, password: string) => {
+  return (
+    new ClientBuilder()
+      .withPasswordFlow({
+        ...passwordAuthMiddlewareOptions,
+        credentials: {
+          ...passwordAuthMiddlewareOptions.credentials,
+          user: { username, password },
+        },
+      })
+      .withHttpMiddleware(httpMiddlewareOptions)
+      // .withLoggerMiddleware() // todo remove logger after dev
+      .build()
+  );
+};
+
+export const httpMiddlewareOptions: HttpMiddlewareOptions = {
   host: env.apiUrl,
   includeRequestInErrorResponse: true,
   includeOriginalRequest: true,
@@ -55,68 +116,3 @@ const httpMiddlewareOptions: HttpMiddlewareOptions = {
   },
   fetch: fetch,
 };
-
-export const revokeToken = async (token: string) => {
-  try {
-    const basicAuth = btoa(`${env.clientId}:${env.clientSecret}`);
-
-    const response = await fetch(`${env.authUrl}/oauth/token/revoke`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-      body: new URLSearchParams({
-        token: token,
-        token_type_hint: 'access_token',
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return true;
-  } catch (error) {
-    console.error('Token revocation failed:', error);
-    return false;
-  }
-};
-
-export const ctpClient = new ClientBuilder()
-  .withClientCredentialsFlow(authMiddlewareOptions)
-  .withHttpMiddleware(httpMiddlewareOptions)
-  // .withLoggerMiddleware() // todo remove logger after dev
-  .build();
-
-class ApiRoot {
-  private apiRoot: ByProjectKeyRequestBuilder;
-
-  constructor() {
-    this.apiRoot = this.createApiRoot();
-  }
-
-  private createApiRoot(): ByProjectKeyRequestBuilder {
-    return (this.apiRoot = createApiBuilderFromCtpClient(ctpClient).withProjectKey({
-      projectKey: env.projectKey,
-    }));
-  }
-
-  public get getApiRoot(): ByProjectKeyRequestBuilder {
-    return this.apiRoot;
-  }
-
-  public resetApiClient(): ByProjectKeyRequestBuilder {
-    const newClient = new ClientBuilder()
-      .withClientCredentialsFlow(authMiddlewareOptions)
-      .withHttpMiddleware(httpMiddlewareOptions)
-      .build();
-
-    this.apiRoot = createApiBuilderFromCtpClient(newClient).withProjectKey({
-      projectKey: env.projectKey,
-    });
-
-    return this.apiRoot;
-  }
-}
-
-export const apiRoot = new ApiRoot();

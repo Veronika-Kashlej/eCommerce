@@ -5,7 +5,7 @@ import { ValidationResult } from '@/types/interfaces';
 import { Link } from 'react-router-dom';
 import api from '@/api/api';
 import { useNavigate } from 'react-router-dom';
-import modalWindow from '@/components/modal/ModalWindow';
+import ModalWindow from '@/components/modal/ModalWindow';
 import WaitingModal from '@/components/waiting/Waiting';
 
 function Login() {
@@ -51,10 +51,7 @@ function Login() {
     // Submit logic here
     setIsWaitingOpen(true);
     try {
-      api.clearTokenCustomer();
-
-      const checkCustomerEmail = await api.getCustomerByEmail(email);
-      // api.clearTokenCustomer();
+      const checkCustomerEmail = await api.getAnonymCustomerByEmail(email);
 
       if (!checkCustomerEmail.found) {
         setErrors({ email: checkCustomerEmail.message, password: '' });
@@ -64,11 +61,11 @@ function Login() {
         if (checkCustomer.signed) {
           navigate('/');
         } else {
-          if (checkCustomer.message === 'Account with the given credentials not found.') {
+          if (checkCustomer.message === 'Customer account with the given credentials not found.') {
             setErrors({ email: '', password: 'Customer password incorrect' });
           } else {
             // any other errors
-            modalWindow.alert(checkCustomer.message, 'Server notification!');
+            ModalWindow.alert(checkCustomer.message, 'Server notification!');
           }
         }
       }
