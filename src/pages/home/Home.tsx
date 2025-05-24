@@ -1,6 +1,7 @@
 import './Home.css';
 import { useState } from 'react';
 import api from '@/api/api';
+import ProductList from '@/components/products-list/Products-list';
 
 const HomePage: React.FC = () => {
   const [isAuthenticated] = useState(api.loginned);
@@ -13,6 +14,8 @@ const HomePage: React.FC = () => {
             ? "You're successfully logged in!"
             : 'Please sign in or register to continue'}
         </p>
+
+        <ProductList />
       </main>
     </div>
   );

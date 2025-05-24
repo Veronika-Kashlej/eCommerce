@@ -28,6 +28,7 @@ class Api {
   private apiRoot: ByProjectKeyRequestBuilder | undefined;
   private anonymClient: Client;
   private anonymApiRoot: ByProjectKeyRequestBuilder;
+  private eventTarget = new EventTarget();
 
   private constructor() {
     this.anonymClient = new ClientBuilder()
@@ -44,6 +45,14 @@ class Api {
       Api.instance = new Api();
     }
     return Api.instance;
+  }
+
+  public onLoginStatusChange(callback: () => void): void {
+    this.eventTarget.addEventListener('loginStatusChanged', callback);
+  }
+
+  public offLoginStatusChange(callback: () => void): void {
+    this.eventTarget.addEventListener('loginStatusChanged', callback);
   }
 
   public get getAnonymApiRoot(): ByProjectKeyRequestBuilder {
@@ -71,6 +80,7 @@ class Api {
     const token: string | undefined = this.getTokenCustomer?.token;
     this.revokeToken(token);
     this.resetApiRoot();
+    this.notifyLoginStatusChange();
   }
 
   public async revokeToken(token: string | undefined): Promise<void> {
@@ -240,6 +250,7 @@ class Api {
       const message = signed ? 'OK' : 'Not Signed';
 
       if (signed) {
+        this.notifyLoginStatusChange();
         return { response, signed, message };
       } else {
         this.clearTokenCustomer();
@@ -345,11 +356,11 @@ class Api {
    * });
    */
   public async getProductsList(
-    queryArgs: ProductsQueryArgs
+    queryArgs?: ProductsQueryArgs
   ): Promise<ClientResponse<ProductPagedQueryResponse> | undefined> {
-    if (this.apiRoot && this.loginned)
+    if (this.anonymApiRoot && this.loginned)
       try {
-        const response = await this.apiRoot
+        const response = await this.anonymApiRoot
           .products()
           .get({
             queryArgs: {
@@ -364,6 +375,10 @@ class Api {
       } catch (error) {
         console.error('Error while receiving goods:', error);
       }
+  }
+
+  private notifyLoginStatusChange(): void {
+    this.eventTarget.dispatchEvent(new Event('loginStatusChanged'));
   }
 }
 

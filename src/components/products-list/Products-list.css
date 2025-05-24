@@ -1,0 +1,39 @@
+.product-list-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  background-color: blueviolet;
+  flex-direction: column;
+}
+
+.product-list {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  padding: 1rem;
+  box-sizing: border-box;
+  gap: 5px;
+}
+
+.product-list-card {
+  width: 300px;
+  border: 2px solid red;
+  background-color: aquamarine;
+}
+
+.product-image {
+  max-width: 100%;
+  height: auto;
+  max-height: 200px;
+  object-fit: contain;
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 200px;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+}
