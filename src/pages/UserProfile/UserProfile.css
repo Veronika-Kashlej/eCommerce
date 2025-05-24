@@ -1,0 +1,25 @@
+.wrapper {
+  padding: 20px;
+}
+
+.first_section {
+  margin-bottom: 30px;
+}
+
+.billingAddress__wrapper {
+  background-color: #e0f7fa;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.shippingAddress__wrapper {
+  background-color: #ffe0b2;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.otherAddresses__wrapper {
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+}

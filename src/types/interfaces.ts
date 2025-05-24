@@ -32,3 +32,20 @@ export const postalCodePatterns: PostalCodePatterns = {
   [Country.UA]: /^\d{5}$/,
   [Country.US]: /^\d{5}(-\d{4})?$/,
 };
+
+export interface User {
+  firstName: string;
+  lastName: string;
+  dob: string;
+  addresses: Address[];
+}
+
+interface Address {
+  id: string;
+  streetName: string;
+  postalCode: string;
+  city: string;
+  country: Country; // or string?
+  defaultBilling?: boolean;
+  defaultShipping?: boolean;
+}
