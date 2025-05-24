@@ -6,7 +6,7 @@ import { Country, CountryLabels } from '@/types/enums';
 import { Link } from 'react-router-dom';
 import api from '@/api/api';
 import { useNavigate } from 'react-router-dom';
-import modalWindow from '@/components/modal/ModalWindow';
+import ModalWindow from '@/components/modal/ModalWindow';
 import WaitingModal from '@/components/waiting/Waiting';
 import { CustomerDraft } from '@commercetools/platform-sdk';
 
@@ -381,7 +381,7 @@ function Registration() {
                 break;
 
               default:
-                modalWindow.alert(element.detailedErrorMessage, 'Registration failed');
+                ModalWindow.alert(element.detailedErrorMessage, 'Registration failed');
                 break;
             }
           });
@@ -400,7 +400,7 @@ function Registration() {
       }
     } catch (error) {
       console.log('Registration failed:', error);
-      modalWindow.alert(`We didn't expect this error, but it appeared.`, 'Registration failed');
+      ModalWindow.alert(`We didn't expect this error, but it appeared.`, 'Registration failed');
     } finally {
       setIsWaitingOpen(false);
     }

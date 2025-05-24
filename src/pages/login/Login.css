@@ -14,7 +14,7 @@
   padding: 40px;
   border-radius: 12px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-  background: linear-gradient(135deg, rgba(243, 229, 245, 0.95) 0%, rgba(225, 190, 231, 0.95) 100%);
+  background: #f5f5f5;
 }
 
 .login-page h2 {

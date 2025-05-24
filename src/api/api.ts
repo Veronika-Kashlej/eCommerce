@@ -1,6 +1,10 @@
-import { apiRoot, revokeToken } from './commercetools-client';
+import {
+  authMiddlewareOptions,
+  createPasswordClient,
+  httpMiddlewareOptions,
+} from './commercetools-client';
 
-import { type TokenStore } from '@commercetools/sdk-client-v2';
+import { Client, ClientBuilder, type TokenStore } from '@commercetools/sdk-client-v2';
 import {
   CustomerSignInResult,
   ClientResponse,
@@ -8,7 +12,12 @@ import {
   CustomerPagedQueryResponse,
   MyCustomerSignin,
   ByProjectKeyRequestBuilder,
+  ProductPagedQueryResponse,
+  createApiBuilderFromCtpClient,
 } from '@commercetools/platform-sdk';
+
+import { ProductsQueryArgs } from './api-interfaces';
+import env from './env';
 
 type registeredResponseMessage =
   | Array<{ detailedErrorMessage: string; code: string; error: string; message: string }>
@@ -16,10 +25,19 @@ type registeredResponseMessage =
 
 class Api {
   private static instance: Api;
-  private apiRoot: ByProjectKeyRequestBuilder;
+  private apiRoot: ByProjectKeyRequestBuilder | undefined;
+  private anonymClient: Client;
+  private anonymApiRoot: ByProjectKeyRequestBuilder;
+  private eventTarget = new EventTarget();
 
   private constructor() {
-    this.apiRoot = apiRoot.getApiRoot;
+    this.anonymClient = new ClientBuilder()
+      .withClientCredentialsFlow(authMiddlewareOptions)
+      .withHttpMiddleware(httpMiddlewareOptions)
+      .build();
+    this.anonymApiRoot = createApiBuilderFromCtpClient(this.anonymClient).withProjectKey({
+      projectKey: env.projectKey,
+    });
   }
 
   public static getInstance(): Api {
@@ -27,6 +45,18 @@ class Api {
       Api.instance = new Api();
     }
     return Api.instance;
+  }
+
+  public onLoginStatusChange(callback: () => void): void {
+    this.eventTarget.addEventListener('loginStatusChanged', callback);
+  }
+
+  public offLoginStatusChange(callback: () => void): void {
+    this.eventTarget.addEventListener('loginStatusChanged', callback);
+  }
+
+  public get getAnonymApiRoot(): ByProjectKeyRequestBuilder {
+    return this.anonymApiRoot;
   }
 
   public get getTokenCustomer(): TokenStore | undefined {
@@ -47,13 +77,35 @@ class Api {
   }
 
   public async logout(): Promise<void> {
-    this.resetApiRoot();
     const token: string | undefined = this.getTokenCustomer?.token;
-    if (token) await this.revokeToken(token);
+    this.revokeToken(token);
+    this.resetApiRoot();
+    this.notifyLoginStatusChange();
   }
 
-  public async revokeToken(token: string): Promise<void> {
-    await revokeToken(token);
+  public async revokeToken(token: string | undefined): Promise<void> {
+    if (token && token.length > 0)
+      try {
+        const basicAuth = btoa(`${env.clientId}:${env.clientSecret}`);
+
+        const response = await fetch(`${env.authUrl}/oauth/token/revoke`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Authorization: `Basic ${basicAuth}`,
+          },
+          body: new URLSearchParams({
+            token: token,
+            token_type_hint: 'access_token',
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+      } catch (error) {
+        console.error('Token revocation failed:', error);
+      }
   }
 
   public clearTokenCustomer(): TokenStore {
@@ -63,7 +115,7 @@ class Api {
 
   public resetApiRoot(): void {
     this.clearTokenCustomer();
-    this.apiRoot = apiRoot.resetApiClient();
+    this.apiRoot = undefined;
   }
 
   /**
@@ -102,7 +154,7 @@ class Api {
     await this.logout();
 
     try {
-      const response: ClientResponse<CustomerSignInResult> = await this.apiRoot
+      const response: ClientResponse<CustomerSignInResult> = await this.anonymApiRoot
         .customers()
         .post({
           body: data,
@@ -116,8 +168,11 @@ class Api {
 
       const message: string = registered ? 'OK' : 'Not Registered';
 
+      await this.logout();
       return { response, registered, message };
     } catch (error) {
+      await this.logout();
+
       const message: registeredResponseMessage = [];
 
       if (
@@ -181,37 +236,30 @@ class Api {
     await this.logout();
 
     try {
-      const response: ClientResponse<CustomerSignInResult> = await this.apiRoot
-        .me()
-        .login()
-        .post({
-          body: data,
-        })
-        .execute();
+      const client = createPasswordClient(data.email, data.password);
+      this.apiRoot = createApiBuilderFromCtpClient(client).withProjectKey({
+        projectKey: env.projectKey,
+      });
+
+      const response = await this.apiRoot.me().login().post({ body: data }).execute();
 
       const signed: boolean =
         response.statusCode && response.statusCode >= 200 && response.statusCode < 300
           ? true
           : false;
-      const message: string = signed ? 'OK' : 'Not Signed';
-      if (!signed) {
-        this.clearTokenCustomer();
-        this.apiRoot = apiRoot.resetApiClient();
-      }
+      const message = signed ? 'OK' : 'Not Signed';
 
-      return { response, signed, message };
+      if (signed) {
+        this.notifyLoginStatusChange();
+        return { response, signed, message };
+      } else {
+        this.clearTokenCustomer();
+        return { response, signed, message };
+      }
     } catch (error) {
       this.clearTokenCustomer();
-      this.apiRoot = apiRoot.resetApiClient();
 
-      const message: string =
-        error &&
-        typeof error === 'object' &&
-        'message' in error &&
-        typeof error.message === 'string'
-          ? error.message
-          : 'Unknown error';
-
+      const message = error instanceof Error ? error.message : 'Unknown error';
       return { response: undefined, signed: false, message };
     }
   }
@@ -227,6 +275,7 @@ class Api {
    *   - `message`: Status message ('Customer found'/'Customer not found'/'Server connection failure')
    *   - `id` (optional): Customer ID if found
    */
+
   public async getCustomerByEmail(email: string): Promise<{
     response?: ClientResponse<CustomerPagedQueryResponse>;
     found: boolean;
@@ -243,7 +292,7 @@ class Api {
     }
 
     try {
-      const response: ClientResponse<CustomerPagedQueryResponse> = await this.apiRoot
+      const response = await this.anonymApiRoot
         .customers()
         .get({
           queryArgs: {
@@ -253,22 +302,16 @@ class Api {
         })
         .execute();
 
-      const found: boolean =
-        response.statusCode &&
-        response.statusCode >= 200 &&
-        response.statusCode < 300 &&
-        response.body.count !== 0
-          ? true
-          : false;
-      const message: string = found ? 'Customer found' : 'Customer not found';
+      const found = response.body.count > 0;
 
       return {
         response,
         found,
-        message,
-        id: response.body.results.length ? response.body.results[0].id : undefined,
+        message: found ? 'Customer found' : 'Customer not found',
+        id: found ? response.body.results[0].id : undefined,
       };
-    } catch {
+    } catch (error) {
+      console.error('Error in getCustomerByEmail:', error);
       return {
         response: undefined,
         found: false,
@@ -276,6 +319,66 @@ class Api {
         id: undefined,
       };
     }
+  }
+
+  /**
+   * Retrieves a paginated list of products from Commercetools based on query parameters.
+   *
+   * @param {ProductsQueryArgs} queryArgs - Query parameters for filtering, sorting and pagination.
+   * @param {number} [queryArgs.limit=20] - Maximum number of products to return (default: 20).
+   * @param {number} [queryArgs.offset=0] - Number of products to skip (for pagination).
+   * @param {string|string[]} [queryArgs.where] - Query predicate in Commercetools Predicate Language.
+   * @param {string|string[]} [queryArgs.expand] - References to expand (e.g., ['productType', 'taxCategory']).
+   * @param {string|string[]} [queryArgs.sort] - Sort criteria (e.g., 'createdAt desc').
+   * @param {boolean} [queryArgs.staged] - Whether to include staged changes (default: false).
+   * @param {string} [queryArgs.priceCurrency] - Currency code for price selection.
+   * @param {string} [queryArgs.priceCountry] - Country code for price selection.
+   *
+   * @returns {Promise<ClientResponse<ProductPagedQueryResponse>|undefined>}
+   *   - Returns the API response with products data if successful.
+   *   - Returns undefined and logs error if the request fails.
+   *
+   * @throws {Error}
+   *   - Throws and logs errors from Commercetools API (network issues, invalid queries etc.)
+   *
+   * @example
+   * Get first 10 published products
+   * getProductsList({
+   *   limit: 10,
+   *   where: 'masterData(published=true)'
+   * });
+   *
+   * @example
+   * Get products sorted by creation date (newest first)
+   * getProductsList({
+   *   sort: 'createdAt desc',
+   *   expand: ['productType']
+   * });
+   */
+  public async getProductsList(
+    queryArgs?: ProductsQueryArgs
+  ): Promise<ClientResponse<ProductPagedQueryResponse> | undefined> {
+    if (this.anonymApiRoot && this.loginned)
+      try {
+        const response = await this.anonymApiRoot
+          .products()
+          .get({
+            queryArgs: {
+              ...queryArgs,
+            },
+          })
+          .execute();
+
+        console.log(response.body.results);
+
+        return response;
+      } catch (error) {
+        console.error('Error while receiving goods:', error);
+      }
+  }
+
+  private notifyLoginStatusChange(): void {
+    this.eventTarget.dispatchEvent(new Event('loginStatusChanged'));
   }
 }
 

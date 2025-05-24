@@ -1,6 +1,5 @@
 import { ClientResponse, CustomerPagedQueryResponse, Customer } from '@commercetools/platform-sdk';
 import api from '@/api/api';
-import { apiRoot } from '@/api/commercetools-client';
 import { Mock } from 'vitest';
 
 describe('API Functions getCustomerByEmail', () => {
@@ -37,7 +36,8 @@ describe('API Functions getCustomerByEmail', () => {
       get: mockGet,
     });
 
-    vi.spyOn(apiRoot.getApiRoot, 'customers').mockImplementation(() => mockCustomers());
+    vi.spyOn(api.getAnonymApiRoot, 'customers').mockImplementation(() => mockCustomers());
+    vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   it('should return customer when email exists', async () => {

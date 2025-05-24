@@ -3,8 +3,8 @@ import '@/App.css';
 import Header from '@/components/header/Header';
 import Login from '@/pages/login/Login';
 import Registration from '@/pages/registration/Registration';
-import Page404 from '@/pages/page404/page404';
-import HomePage from '@/pages/home/home';
+import Page404 from '@/pages/page404/Page404';
+import HomePage from '@/pages/home/Home';
 import api from '@/api/api';
 import { useEffect } from 'react';
 
