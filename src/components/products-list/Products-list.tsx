@@ -2,6 +2,7 @@ import './Products-list.css';
 import { useSyncExternalStore, useEffect, useState } from 'react';
 import api from '@/api/api';
 import { ProductPagedQueryResponse } from '@commercetools/platform-sdk';
+import ProductCard from '@/components/ProductCard/ProductCard';
 
 const ProductList: React.FC = () => {
   const [products, setProducts] = useState<ProductPagedQueryResponse | null>(null);
@@ -51,30 +52,7 @@ const ProductList: React.FC = () => {
       <h2>Product List</h2>
       <div className="product-list">
         {products?.results.length ? (
-          products.results.map((product) => {
-            const masterVariant = product.masterData.current.masterVariant;
-            const firstImage = masterVariant.images?.[0];
-
-            return (
-              <div className="product-list-card" key={product.id}>
-                <article>
-                  <h3>{product.masterData.current.name['en-US']}</h3>
-                  {/* {product.masterData.current.description && (
-                    <p>{product.masterData.current.description['en-US']}</p>
-                  )} */}
-                  {firstImage ? (
-                    <img
-                      src={firstImage.url}
-                      alt={firstImage.label || product.masterData.current.name['en-US']}
-                      className="product-image"
-                    />
-                  ) : (
-                    <div className="image-placeholder">No Image</div>
-                  )}
-                </article>
-              </div>
-            );
-          })
+          products.results.map((product) => <ProductCard key={product.id} product={product} />)
         ) : (
           <p>No products found</p>
         )}
