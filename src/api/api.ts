@@ -14,6 +14,18 @@ import {
   ByProjectKeyRequestBuilder,
   ProductPagedQueryResponse,
   createApiBuilderFromCtpClient,
+  Customer,
+  Address,
+  MyCustomerSetFirstNameAction,
+  MyCustomerSetLastNameAction,
+  MyCustomerChangeEmailAction,
+  MyCustomerSetDateOfBirthAction,
+  MyCustomerAddAddressAction,
+  MyCustomerChangeAddressAction,
+  MyCustomerRemoveAddressAction,
+  MyCustomerSetDefaultShippingAddressAction,
+  MyCustomerSetDefaultBillingAddressAction,
+  MyCustomerUpdateAction,
 } from '@commercetools/platform-sdk';
 
 import { ProductsQueryArgs } from './api-interfaces';
@@ -34,6 +46,7 @@ class Api {
     this.anonymClient = new ClientBuilder()
       .withClientCredentialsFlow(authMiddlewareOptions)
       .withHttpMiddleware(httpMiddlewareOptions)
+      .withLoggerMiddleware() // todo remove logger after dev
       .build();
     this.anonymApiRoot = createApiBuilderFromCtpClient(this.anonymClient).withProjectKey({
       projectKey: env.projectKey,
@@ -45,6 +58,127 @@ class Api {
       Api.instance = new Api();
     }
     return Api.instance;
+  }
+
+  public async getCurrentCustomer(): Promise<{
+    response?: ClientResponse<Customer>;
+    success: boolean;
+    message: string;
+  }> {
+    if (!this.apiRoot || !this.loginned) {
+      return {
+        success: false,
+        message: 'User not authenticated',
+      };
+    }
+
+    try {
+      const response = await this.apiRoot.me().get().execute();
+
+      return {
+        response,
+        success: true,
+        message: 'Customer data retrieved successfully',
+      };
+    } catch (error) {
+      console.error('Error fetching customer data:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  public async updateCustomer(data: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    dateOfBirth?: string;
+    addresses?: {
+      action: 'addAddress' | 'changeAddress' | 'removeAddress';
+      addressId?: string;
+      address?: Address;
+    };
+    defaultShippingAddress?: string;
+    defaultBillingAddress?: string;
+  }): Promise<{
+    response?: ClientResponse<Customer>;
+    success: boolean;
+    message: string;
+  }> {
+    if (!this.apiRoot || !this.loginned) {
+      return {
+        success: false,
+        message: 'User not authenticated',
+      };
+    }
+
+    try {
+      const currentResponse = await this.apiRoot.me().get().execute();
+
+      const currentVersion = currentResponse.body.version;
+      const actions: MyCustomerUpdateAction[] = [];
+
+      if (data.firstName) {
+        actions.push(createSetFirstNameAction(data.firstName));
+      }
+
+      if (data.lastName) {
+        actions.push(createSetLastNameAction(data.lastName));
+      }
+
+      if (data.email) {
+        actions.push(createChangeEmailAction(data.email));
+      }
+
+      if (data.dateOfBirth) {
+        actions.push(createSetDateOfBirthAction(data.dateOfBirth));
+      }
+
+      if (data.addresses) {
+        if (data.addresses.action === 'addAddress' && data.addresses.address) {
+          actions.push(createAddAddressAction(data.addresses.address));
+        } else if (
+          data.addresses.action === 'changeAddress' &&
+          data.addresses.addressId &&
+          data.addresses.address
+        ) {
+          actions.push(createChangeAddressAction(data.addresses.addressId, data.addresses.address));
+        } else if (data.addresses.action === 'removeAddress' && data.addresses.addressId) {
+          actions.push(createRemoveAddressAction(data.addresses.addressId));
+        }
+      }
+
+      if (data.defaultShippingAddress) {
+        actions.push(createSetDefaultShippingAddressAction(data.defaultShippingAddress));
+      }
+
+      if (data.defaultBillingAddress) {
+        actions.push(createSetDefaultBillingAddressAction(data.defaultBillingAddress));
+      }
+
+      const response = await this.apiRoot
+        .me()
+        .post({
+          body: {
+            version: currentVersion,
+            actions,
+          },
+        })
+        .execute();
+
+      return {
+        response,
+        success: true,
+        message: 'Customer updated successfully',
+      };
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   }
 
   public onLoginStatusChange(callback: () => void): void {
@@ -358,7 +492,7 @@ class Api {
   public async getProductsList(
     queryArgs?: ProductsQueryArgs
   ): Promise<ClientResponse<ProductPagedQueryResponse> | undefined> {
-    if (this.anonymApiRoot && this.loginned)
+    if (this.anonymApiRoot)
       try {
         const response = await this.anonymApiRoot
           .products()
@@ -403,3 +537,56 @@ export function isTokenStore(data: unknown): data is TokenStore {
 
 const api: Api = Api.getInstance();
 export default api;
+
+const createSetFirstNameAction = (firstName: string): MyCustomerSetFirstNameAction => ({
+  action: 'setFirstName',
+  firstName,
+});
+
+const createSetLastNameAction = (lastName: string): MyCustomerSetLastNameAction => ({
+  action: 'setLastName',
+  lastName,
+});
+
+const createChangeEmailAction = (email: string): MyCustomerChangeEmailAction => ({
+  action: 'changeEmail',
+  email,
+});
+
+const createSetDateOfBirthAction = (dateOfBirth: string): MyCustomerSetDateOfBirthAction => ({
+  action: 'setDateOfBirth',
+  dateOfBirth,
+});
+
+const createAddAddressAction = (address: Address): MyCustomerAddAddressAction => ({
+  action: 'addAddress',
+  address,
+});
+
+const createChangeAddressAction = (
+  addressId: string,
+  address: Address
+): MyCustomerChangeAddressAction => ({
+  action: 'changeAddress',
+  addressId,
+  address,
+});
+
+const createRemoveAddressAction = (addressId: string): MyCustomerRemoveAddressAction => ({
+  action: 'removeAddress',
+  addressId,
+});
+
+const createSetDefaultShippingAddressAction = (
+  addressId: string
+): MyCustomerSetDefaultShippingAddressAction => ({
+  action: 'setDefaultShippingAddress',
+  addressId,
+});
+
+const createSetDefaultBillingAddressAction = (
+  addressId: string
+): MyCustomerSetDefaultBillingAddressAction => ({
+  action: 'setDefaultBillingAddress',
+  addressId,
+});
