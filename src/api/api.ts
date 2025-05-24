@@ -46,6 +46,10 @@ class Api {
     return Api.instance;
   }
 
+  public get getAnonymApiRoot(): ByProjectKeyRequestBuilder {
+    return this.anonymApiRoot;
+  }
+
   public get getTokenCustomer(): TokenStore | undefined {
     const store: string | null = localStorage.getItem('commercetoolsToken');
     if (store) {

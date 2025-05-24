@@ -1,6 +1,5 @@
 import { ClientResponse, CustomerSignInResult, CustomerDraft } from '@commercetools/platform-sdk';
 import api from '@/api/api';
-import { apiRoot } from '@/api/commercetools-client';
 import { Mock } from 'vitest';
 
 describe('API Functions registerCustomer', () => {
@@ -50,7 +49,7 @@ describe('API Functions registerCustomer', () => {
       post: mockPost,
     });
 
-    vi.spyOn(apiRoot.getApiRoot, 'customers').mockImplementation(() => mockCustomers());
+    vi.spyOn(api.getAnonymApiRoot, 'customers').mockImplementation(() => mockCustomers());
     vi.spyOn(api, 'logout').mockImplementation(() => Promise.resolve());
   });
 
