@@ -30,6 +30,7 @@
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+  border-radius: 8px;
 }
 
 .image-placeholder {
@@ -129,40 +130,40 @@
   color: #d32f2f;
 }
 
-.price-section {
+.product-page .price-section {
   margin: 1.5rem 0;
   padding: 1rem;
   background: #f8f9fa;
   border-radius: 8px;
 }
 
-.original-price {
+.product-page .original-price {
   text-decoration: line-through;
   color: #6c757d;
   font-size: 1.2rem;
   display: block;
 }
 
-.discounted-price-container {
+.product-page .discounted-price-container {
   display: flex;
   align-items: center;
   gap: 1rem;
   margin-top: 0.5rem;
 }
 
-.discounted-price {
+.product-page .discounted-price {
   color: #dc3545;
   font-size: 1.8rem;
   font-weight: bold;
 }
 
-.current-price {
+.product-page .current-price {
   color: #212529;
   font-size: 1.8rem;
   font-weight: bold;
 }
 
-.discount-badge {
+.product-page .discount-badge {
   background: #dc3545;
   color: white;
   padding: 0.3rem 0.8rem;
