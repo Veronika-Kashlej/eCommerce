@@ -15,23 +15,69 @@ const ProductPage = () => {
   const productName = name['en-US'];
   const productDescription = description?.['en-US'] || 'No description available';
   const images = masterVariant.images || [];
+  const prices = masterVariant.prices || [];
   const attributes = masterVariant.attributes || [];
+
+  const formatPrice = (cents: number, currency: string) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(cents / 100);
+  };
+
+  const getPriceInfo = () => {
+    if (prices.length === 0) return null;
+
+    const price = prices[0];
+    const originalPrice = price.value.centAmount;
+    const discountedPrice = price.discounted?.value.centAmount;
+    const currency = price.value.currencyCode;
+
+    return {
+      original: formatPrice(originalPrice, currency),
+      discounted: discountedPrice ? formatPrice(discountedPrice, currency) : null,
+      discountPercent: discountedPrice
+        ? Math.round((1 - discountedPrice / originalPrice) * 100)
+        : 0,
+      currency: currency,
+    };
+  };
+
+  const priceInfo = getPriceInfo();
 
   return (
     <div className="product-page">
-      {images.length > 0 ? (
-        <>
-          <div className="main-image">
-            <img src={images[0].url} alt={productName} className="product-image" />
+      <div className="product-main">
+        {images.length > 0 ? (
+          <>
+            <div className="main-image">
+              <img src={images[0].url} alt={productName} className="product-image" />
+            </div>
+          </>
+        ) : (
+          <div className="image-placeholder">No Image Available</div>
+        )}
+        {priceInfo && (
+          <div className="price-section">
+            {priceInfo.discounted ? (
+              <>
+                <span className="original-price">{priceInfo.original}</span>
+                <div className="discounted-price-container">
+                  <span className="discounted-price">{priceInfo.discounted}</span>
+                  <span className="discount-badge">Save {priceInfo.discountPercent}%</span>
+                </div>
+              </>
+            ) : (
+              <span className="current-price">{priceInfo.original}</span>
+            )}
           </div>
-        </>
-      ) : (
-        <div className="image-placeholder">No Image Available</div>
-      )}
+        )}
+      </div>
 
       <div className="product-details">
         <h1 className="product-title">{productName}</h1>
-
         <div className="product-description">
           <h3>Description</h3>
           <p>{productDescription}</p>

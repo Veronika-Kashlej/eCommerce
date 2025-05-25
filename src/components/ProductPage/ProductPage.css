@@ -1,3 +1,10 @@
+.product-main {
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
 .product-page {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -22,11 +29,6 @@
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  transition: transform 0.3s ease;
-}
-
-.product-image:hover {
-  transform: scale(1.03);
 }
 
 .image-placeholder {
@@ -126,6 +128,48 @@
   color: #d32f2f;
 }
 
+.price-section {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.original-price {
+  text-decoration: line-through;
+  color: #6c757d;
+  font-size: 1.2rem;
+  display: block;
+}
+
+.discounted-price-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.discounted-price {
+  color: #dc3545;
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.current-price {
+  color: #212529;
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.discount-badge {
+  background: #dc3545;
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
 @media (max-width: 800px) {
   .product-page {
     grid-template-columns: 1fr;
@@ -140,6 +184,15 @@
   .product-attributes ul {
     grid-template-columns: 1fr;
     gap: 15px;
+  }
+
+  .discounted-price,
+  .current-price {
+    font-size: 1.5rem;
+  }
+
+  .original-price {
+    font-size: 1rem;
   }
 }
 
