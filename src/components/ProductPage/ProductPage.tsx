@@ -1,6 +1,10 @@
 import { useLocation } from 'react-router-dom';
 import './ProductPage.css';
 import { Attribute } from '@commercetools/platform-sdk';
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
+import { ProductImage } from '@/types/interfaces';
 
 const ProductPage = () => {
   const { state } = useLocation();
@@ -14,7 +18,12 @@ const ProductPage = () => {
 
   const productName = name['en-US'];
   const productDescription = description?.['en-US'] || 'No description available';
-  const images = masterVariant.images || [];
+  const images: ProductImage[] =
+    masterVariant.images?.map((img: ProductImage) => ({
+      url: img.url,
+      dimensions: img.dimensions,
+      label: img.label,
+    })) || [];
   const prices = masterVariant.prices || [];
   const attributes = masterVariant.attributes || [];
 
@@ -47,15 +56,35 @@ const ProductPage = () => {
 
   const priceInfo = getPriceInfo();
 
+  const sliderSettings = {
+    dots: images.length > 1,
+    infinite: images.length > 1,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    arrows: images.length > 1,
+    dotsClass: images.length > 1 ? 'slick-dots' : 'slick-dots-hidden',
+    adaptiveHeight: true,
+    swipe: true,
+  };
+
   return (
     <div className="product-page">
       <div className="product-main">
         {images.length > 0 ? (
-          <>
-            <div className="main-image">
-              <img src={images[0].url} alt={productName} className="product-image" />
-            </div>
-          </>
+          <div className="product-slider">
+            <Slider {...sliderSettings}>
+              {images.map((image: ProductImage, index: number) => (
+                <div key={index} className="slider-image-container">
+                  <img
+                    src={image.url}
+                    alt={`${productName} - ${index + 1}`}
+                    className="product-image"
+                  />
+                </div>
+              ))}
+            </Slider>
+          </div>
         ) : (
           <div className="image-placeholder">No Image Available</div>
         )}
