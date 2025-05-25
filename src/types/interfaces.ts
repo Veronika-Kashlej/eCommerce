@@ -1,4 +1,5 @@
 import { Country } from './enums';
+import { Address as CtAddress } from '@commercetools/platform-sdk';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -40,12 +41,17 @@ export interface User {
   addresses: Address[];
 }
 
-interface Address {
-  id: string;
-  streetName: string;
-  postalCode: string;
-  city: string;
-  country: Country; // or string?
+interface Address extends CtAddress {
   defaultBilling?: boolean;
   defaultShipping?: boolean;
 }
+
+// interface Address {
+//   id: string;
+//   streetName: string;
+//   postalCode: string;
+//   city: string;
+//   country: Country; // or string?
+//   defaultBilling?: boolean;
+//   defaultShipping?: boolean;
+// }

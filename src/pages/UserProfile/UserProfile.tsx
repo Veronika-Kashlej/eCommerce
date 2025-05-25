@@ -1,6 +1,6 @@
+import api from '@/api/api';
 import { User } from '@/types/interfaces';
 import React, { useEffect, useState } from 'react';
-import { fetchCustomer } from './UserProfile-api';
 import WaitingModal from '@/components/waiting/Waiting';
 import './UserProfile.css';
 
@@ -10,12 +10,24 @@ const UserProfile: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchCustomer('user-id') // надо не забыть заменить
-      .then((data) => {
-        setUser(data);
+    api
+      .getCurrentCustomer()
+      .then((res) => {
+        if (res.success && res.response) {
+          const customerData = res.response.body;
+
+          setUser({
+            firstName: customerData.firstName!,
+            lastName: customerData.lastName!,
+            dob: customerData.dateOfBirth!,
+            addresses: customerData.addresses ?? [],
+          });
+        } else {
+          setError('Не удалось получить данные пользователя');
+        }
         setLoading(false);
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         console.error('Ошибка при загрузке данных:', err);
         setError('Ошибка при загрузке данных');
         setLoading(false);
