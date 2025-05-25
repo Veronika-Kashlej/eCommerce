@@ -1,5 +1,6 @@
 import { Product } from '@commercetools/platform-sdk';
 import './ProductCard.css';
+import { Link } from 'react-router-dom';
 
 interface ProductCardProps {
   product: Product;
@@ -33,7 +34,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       : 0;
 
   return (
-    <a className="product-card">
+    <Link to={`/product/${product.id}`} className="product-card" state={{ product }}>
       {hasDiscount && <div className="discount-badge">-{discountPercentage}%</div>}
       <div className="product-image-container">
         {firstImage ? (
@@ -66,7 +67,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           )}
         </div>
       </div>
-    </a>
+    </Link>
   );
 };
 
