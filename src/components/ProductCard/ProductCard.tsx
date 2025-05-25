@@ -1,5 +1,6 @@
 import { Product } from '@commercetools/platform-sdk';
 import './ProductCard.css';
+import { Link } from 'react-router-dom';
 
 interface ProductCardProps {
   product: Product;
@@ -11,8 +12,30 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const productName = product.masterData.current.name['en-US'];
   const productDescription = product.masterData.current.description?.['en-US'] || '';
 
+  const priceData = masterVariant.prices?.[0];
+  const originalPriceCents = priceData?.value?.centAmount;
+  const discountedPriceCents = priceData?.discounted?.value?.centAmount;
+  const currencyCode = priceData?.value?.currencyCode || 'USD';
+  const hasDiscount =
+    !!priceData?.discounted &&
+    originalPriceCents !== undefined &&
+    discountedPriceCents !== undefined;
+  const formatPrice = (cents: number | undefined) => {
+    if (cents === undefined) return 'Price not available';
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: currencyCode,
+    }).format(cents / 100);
+  };
+
+  const discountPercentage =
+    hasDiscount && originalPriceCents && discountedPriceCents
+      ? Math.round((1 - discountedPriceCents / originalPriceCents) * 100)
+      : 0;
+
   return (
-    <a className="product-card">
+    <Link to={`/product/${product.id}`} className="product-card" state={{ product }}>
+      {hasDiscount && <div className="discount-badge">-{discountPercentage}%</div>}
       <div className="product-image-container">
         {firstImage ? (
           <img
@@ -33,8 +56,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {productDescription.substring(0, 100)}
           {productDescription.length > 100 ? '...' : ''}
         </p>
+        <div className="price-section">
+          {hasDiscount ? (
+            <>
+              <span className="original-price">{formatPrice(originalPriceCents)}</span>
+              <span className="current-price">{formatPrice(discountedPriceCents)}</span>
+            </>
+          ) : (
+            <span className="current-price">{formatPrice(originalPriceCents)}</span>
+          )}
+        </div>
       </div>
-    </a>
+    </Link>
   );
 };
 

@@ -32,3 +32,7 @@ export const postalCodePatterns: PostalCodePatterns = {
   [Country.UA]: /^\d{5}$/,
   [Country.US]: /^\d{5}(-\d{4})?$/,
 };
+
+export interface Attribute {
+  name: string;
+}
