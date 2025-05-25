@@ -36,3 +36,9 @@ export const postalCodePatterns: PostalCodePatterns = {
 export interface Attribute {
   name: string;
 }
+
+export interface ProductImage {
+  url: string;
+  dimensions?: { w: number; h: number };
+  label?: string;
+}
