@@ -1,23 +1,24 @@
 import './Products-list.css';
 import { useEffect, useState } from 'react';
 import api from '@/api/api';
-import { ProductPagedQueryResponse } from '@commercetools/platform-sdk';
+import { ProductProjectionPagedSearchResponse } from '@commercetools/platform-sdk';
 import ProductCard from '@/components/ProductCard/ProductCard';
 import PaginationControls from '@/components/products-list/PaginationControls';
-import { ProductsQueryArgs } from '@/api/api-interfaces';
+import { ProductProjectionSearchArgs } from '@/api/interfaces/types';
 
 const ProductList: React.FC = () => {
-  const [products, setProducts] = useState<ProductPagedQueryResponse | null>(null);
+  const [products, setProducts] = useState<ProductProjectionPagedSearchResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [appliedSearchQuery, setAppliedSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [offset, setOffset] = useState(0);
   const [limit, setLimit] = useState<number>(5);
 
   const limitOptions = [5, 10, 15, 25, 30, 50, 100];
   const categories = [
-    { id: '1', name: 'Electronics' }, // todo change to real
+    { id: '1', name: 'Electronics' },
     { id: '2', name: 'Clothing' },
     { id: '3', name: 'Books' },
   ];
@@ -28,16 +29,15 @@ const ProductList: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const params: ProductsQueryArgs = {
+        const params: ProductProjectionSearchArgs = {
           limit,
           offset,
-          ...(searchQuery && { search: searchQuery }),
-          ...(selectedCategory && { category: selectedCategory }),
+          ...(appliedSearchQuery && { searchTerm: appliedSearchQuery }),
+          filter: selectedCategory ? [`categories.id:"${selectedCategory}"`] : undefined,
+          facet: ['variants.attributes.color', 'variants.attributes.size'],
         };
 
         const response = await api.getProductsList(params);
-        console.log('params = ', params);
-        console.log('response = ', response);
 
         if (response) {
           setProducts(response.body);
@@ -51,10 +51,20 @@ const ProductList: React.FC = () => {
     };
 
     fetchProducts();
-  }, [searchQuery, selectedCategory, offset, limit]);
+  }, [appliedSearchQuery, selectedCategory, offset, limit]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      applySearch();
+    }
+  };
+
+  const applySearch = () => {
+    setAppliedSearchQuery(searchQuery);
     setOffset(0);
   };
 
@@ -84,12 +94,18 @@ const ProductList: React.FC = () => {
       <h2>Product List</h2>
 
       <div className="product-filters">
-        <input
-          type="text"
-          placeholder="Search products..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-        />
+        <div className="search-container">
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            onKeyDown={handleKeyDown}
+          />
+          <button onClick={applySearch} className="search-button">
+            Search
+          </button>
+        </div>
 
         <select value={selectedCategory} onChange={handleCategoryChange}>
           <option value="">All Categories</option>
