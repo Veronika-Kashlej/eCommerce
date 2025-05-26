@@ -14,6 +14,7 @@ import {
   ByProjectKeyRequestBuilder,
   ProductPagedQueryResponse,
   createApiBuilderFromCtpClient,
+  Product,
   Customer,
   Address,
   MyCustomerSetFirstNameAction,
@@ -509,6 +510,20 @@ class Api {
       } catch (error) {
         console.error('Error while receiving goods:', error);
       }
+  }
+
+  public async getProductById(productId: string): Promise<Product> {
+    try {
+      const response = await this.anonymApiRoot
+        .products()
+        .withId({ ID: productId })
+        .get()
+        .execute();
+      return response.body;
+    } catch (error) {
+      console.error('Error fetching product:', error);
+      throw error;
+    }
   }
 
   private notifyLoginStatusChange(): void {
