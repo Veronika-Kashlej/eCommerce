@@ -31,6 +31,12 @@
   max-height: 100%;
   object-fit: contain;
   border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.product-image:hover {
+  transform: scale(1.02);
 }
 
 .image-placeholder {

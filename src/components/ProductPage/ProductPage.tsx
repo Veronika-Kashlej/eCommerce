@@ -7,6 +7,7 @@ import 'slick-carousel/slick/slick-theme.css';
 import { ProductImage } from '@/types/interfaces';
 import { useEffect, useState } from 'react';
 import api from '@/api/api';
+import ImageModal from '../image-modal/ImageModal';
 
 const ProductPage = () => {
   const { productId } = useParams();
@@ -14,6 +15,7 @@ const ProductPage = () => {
   const [product, setProduct] = useState<Product | null>(state?.product || null);
   const [loading, setLoading] = useState(!state?.product);
   const [, setError] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     setProduct(null);
@@ -45,6 +47,13 @@ const ProductPage = () => {
   if (!product) {
     return <div className="product-not-found">Product not found</div>;
   }
+
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+  };
+  const closeModal = () => {
+    setSelectedImage(null);
+  };
 
   const { name, description, masterVariant } = product.masterData.current;
 
@@ -100,8 +109,12 @@ const ProductPage = () => {
     swipe: true,
   };
 
+  const modal = selectedImage && (
+    <ImageModal imageUrl={selectedImage} altText={productName} onClose={closeModal} />
+  );
   return (
     <div className="product-page">
+      {modal}
       <div className="product-main">
         {images.length > 0 ? (
           <div className="product-slider">
@@ -112,6 +125,7 @@ const ProductPage = () => {
                     src={image.url}
                     alt={`${productName} - ${index + 1}`}
                     className="product-image"
+                    onClick={() => handleImageClick(image.url)}
                   />
                 </div>
               ))}
