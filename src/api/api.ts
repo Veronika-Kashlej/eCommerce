@@ -12,24 +12,18 @@ import {
   CustomerPagedQueryResponse,
   MyCustomerSignin,
   ByProjectKeyRequestBuilder,
-  ProductPagedQueryResponse,
   createApiBuilderFromCtpClient,
-  Customer,
-  Address,
-  MyCustomerSetFirstNameAction,
-  MyCustomerSetLastNameAction,
-  MyCustomerChangeEmailAction,
-  MyCustomerSetDateOfBirthAction,
-  MyCustomerAddAddressAction,
-  MyCustomerChangeAddressAction,
-  MyCustomerRemoveAddressAction,
-  MyCustomerSetDefaultShippingAddressAction,
-  MyCustomerSetDefaultBillingAddressAction,
-  MyCustomerUpdateAction,
+  ProductProjectionPagedSearchResponse,
 } from '@commercetools/platform-sdk';
 
-import { ProductsQueryArgs } from './api-interfaces';
+import { ProductsQueryArgs } from './interfaces/types';
 import env from './env';
+
+import { registerCustomer } from './customers/customer-registration';
+import { getCurrentCustomer } from './customers/customer-get';
+import { updateCustomer } from './customers/customer-update';
+import { CustomerUpdateData } from './interfaces/types';
+import { getProductsList } from './products/product-query';
 
 type registeredResponseMessage =
   | Array<{ detailedErrorMessage: string; code: string; error: string; message: string }>
@@ -60,125 +54,12 @@ class Api {
     return Api.instance;
   }
 
-  public async getCurrentCustomer(): Promise<{
-    response?: ClientResponse<Customer>;
-    success: boolean;
-    message: string;
-  }> {
-    if (!this.apiRoot || !this.loginned) {
-      return {
-        success: false,
-        message: 'User not authenticated',
-      };
-    }
-
-    try {
-      const response = await this.apiRoot.me().get().execute();
-
-      return {
-        response,
-        success: true,
-        message: 'Customer data retrieved successfully',
-      };
-    } catch (error) {
-      console.error('Error fetching customer data:', error);
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Unknown error',
-      };
-    }
+  public async getCurrentCustomer() {
+    return getCurrentCustomer(this.apiRoot, this.loginned);
   }
 
-  public async updateCustomer(data: {
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    dateOfBirth?: string;
-    addresses?: {
-      action: 'addAddress' | 'changeAddress' | 'removeAddress';
-      addressId?: string;
-      address?: Address;
-    };
-    defaultShippingAddress?: string;
-    defaultBillingAddress?: string;
-  }): Promise<{
-    response?: ClientResponse<Customer>;
-    success: boolean;
-    message: string;
-  }> {
-    if (!this.apiRoot || !this.loginned) {
-      return {
-        success: false,
-        message: 'User not authenticated',
-      };
-    }
-
-    try {
-      const currentResponse = await this.apiRoot.me().get().execute();
-
-      const currentVersion = currentResponse.body.version;
-      const actions: MyCustomerUpdateAction[] = [];
-
-      if (data.firstName) {
-        actions.push(createSetFirstNameAction(data.firstName));
-      }
-
-      if (data.lastName) {
-        actions.push(createSetLastNameAction(data.lastName));
-      }
-
-      if (data.email) {
-        actions.push(createChangeEmailAction(data.email));
-      }
-
-      if (data.dateOfBirth) {
-        actions.push(createSetDateOfBirthAction(data.dateOfBirth));
-      }
-
-      if (data.addresses) {
-        if (data.addresses.action === 'addAddress' && data.addresses.address) {
-          actions.push(createAddAddressAction(data.addresses.address));
-        } else if (
-          data.addresses.action === 'changeAddress' &&
-          data.addresses.addressId &&
-          data.addresses.address
-        ) {
-          actions.push(createChangeAddressAction(data.addresses.addressId, data.addresses.address));
-        } else if (data.addresses.action === 'removeAddress' && data.addresses.addressId) {
-          actions.push(createRemoveAddressAction(data.addresses.addressId));
-        }
-      }
-
-      if (data.defaultShippingAddress) {
-        actions.push(createSetDefaultShippingAddressAction(data.defaultShippingAddress));
-      }
-
-      if (data.defaultBillingAddress) {
-        actions.push(createSetDefaultBillingAddressAction(data.defaultBillingAddress));
-      }
-
-      const response = await this.apiRoot
-        .me()
-        .post({
-          body: {
-            version: currentVersion,
-            actions,
-          },
-        })
-        .execute();
-
-      return {
-        response,
-        success: true,
-        message: 'Customer updated successfully',
-      };
-    } catch (error) {
-      console.error('Error updating customer:', error);
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Unknown error',
-      };
-    }
+  public async updateCustomer(data: CustomerUpdateData) {
+    return updateCustomer(this.apiRoot, this.loginned, data);
   }
 
   public onLoginStatusChange(callback: () => void): void {
@@ -252,102 +133,15 @@ class Api {
     this.apiRoot = undefined;
   }
 
-  /**
-   * Registers a new customer with the provided details.
-   *
-   * @param {CustomerDraft} data - Customer registration data containing:
-   * @param {string} data.email - Customer's email address (must be valid format, e.g., user@example.com)
-   * @param {string} data.password - Customer's password (min 8 chars, 1 uppercase, 1 lowercase, 1 number)
-   * @param {string} data.firstName - Customer's first name (no special chars or numbers)
-   * @param {string} data.lastName - Customer's last name (no special chars or numbers)
-   * @param {string} [data.dateOfBirth] - Customer's date of birth (YYYY-MM-DD format, must be ≥13 years old, optional)
-   * @param {Object} [data.addresses] - Customer's address details (optional)
-   * @param {Object[]} [data.addresses] - Array of address objects
-   * @param {string} data.addresses[].street - Street address (min 1 character)
-   * @param {string} data.addresses[].city - City name (no special chars or numbers)
-   * @param {string} data.addresses[].postalCode - Postal code (format depends on country)
-   * @param {string} data.addresses[].country - Country code (must be valid, e.g., 'US', 'BY', 'UA', 'RU')
-   * @param {string} [data.defaultShippingAddress] - Index of default shipping address in addresses array
-   * @param {string} [data.defaultBillingAddress] - Index of default billing address in addresses array
-   *
-   * @returns {Promise<{
-   *   response?: ClientResponse<CustomerSignInResult>;
-   *   registered: boolean;
-   *   message: registeredResponseMessage;
-   * }>}
-   *   A promise that resolves with an object containing:
-   *   - `response` (optional): The API response if registration was successful.
-   *   - `registered`: A boolean indicating whether registration succeeded (`true` if HTTP status 200-299).
-   *   - `message`: An array of parsed error messages if registration failed, or `'OK'` if successful.
-   */
   public async registerCustomer(data: CustomerDraft): Promise<{
     response?: ClientResponse<CustomerSignInResult>;
     registered: boolean;
     message: registeredResponseMessage;
   }> {
     await this.logout();
-
-    try {
-      const response: ClientResponse<CustomerSignInResult> = await this.anonymApiRoot
-        .customers()
-        .post({
-          body: data,
-        })
-        .execute();
-
-      const registered: boolean =
-        response.statusCode && response.statusCode >= 200 && response.statusCode < 300
-          ? true
-          : false;
-
-      const message: string = registered ? 'OK' : 'Not Registered';
-
-      await this.logout();
-      return { response, registered, message };
-    } catch (error) {
-      await this.logout();
-
-      const message: registeredResponseMessage = [];
-
-      if (
-        error &&
-        typeof error === 'object' &&
-        'body' in error &&
-        error.body &&
-        typeof error.body === 'object' &&
-        'errors' in error.body &&
-        error.body.errors &&
-        Array.isArray(error.body.errors)
-      ) {
-        error.body.errors.forEach(
-          (value: {
-            code: string;
-            detailedErrorMessage?: string;
-            message: string;
-            duplicateValue?: string;
-          }) => {
-            if (value.detailedErrorMessage) {
-              const parsedValue = value.detailedErrorMessage.split(':').map((part) => part.trim());
-              const [code = '', error = '', ...rest] = parsedValue;
-              message.push({
-                detailedErrorMessage: value.detailedErrorMessage,
-                code,
-                error,
-                message: rest.join(':'),
-              });
-            } else {
-              message.push({
-                detailedErrorMessage: value.message,
-                code: value.code,
-                error: value.duplicateValue || value.message,
-                message: value.message,
-              });
-            }
-          }
-        );
-      }
-      return { response: undefined, registered: false, message };
-    }
+    const result = await registerCustomer(this.anonymApiRoot, data);
+    await this.logout();
+    return result;
   }
 
   /**
@@ -455,60 +249,11 @@ class Api {
     }
   }
 
-  /**
-   * Retrieves a paginated list of products from Commercetools based on query parameters.
-   *
-   * @param {ProductsQueryArgs} queryArgs - Query parameters for filtering, sorting and pagination.
-   * @param {number} [queryArgs.limit=20] - Maximum number of products to return (default: 20).
-   * @param {number} [queryArgs.offset=0] - Number of products to skip (for pagination).
-   * @param {string|string[]} [queryArgs.where] - Query predicate in Commercetools Predicate Language.
-   * @param {string|string[]} [queryArgs.expand] - References to expand (e.g., ['productType', 'taxCategory']).
-   * @param {string|string[]} [queryArgs.sort] - Sort criteria (e.g., 'createdAt desc').
-   * @param {boolean} [queryArgs.staged] - Whether to include staged changes (default: false).
-   * @param {string} [queryArgs.priceCurrency] - Currency code for price selection.
-   * @param {string} [queryArgs.priceCountry] - Country code for price selection.
-   *
-   * @returns {Promise<ClientResponse<ProductPagedQueryResponse>|undefined>}
-   *   - Returns the API response with products data if successful.
-   *   - Returns undefined and logs error if the request fails.
-   *
-   * @throws {Error}
-   *   - Throws and logs errors from Commercetools API (network issues, invalid queries etc.)
-   *
-   * @example
-   * Get first 10 published products
-   * getProductsList({
-   *   limit: 10,
-   *   where: 'masterData(published=true)'
-   * });
-   *
-   * @example
-   * Get products sorted by creation date (newest first)
-   * getProductsList({
-   *   sort: 'createdAt desc',
-   *   expand: ['productType']
-   * });
-   */
   public async getProductsList(
     queryArgs?: ProductsQueryArgs
-  ): Promise<ClientResponse<ProductPagedQueryResponse> | undefined> {
-    if (this.anonymApiRoot)
-      try {
-        const response = await this.anonymApiRoot
-          .products()
-          .get({
-            queryArgs: {
-              ...queryArgs,
-            },
-          })
-          .execute();
-
-        console.log(response.body.results);
-
-        return response;
-      } catch (error) {
-        console.error('Error while receiving goods:', error);
-      }
+  ): Promise<ClientResponse<ProductProjectionPagedSearchResponse> | undefined> {
+    if (!this.anonymApiRoot) return undefined;
+    return getProductsList(this.anonymApiRoot, queryArgs);
   }
 
   private notifyLoginStatusChange(): void {
@@ -537,56 +282,3 @@ export function isTokenStore(data: unknown): data is TokenStore {
 
 const api: Api = Api.getInstance();
 export default api;
-
-const createSetFirstNameAction = (firstName: string): MyCustomerSetFirstNameAction => ({
-  action: 'setFirstName',
-  firstName,
-});
-
-const createSetLastNameAction = (lastName: string): MyCustomerSetLastNameAction => ({
-  action: 'setLastName',
-  lastName,
-});
-
-const createChangeEmailAction = (email: string): MyCustomerChangeEmailAction => ({
-  action: 'changeEmail',
-  email,
-});
-
-const createSetDateOfBirthAction = (dateOfBirth: string): MyCustomerSetDateOfBirthAction => ({
-  action: 'setDateOfBirth',
-  dateOfBirth,
-});
-
-const createAddAddressAction = (address: Address): MyCustomerAddAddressAction => ({
-  action: 'addAddress',
-  address,
-});
-
-const createChangeAddressAction = (
-  addressId: string,
-  address: Address
-): MyCustomerChangeAddressAction => ({
-  action: 'changeAddress',
-  addressId,
-  address,
-});
-
-const createRemoveAddressAction = (addressId: string): MyCustomerRemoveAddressAction => ({
-  action: 'removeAddress',
-  addressId,
-});
-
-const createSetDefaultShippingAddressAction = (
-  addressId: string
-): MyCustomerSetDefaultShippingAddressAction => ({
-  action: 'setDefaultShippingAddress',
-  addressId,
-});
-
-const createSetDefaultBillingAddressAction = (
-  addressId: string
-): MyCustomerSetDefaultBillingAddressAction => ({
-  action: 'setDefaultBillingAddress',
-  addressId,
-});
