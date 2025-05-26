@@ -38,11 +38,17 @@ const UserProfile: React.FC = () => {
   if (error) return <p>{error}</p>;
   if (!user) return null;
 
-  const billingAddress = user.addresses.find((addr) => addr.defaultBilling);
+  //const billingAddress = user.addresses.find((addr) => addr.defaultBilling);
+  const billingAddress = user.addresses.find((addr) => addr.Billing);
   const shippingAddress = user.addresses.find((addr) => addr.defaultShipping);
   const otherAddresses = user.addresses.filter(
     (addr) => addr !== billingAddress && addr !== shippingAddress
   );
+
+  //проверка получения типов адреса
+  //const addressType = user.addresses.filter((addr) => addr.custom?.fields?.addressType);
+  //console.log(`AdressType ${addressType}`);
+  //console.log(user.addresses.filter((addr) => addr));
 
   return (
     <div className="wrapper">

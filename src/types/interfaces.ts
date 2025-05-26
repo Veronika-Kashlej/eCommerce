@@ -42,6 +42,7 @@ export interface User {
 }
 
 interface Address extends CtAddress {
+  Billing?: boolean;
   defaultBilling?: boolean;
   defaultShipping?: boolean;
 }
