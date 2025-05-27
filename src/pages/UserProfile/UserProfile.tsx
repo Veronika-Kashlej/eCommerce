@@ -3,18 +3,31 @@ import { User } from '@/types/interfaces';
 import React, { useEffect, useState } from 'react';
 import WaitingModal from '@/components/waiting/Waiting';
 import './UserProfile.css';
+import { useNavigate } from 'react-router-dom';
 
 const UserProfile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!api.loginned) {
+      navigate('/login');
+    }
+  }, [navigate]);
 
   useEffect(() => {
     api
       .getCurrentCustomer()
       .then((res) => {
+        console.log(res.success); // проверка
+        console.log(res.response);
+
         if (res.success && res.response) {
           const customerData = res.response.body;
+
+          // console.log(customerData); //проверка
 
           setUser({
             firstName: customerData.firstName!,
@@ -23,13 +36,13 @@ const UserProfile: React.FC = () => {
             addresses: customerData.addresses ?? [],
           });
         } else {
-          setError('Не удалось получить данные пользователя');
+          setError('User data is not available or user is not registered');
         }
         setLoading(false);
       })
       .catch((err: unknown) => {
-        console.error('Ошибка при загрузке данных:', err);
-        setError('Ошибка при загрузке данных');
+        console.error('Error loading data:', err);
+        setError('Error loading data');
         setLoading(false);
       });
   }, []);
@@ -44,11 +57,6 @@ const UserProfile: React.FC = () => {
   const otherAddresses = user.addresses.filter(
     (addr) => addr !== billingAddress && addr !== shippingAddress
   );
-
-  //проверка получения типов адреса
-  //const addressType = user.addresses.filter((addr) => addr.custom?.fields?.addressType);
-  //console.log(`AdressType ${addressType}`);
-  //console.log(user.addresses.filter((addr) => addr));
 
   return (
     <div className="wrapper">
