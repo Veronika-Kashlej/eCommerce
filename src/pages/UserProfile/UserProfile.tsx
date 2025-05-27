@@ -96,21 +96,23 @@ const UserProfile: React.FC = () => {
   return (
     <div className="wrapper">
       <section className="first_section">
-        <h1>Личная информация</h1>
+        <h1>Personal information</h1>
         <p>
-          <strong className="name">Имя:</strong> {user.firstName} {user.lastName}
+          <strong className="name">First Name / Second Name:</strong> {user.firstName}
+          {' / '}
+          {user.lastName}
         </p>
         {user.dob && (
           <p>
-            <strong>Дата рождения:</strong> {user.dob}
+            <strong>Date of birth:</strong> {user.dob}
           </p>
         )}
       </section>
 
       <section>
-        <h2 className="addresses-container">Адреса пользователя:</h2>
+        <h2 className="addresses-container">Customer addresses:</h2>
 
-        <h3>Адреса для доставки</h3>
+        <h3>Shipping addresses</h3>
         {shippingAddresses.length > 0 ? (
           shippingAddresses.map((addr) => (
             <div
@@ -123,17 +125,17 @@ const UserProfile: React.FC = () => {
               <p>{addr.postalCode}</p>
               <p>{addr.country}</p>
               {addr.id === defaultShippingAddr?.id && (
-                <span className="default-label">Основной для доставки</span>
+                <span className="default-label">Default shipping address</span>
               )}
             </div>
           ))
         ) : (
-          <p>Нет адресов для доставки</p>
+          <p>shipping addresses ar'nt registered</p>
         )}
 
         <div className="zone-divider"></div>
 
-        <h3>Адреса для выставления счетов</h3>
+        <h3>Billing addresses</h3>
         {billingAddresses.length > 0 ? (
           billingAddresses.map((addr) => (
             <div
@@ -146,17 +148,17 @@ const UserProfile: React.FC = () => {
               <p>{addr.postalCode}</p>
               <p>{addr.country}</p>
               {addr.id === defaultBillingAddr?.id && (
-                <span className="default-label">Основной для счета</span>
+                <span className="default-label">Default billing address</span>
               )}
             </div>
           ))
         ) : (
-          <p>Нет адресов для выставления счетов</p>
+          <p>billing addresses ar'nt registered</p>
         )}
 
         <div className="zone-divider"></div>
 
-        <h3>Другие адреса</h3>
+        <h3>Other Addresses</h3>
         {otherAddresses.length > 0 ? (
           otherAddresses.map((addr) => (
             <div key={addr.id} className="address">
@@ -168,7 +170,7 @@ const UserProfile: React.FC = () => {
             </div>
           ))
         ) : (
-          <p>Нет других адресов</p>
+          <p>No other addresses</p>
         )}
       </section>
     </div>

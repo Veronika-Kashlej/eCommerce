@@ -53,6 +53,11 @@
   border: 1px solid #ddd;
 }
 
+.address:hover {
+  transition: box-shadow 0.3s;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
 .address.default {
   border: 2px solid #007bff;
   background-color: #e0f7fa;
