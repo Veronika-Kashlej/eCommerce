@@ -53,6 +53,18 @@
   border: 1px solid #ddd;
 }
 
+.address.default {
+  border: 2px solid #007bff;
+  background-color: #e0f7fa;
+}
+
+.default-label {
+  color: #007bff;
+  font-weight: bold;
+  display: block;
+  margin-top: 5px;
+}
+
 .zone-divider {
   height: 2px;
   background-color: #ccc;

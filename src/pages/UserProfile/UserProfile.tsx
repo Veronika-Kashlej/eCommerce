@@ -10,10 +10,13 @@ const UserProfile: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  // const billingAddress: [] = [];
+
   const [billingAddresses, setBillingAddresses] = useState<Address[]>([]);
   const [shippingAddresses, setShippingAddresses] = useState<Address[]>([]);
   const [otherAddresses, setOtherAddresses] = useState<Address[]>([]);
+
+  const [defaultBillingAddr, setDefaultBillingAddr] = useState<Address | undefined>(undefined);
+  const [defaultShippingAddr, setDefaultShippingAddr] = useState<Address | undefined>(undefined);
 
   useEffect(() => {
     if (!api.loginned) {
@@ -33,14 +36,20 @@ const UserProfile: React.FC = () => {
 
           console.log(customerData); //проверка
 
-          //const billingAddressId = customerData.billingAddressIds;
-          //console.error(billingAddressId);
-
           const addresses = customerData.addresses ?? [];
           const billingAddressIds = customerData.billingAddressIds ?? [];
           const shippingAddressIds = customerData.shippingAddressIds ?? [];
 
-          const usedIds = new Set([...billingAddressIds, ...shippingAddressIds]);
+          // const defaultBillingId = customerData.defaultBillingAddressId;
+          // const defaultShippingId = customerData.defaultShippingAddressId;
+
+          const getAddressById = (id: string | undefined) => {
+            if (!id) return undefined;
+            return addresses.find((addr) => addr.id === id);
+          };
+
+          setDefaultBillingAddr(getAddressById(customerData.defaultBillingAddressId));
+          setDefaultShippingAddr(getAddressById(customerData.defaultShippingAddressId));
 
           const billingAddresses = billingAddressIds
             .map((id) => customerData.addresses.find((addr) => addr.id === id))
@@ -50,16 +59,19 @@ const UserProfile: React.FC = () => {
             .map((id) => customerData.addresses.find((addr) => addr.id === id))
             .filter((addr): addr is Address => addr !== undefined);
 
-          //const otherAddrs = addresses.filter((addr) => !usedIds.has(addr.id));
+          const usedIds = new Set([...billingAddressIds, ...shippingAddressIds]);
+
           const otherAddrs = addresses.filter(
             (addr) => addr.id !== undefined && !usedIds.has(addr.id)
           );
+
+          // const defaultBillingAddress = getAddressById(defaultBillingId);
+          // const defaultShippingAddress = getAddressById(defaultShippingId);
 
           setUser({
             firstName: customerData.firstName!,
             lastName: customerData.lastName!,
             dob: customerData.dateOfBirth!,
-            //addresses: customerData.addresses ?? [],
             addresses: addresses,
           });
           setBillingAddresses(billingAddresses);
@@ -81,20 +93,6 @@ const UserProfile: React.FC = () => {
   if (error) return <p>{error}</p>;
   if (!user) return null;
 
-  // const billingAddress = user.addresses.find((addr) => addr.defaultBilling);
-  // // const billingAddress = user.addresses.find((addr) => addr.Billing);
-  // const shippingAddress = user.addresses.find((addr) => addr.defaultShipping);
-
-  // const otherAddresses = user.addresses.filter(
-  //   (addr) => addr !== billingAddress && addr !== shippingAddress
-  // );
-
-  // const shippingAddress1 = user.addresses.find(
-  //   (addr) => addr.custom?.fields?.addressType === 'Shipping'
-  // );
-  //console.error(`First: ${shippingAddress1}`);
-  //console.error(`second: ${shippingAddress}`);
-
   return (
     <div className="wrapper">
       <section className="first_section">
@@ -115,12 +113,18 @@ const UserProfile: React.FC = () => {
         <h3>Адреса для доставки</h3>
         {shippingAddresses.length > 0 ? (
           shippingAddresses.map((addr) => (
-            <div key={addr.id} className="address">
+            <div
+              key={addr.id}
+              className={`address ${addr.id === defaultShippingAddr?.id ? 'default' : ''}`}
+            >
               <p>
                 {addr.streetName}, {addr.city}
               </p>
               <p>{addr.postalCode}</p>
               <p>{addr.country}</p>
+              {addr.id === defaultShippingAddr?.id && (
+                <span className="default-label">Основной для доставки</span>
+              )}
             </div>
           ))
         ) : (
@@ -132,12 +136,18 @@ const UserProfile: React.FC = () => {
         <h3>Адреса для выставления счетов</h3>
         {billingAddresses.length > 0 ? (
           billingAddresses.map((addr) => (
-            <div key={addr.id} className="address">
+            <div
+              key={addr.id}
+              className={`address ${addr.id === defaultBillingAddr?.id ? 'default' : ''}`}
+            >
               <p>
                 {addr.streetName}, {addr.city}
               </p>
               <p>{addr.postalCode}</p>
               <p>{addr.country}</p>
+              {addr.id === defaultBillingAddr?.id && (
+                <span className="default-label">Основной для счета</span>
+              )}
             </div>
           ))
         ) : (
