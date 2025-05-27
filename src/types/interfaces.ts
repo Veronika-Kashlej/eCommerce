@@ -41,7 +41,7 @@ export interface User {
   addresses: Address[];
 }
 
-interface Address extends CtAddress {
+export interface Address extends CtAddress {
   Billing?: boolean;
   defaultBilling?: boolean;
   defaultShipping?: boolean;

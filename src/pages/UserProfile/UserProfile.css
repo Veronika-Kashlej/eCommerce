@@ -1,25 +1,68 @@
 .wrapper {
   padding: 20px;
+  overflow-y: auto;
 }
 
 .first_section {
+  background-color: #f0f4f8;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   margin-bottom: 30px;
+  transition: box-shadow 0.3s;
 }
 
-.billingAddress__wrapper {
-  background-color: #e0f7fa;
-  padding: 10px;
-  margin-bottom: 10px;
+.first_section:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-.shippingAddress__wrapper {
-  background-color: #ffe0b2;
-  padding: 10px;
-  margin-bottom: 10px;
+.first_section h1 {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 15px;
 }
 
-.otherAddresses__wrapper {
+.first_section p {
+  font-family: 'Arial', sans-serif;
+  font-size: 16px;
+  color: #555;
+  line-height: 1.5;
+  margin: 8px 0;
+}
+
+.first_section .name {
+  color: #007bff;
+  font-weight: bold;
+}
+
+.addresses-container {
+  max-height: 300px;
   padding: 10px;
-  margin-bottom: 10px;
   border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  margin-bottom: 20px;
+}
+
+.address {
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.zone-divider {
+  height: 2px;
+  background-color: #ccc;
+  margin: 20px 0;
+  width: 100%;
+  border-radius: 1px;
+}
+
+@media (max-width: 768px) {
+  .addresses-container {
+    max-height: 200px;
+  }
 }

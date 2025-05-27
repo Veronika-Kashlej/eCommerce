@@ -74,6 +74,11 @@ class Api {
 
     try {
       const response = await this.apiRoot.me().get().execute();
+      // const response = await this.apiRoot
+      //   .me()
+      //   .get({ queryArgs: { expand: ['addresses[*]'] } })
+      //   .execute();
+      // //const response = await this.apiRoot.me().get().expand('addresses[*]').execute();
 
       return {
         response,
