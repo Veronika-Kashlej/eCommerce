@@ -4,6 +4,9 @@ import React, { useEffect, useState } from 'react';
 import WaitingModal from '@/components/waiting/Waiting';
 import './UserProfile.css';
 import { useNavigate } from 'react-router-dom';
+import ModalWindow from './ModalWindow';
+import EditForm from './EditForm';
+//import { EditFormProps } from '@/types/interfaces';
 
 const UserProfile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -17,6 +20,15 @@ const UserProfile: React.FC = () => {
 
   const [defaultBillingAddr, setDefaultBillingAddr] = useState<Address | undefined>(undefined);
   const [defaultShippingAddr, setDefaultShippingAddr] = useState<Address | undefined>(undefined);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'personal' | 'address'>('personal');
+  const [editData, setEditData] = useState<User | Address | null>(null);
+  const [currentAddress, setCurrentAddress] = useState<Address | null>(null);
+
+  if (currentAddress) {
+    console.log();
+  }
 
   useEffect(() => {
     if (!api.loginned) {
@@ -40,9 +52,6 @@ const UserProfile: React.FC = () => {
           const billingAddressIds = customerData.billingAddressIds ?? [];
           const shippingAddressIds = customerData.shippingAddressIds ?? [];
 
-          // const defaultBillingId = customerData.defaultBillingAddressId;
-          // const defaultShippingId = customerData.defaultShippingAddressId;
-
           const getAddressById = (id: string | undefined) => {
             if (!id) return undefined;
             return addresses.find((addr) => addr.id === id);
@@ -65,9 +74,6 @@ const UserProfile: React.FC = () => {
             (addr) => addr.id !== undefined && !usedIds.has(addr.id)
           );
 
-          // const defaultBillingAddress = getAddressById(defaultBillingId);
-          // const defaultShippingAddress = getAddressById(defaultShippingId);
-
           setUser({
             firstName: customerData.firstName!,
             lastName: customerData.lastName!,
@@ -89,6 +95,50 @@ const UserProfile: React.FC = () => {
       });
   }, []);
 
+  const handleOpenModal = (mode: 'personal' | 'address', address?: Address) => {
+    setModalMode(mode);
+    if (mode === 'personal') {
+      if (user) {
+        setEditData({ firstName: user.firstName, lastName: user.lastName, dob: user.dob });
+      }
+    } else if (address) {
+      setCurrentAddress(address);
+      setEditData({ ...address });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleSave = () => {
+    setIsModalOpen(false);
+  };
+
+  // Обработка сохранения
+  // const handleOpenModal = (address: Address) => {
+  //   setModalAddress(address);
+  //   setEditData({ ...address });
+  //   setIsModalOpen(true);
+  // };
+
+  // const handleSaveAddress = async () => {
+  //   if (modalAddress && editData) {
+  //     // вызов API для обновления адреса
+  //     const response = await api.updateAddress(modalAddress.id, editData);
+  //     if (response.success) {
+  //       // обновляем локальный список адресов
+  //       setUser((prev) => {
+  //         if (!prev) return prev;
+  //         const updatedAddresses = prev.addresses.map((addr) =>
+  //           addr.id === modalAddress.id ? { ...addr, ...editData } : addr
+  //         );
+  //         return { ...prev, addresses: updatedAddresses };
+  //       });
+  //       setIsModalOpen(false);
+  //     } else {
+  //       alert('Ошибка при обновлении адреса');
+  //     }
+  //   }
+  // };
+
   if (loading) return <WaitingModal isOpen={true} />;
   if (error) return <p>{error}</p>;
   if (!user) return null;
@@ -107,6 +157,7 @@ const UserProfile: React.FC = () => {
             <strong>Date of birth:</strong> {user.dob}
           </p>
         )}
+        <button onClick={() => handleOpenModal('personal')}>Изменить</button>
       </section>
 
       <section>
@@ -124,6 +175,7 @@ const UserProfile: React.FC = () => {
               </p>
               <p>{addr.postalCode}</p>
               <p>{addr.country}</p>
+              <button onClick={() => handleOpenModal('address', addr)}>Изменить</button>
               {addr.id === defaultShippingAddr?.id && (
                 <span className="default-label">Default shipping address</span>
               )}
@@ -147,6 +199,7 @@ const UserProfile: React.FC = () => {
               </p>
               <p>{addr.postalCode}</p>
               <p>{addr.country}</p>
+              <button onClick={() => handleOpenModal('address', addr)}>Изменить</button>
               {addr.id === defaultBillingAddr?.id && (
                 <span className="default-label">Default billing address</span>
               )}
@@ -167,12 +220,23 @@ const UserProfile: React.FC = () => {
               </p>
               <p>{addr.postalCode}</p>
               <p>{addr.country}</p>
+              <button onClick={() => handleOpenModal('address', addr)}>Edit</button>
             </div>
           ))
         ) : (
           <p>No other addresses</p>
         )}
       </section>
+      {isModalOpen && (
+        <ModalWindow onClose={() => setIsModalOpen(false)}>
+          <EditForm<User | Address>
+            mode={modalMode}
+            data={editData!}
+            onChange={(data: User | Address) => setEditData(data)}
+            onSave={handleSave}
+          />
+        </ModalWindow>
+      )}
     </div>
   );
 };

@@ -38,7 +38,7 @@ export interface User {
   firstName: string;
   lastName: string;
   dob: string;
-  addresses: Address[];
+  addresses?: Address[];
 }
 
 export interface Address extends CtAddress {
@@ -56,3 +56,10 @@ export interface Address extends CtAddress {
 //   defaultBilling?: boolean;
 //   defaultShipping?: boolean;
 // }
+
+export interface EditFormProps<T extends User | Address> {
+  mode: 'personal' | 'address';
+  data: T;
+  onChange: (data: T) => void;
+  onSave: () => void;
+}
