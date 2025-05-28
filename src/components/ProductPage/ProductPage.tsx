@@ -109,9 +109,7 @@ const ProductPage = () => {
     swipe: true,
   };
 
-  const modal = selectedImage && (
-    <ImageModal imageUrl={selectedImage} altText={productName} onClose={closeModal} />
-  );
+  const modal = selectedImage && <ImageModal images={images} onClose={closeModal} />;
   return (
     <div className="product-page">
       {modal}
