@@ -1,6 +1,6 @@
 import { useLocation, useParams } from 'react-router-dom';
 import './ProductPage.css';
-import { Attribute, Product } from '@commercetools/platform-sdk';
+import { Attribute, ProductProjection } from '@commercetools/platform-sdk';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
@@ -12,7 +12,7 @@ import ImageModal from '../image-modal/ImageModal';
 const ProductPage = () => {
   const { productId } = useParams();
   const { state } = useLocation();
-  const [product, setProduct] = useState<Product | null>(state?.product || null);
+  const [product, setProduct] = useState<ProductProjection | null>(state?.product || null);
   const [loading, setLoading] = useState(!state?.product);
   const [, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -27,8 +27,9 @@ const ProductPage = () => {
     } else if (productId) {
       const fetchProduct = async () => {
         try {
-          const productData = await api.getProductById(productId);
-          setProduct(productData);
+          // const productData = await api.getProductById(productId);
+          const productData = await api.getProductProjectionById(productId);
+          if (productData) setProduct(productData);
         } catch (error) {
           console.error('Error fetching product:', error);
           setError('Failed to load product');
@@ -55,7 +56,7 @@ const ProductPage = () => {
     setSelectedImage(null);
   };
 
-  const { name, description, masterVariant } = product.masterData.current;
+  const { name, description, masterVariant } = product;
 
   const productName = name['en-US'];
   const productDescription = description?.['en-US'] || 'No description available';

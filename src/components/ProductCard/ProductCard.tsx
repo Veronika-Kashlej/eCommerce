@@ -1,16 +1,16 @@
-import { Product } from '@commercetools/platform-sdk';
+import { ProductProjection } from '@commercetools/platform-sdk';
 import './ProductCard.css';
 import { Link } from 'react-router-dom';
 
 interface ProductCardProps {
-  product: Product;
+  product: ProductProjection;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const masterVariant = product.masterData.current.masterVariant;
+  const masterVariant = product.masterVariant;
   const firstImage = masterVariant.images?.[0];
-  const productName = product.masterData.current.name['en-US'];
-  const productDescription = product.masterData.current.description?.['en-US'] || '';
+  const productName = product.name['en-US'];
+  const productDescription = product.description?.['en-US'] || '';
 
   const priceData = masterVariant.prices?.[0];
   const originalPriceCents = priceData?.value?.centAmount;
