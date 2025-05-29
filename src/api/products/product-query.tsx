@@ -57,13 +57,12 @@ export async function getProductsList(
   queryArgs?: ProductProjectionSearchArgs
 ): Promise<ClientResponse<ProductProjectionPagedSearchResponse> | undefined> {
   console.log('Original queryArgs:', queryArgs);
-
   try {
     const preparedQueryArgs: Record<string, QueryParam> = {
       limit: 20,
       offset: 0,
       fuzzy: true,
-      // fuzzyLevel: 1,
+      fuzzyLevel: 2,
       staged: false,
       ...queryArgs,
       ...(queryArgs?.searchTerm ? { 'text.en-US': `${queryArgs.searchTerm}*` } : {}),
