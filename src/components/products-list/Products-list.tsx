@@ -212,7 +212,7 @@ const ProductList: React.FC = () => {
           <input
             type="text"
             placeholder="Search products..."
-            title="min 2 characters"
+            title="min 3 characters"
             value={searchQuery}
             onChange={handleSearchChange}
             onKeyDown={handleKeyDown}
@@ -220,8 +220,8 @@ const ProductList: React.FC = () => {
           <button
             onClick={applySearch}
             className="search-button"
-            title="min 2 characters"
-            disabled={searchQuery.trim().length < 2}
+            title="min 3 characters"
+            disabled={searchQuery.trim().length < 3}
           >
             Search
           </button>
