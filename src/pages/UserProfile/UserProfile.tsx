@@ -1,0 +1,302 @@
+import api from '@/api/api';
+import { Address, CustomerUpdateCustomerAction, User } from '@/types/interfaces';
+import React, { useEffect, useState } from 'react';
+import WaitingModal from '@/components/waiting/Waiting';
+import './UserProfile.css';
+import { useNavigate } from 'react-router-dom';
+import ModalWindow from './ModalWindow';
+import EditForm from './EditForm';
+//import handleSave from './api-edit-form';
+//import { EditFormProps } from '@/types/interfaces';
+
+const UserProfile: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  const [billingAddresses, setBillingAddresses] = useState<Address[]>([]);
+  const [shippingAddresses, setShippingAddresses] = useState<Address[]>([]);
+  const [otherAddresses, setOtherAddresses] = useState<Address[]>([]);
+
+  const [defaultBillingAddr, setDefaultBillingAddr] = useState<Address | undefined>(undefined);
+  const [defaultShippingAddr, setDefaultShippingAddr] = useState<Address | undefined>(undefined);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'personal' | 'address'>('personal');
+  const [editData, setEditData] = useState<User | Address | null>(null);
+  const [currentAddress, setCurrentAddress] = useState<Address | null>(null);
+
+  if (currentAddress) {
+    console.log();
+  }
+
+  useEffect(() => {
+    if (!api.loginned) {
+      navigate('/login');
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    api
+      .getCurrentCustomer()
+      .then((res) => {
+        //console.log(res.success); // проверка
+        //console.log(res.response);
+
+        if (res.success && res.response) {
+          const customerData = res.response.body;
+
+          console.log(customerData); //проверка
+
+          const addresses = customerData.addresses ?? [];
+          const billingAddressIds = customerData.billingAddressIds ?? [];
+          const shippingAddressIds = customerData.shippingAddressIds ?? [];
+
+          const getAddressById = (id: string | undefined) => {
+            if (!id) return undefined;
+            return addresses.find((addr) => addr.id === id);
+          };
+
+          setDefaultBillingAddr(getAddressById(customerData.defaultBillingAddressId));
+          setDefaultShippingAddr(getAddressById(customerData.defaultShippingAddressId));
+
+          const billingAddresses = billingAddressIds
+            .map((id) => customerData.addresses.find((addr) => addr.id === id))
+            .filter((addr): addr is Address => addr !== undefined);
+
+          const shippingAddresses = shippingAddressIds
+            .map((id) => customerData.addresses.find((addr) => addr.id === id))
+            .filter((addr): addr is Address => addr !== undefined);
+
+          const usedIds = new Set([...billingAddressIds, ...shippingAddressIds]);
+
+          const otherAddrs = addresses.filter(
+            (addr) => addr.id !== undefined && !usedIds.has(addr.id)
+          );
+
+          setUser({
+            firstName: customerData.firstName!,
+            lastName: customerData.lastName!,
+            dob: customerData.dateOfBirth!,
+            addresses: addresses,
+          });
+          setBillingAddresses(billingAddresses);
+          setShippingAddresses(shippingAddresses);
+          setOtherAddresses(otherAddrs);
+        } else {
+          setError('User data is not available or user is not registered');
+        }
+        setLoading(false);
+      })
+      .catch((err: unknown) => {
+        console.error('Error loading data:', err);
+        setError('Error loading data');
+        setLoading(false);
+      });
+  }, []);
+
+  const handleOpenModal = (mode: 'personal' | 'address', address?: Address) => {
+    setModalMode(mode);
+    if (mode === 'personal') {
+      if (user) {
+        setEditData({ firstName: user.firstName, lastName: user.lastName, dob: user.dob });
+      }
+    } else if (address) {
+      setCurrentAddress(address);
+      setEditData({ ...address });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleSave = async (mode: 'personal' | 'address') => {
+    const actions: CustomerUpdateCustomerAction[] = [];
+
+    if (mode === 'personal') {
+      if (editData?.firstName && editData?.firstName !== user?.firstName) {
+        actions.push({ action: 'setFirstName', firstName: editData!.firstName });
+      }
+      if (editData?.lastName && editData?.lastName !== user?.lastName) {
+        actions.push({ action: 'setLastName', lastName: editData!.lastName });
+      }
+      if ((editData as User).dob !== user?.dob) {
+        actions.push({ action: 'setDateOfBirth', dateOfBirth: (editData as User).dob });
+      }
+    } else if (mode === 'address' && currentAddress && editData && currentAddress.id) {
+      actions.push({
+        action: 'changeAddress',
+        addressId: currentAddress.id,
+        address: {
+          streetName: (editData as Address).streetName,
+          city: (editData as Address).city,
+          postalCode: (editData as Address).postalCode,
+          country: (editData as Address).country,
+        },
+      });
+    }
+
+    if (actions.length > 0) {
+      //const response = await api.updateCustomer({ actions });
+      const response = await api.updateCustomer({
+        firstName: editData?.firstName,
+        lastName: editData?.lastName,
+        dateOfBirth: (editData as User).dob,
+        //addresses: actions,
+      });
+      if (response.success) {
+        // обновляем локальное состояние
+        if (mode === 'personal') {
+          if (editData && editData?.firstName && editData?.lastName && (editData as User)?.dob) {
+            setUser((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    firstName: editData!.firstName as string,
+                    lastName: editData!.lastName as string,
+                    dob: (editData as User)!.dob,
+                  }
+                : prev
+            );
+          }
+        } else if (mode === 'address') {
+          // обновляем список адресов
+          setUser((prev) => {
+            if (!prev) return prev;
+            const updatedAddresses = prev.addresses
+              ? prev.addresses.map((addr) =>
+                  addr.id === currentAddress?.id ? { ...addr, ...editData } : addr
+                )
+              : [];
+            return { ...prev, addresses: updatedAddresses };
+          });
+        }
+        alert('Данные успешно обновлены');
+      } else {
+        alert('Ошибка при обновлении данных');
+      }
+    }
+    setIsModalOpen(false);
+  };
+
+  // const handleSave = () => {
+  //   setIsModalOpen(false);
+  // };
+
+  // Обработка сохранения
+  // const handleOpenModal = (address: Address) => {
+  //   setModalAddress(address);
+  //   setEditData({ ...address });
+  //   setIsModalOpen(true);
+  // };
+
+  if (loading) return <WaitingModal isOpen={true} />;
+  if (error) return <p>{error}</p>;
+  if (!user) return null;
+
+  return (
+    <div className="wrapper">
+      <section className="first_section">
+        <h1>Personal information</h1>
+        <p>
+          <strong className="name">First Name / Second Name:</strong> {user.firstName}
+          {' / '}
+          {user.lastName}
+        </p>
+        {user.dob && (
+          <p>
+            <strong>Date of birth:</strong> {user.dob}
+          </p>
+        )}
+        <button className="edit_button" onClick={() => handleOpenModal('personal')}>
+          Edit
+        </button>
+      </section>
+
+      <section>
+        <h2 className="addresses-container">Customer addresses:</h2>
+
+        <h3>Shipping addresses</h3>
+        {shippingAddresses.length > 0 ? (
+          shippingAddresses.map((addr) => (
+            <div
+              key={addr.id}
+              className={`address ${addr.id === defaultShippingAddr?.id ? 'default' : ''}`}
+            >
+              <p>
+                {addr.streetName}, {addr.city}
+              </p>
+              <p>{addr.postalCode}</p>
+              <p>{addr.country}</p>
+              <button className="edit_button" onClick={() => handleOpenModal('address', addr)}>
+                Edit
+              </button>
+              {addr.id === defaultShippingAddr?.id && (
+                <span className="default-label">Default shipping address</span>
+              )}
+            </div>
+          ))
+        ) : (
+          <p>shipping addresses ar'nt registered</p>
+        )}
+
+        <div className="zone-divider"></div>
+
+        <h3>Billing addresses</h3>
+        {billingAddresses.length > 0 ? (
+          billingAddresses.map((addr) => (
+            <div
+              key={addr.id}
+              className={`address ${addr.id === defaultBillingAddr?.id ? 'default' : ''}`}
+            >
+              <p>
+                {addr.streetName}, {addr.city}
+              </p>
+              <p>{addr.postalCode}</p>
+              <p>{addr.country}</p>
+              <button className="edit_button" onClick={() => handleOpenModal('address', addr)}>
+                Edit
+              </button>
+              {addr.id === defaultBillingAddr?.id && (
+                <span className="default-label">Default billing address</span>
+              )}
+            </div>
+          ))
+        ) : (
+          <p>billing addresses ar'nt registered</p>
+        )}
+
+        <div className="zone-divider"></div>
+
+        <h3>Other Addresses</h3>
+        {otherAddresses.length > 0 ? (
+          otherAddresses.map((addr) => (
+            <div key={addr.id} className="address">
+              <p>
+                {addr.streetName}, {addr.city}
+              </p>
+              <p>{addr.postalCode}</p>
+              <p>{addr.country}</p>
+              <button className="edit_button" onClick={() => handleOpenModal('address', addr)}>
+                Edit
+              </button>
+            </div>
+          ))
+        ) : (
+          <p>No other addresses</p>
+        )}
+      </section>
+      {isModalOpen && (
+        <ModalWindow onClose={() => setIsModalOpen(false)}>
+          <EditForm<User | Address>
+            mode={modalMode}
+            data={editData!}
+            onChange={(data: User | Address) => setEditData(data)}
+            onSave={handleSave}
+          />
+        </ModalWindow>
+      )}
+    </div>
+  );
+};
+
+export default UserProfile;
