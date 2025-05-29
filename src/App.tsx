@@ -8,6 +8,7 @@ import HomePage from '@/pages/home/Home';
 import api from '@/api/api';
 import { useEffect } from 'react';
 import UserProfile from './pages/UserProfile/UserProfile';
+import ProductPage from './components/ProductPage/ProductPage';
 
 function App() {
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Registration />} />
         <Route path="/userprofile" element={<UserProfile />} />
+        <Route path="/product/:productId" element={<ProductPage />} />
         <Route path="*" element={<Page404 />} />
       </Routes>
     </>

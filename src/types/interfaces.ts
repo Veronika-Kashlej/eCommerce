@@ -73,3 +73,14 @@ export type CustomerUpdateCustomerAction =
   | { action: 'removeAddress'; addressId: string }
   | { action: 'setDefaultShippingAddress'; addressId: string }
   | { action: 'setDefaultBillingAddress'; addressId: string };
+
+export interface Attribute {
+  name: string;
+}
+
+export interface ProductImage {
+  url: string;
+  dimensions?: { w: number; h: number };
+  label?: string;
+}
+

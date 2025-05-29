@@ -1,0 +1,308 @@
+.product-main {
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.product-page {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  margin: 2rem auto;
+  padding: 0 2rem;
+  overflow-y: auto;
+}
+
+.main-image {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: #f8f8f8;
+  aspect-ratio: 1/1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-page .product-image {
+  position: static;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.product-image:hover {
+  transform: scale(1.02);
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  color: #888;
+  font-size: 1.2rem;
+  border-radius: 12px;
+}
+
+.product-details {
+  padding: 1rem;
+}
+
+.product-title {
+  font-size: 2.2rem;
+  margin-bottom: 1.5rem;
+  color: #2d3748;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.product-description {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+.product-description h3 {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  color: #4a5568;
+  font-weight: 600;
+}
+
+.product-description p {
+  color: #4a5568;
+  line-height: 1.6;
+  font-size: 1.05rem;
+}
+
+.product-attributes {
+  margin: 1rem 0;
+  padding: 1.5rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+.product-attributes h3 {
+  font-size: 1.3rem;
+  margin-bottom: 1.2rem;
+  color: #4a5568;
+  font-weight: 600;
+}
+
+.product-attributes ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.product-attributes li {
+  padding: 0.8rem;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.product-attributes strong {
+  color: #2d3748;
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.95rem;
+}
+
+.availability {
+  border-radius: 8px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.in-stock {
+  background: #ebf7eb;
+  color: #2e7d32;
+}
+
+.out-of-stock {
+  background: #fde8e8;
+  color: #d32f2f;
+}
+
+.product-page .price-section {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.product-page .original-price {
+  text-decoration: line-through;
+  color: #6c757d;
+  font-size: 1.2rem;
+  display: block;
+}
+
+.product-page .discounted-price-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.product-page .discounted-price {
+  color: #dc3545;
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.product-page .current-price {
+  color: #212529;
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.product-page .discount-badge {
+  background: #dc3545;
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.product-slider {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.slider-image-container {
+  height: 500px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.slick-dots {
+  bottom: 20px;
+}
+
+.slick-dots li button:before {
+  color: #999;
+  font-size: 10px;
+}
+
+.slick-dots li.slick-active button:before {
+  color: #333;
+}
+
+.slick-prev:before,
+.slick-next:before {
+  color: #333;
+  font-size: 24px;
+}
+
+.slick-prev {
+  left: 15px;
+  z-index: 1;
+}
+
+.slick-next {
+  right: 15px;
+  z-index: 1;
+}
+
+.slick-arrow {
+  pointer-events: none;
+}
+
+@media (max-width: 900px) {
+  .product-page {
+    grid-template-columns: 1fr;
+    padding: 0 1.5rem;
+    gap: 20px;
+  }
+
+  .product-slider {
+    max-width: 90vw;
+  }
+
+  .slider-image-container {
+    height: 300px;
+  }
+
+  .main-image {
+    height: 90vw;
+  }
+
+  .product-attributes ul {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .discounted-price,
+  .current-price {
+    font-size: 1.5rem;
+  }
+
+  .original-price {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-page {
+    padding: 0 1rem;
+  }
+
+  .product-slider {
+    max-width: 80vw;
+  }
+
+  .product-title {
+    font-size: 1.8rem;
+  }
+
+  .product-description,
+  .product-attributes {
+    padding: 0.5rem;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.product-page > * {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.product-not-found {
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.3rem;
+  color: #d32f2f;
+  background: #fde8e8;
+  border-radius: 8px;
+  max-width: 600px;
+  margin: 3rem auto;
+}
