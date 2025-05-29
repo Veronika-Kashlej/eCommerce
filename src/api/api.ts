@@ -16,6 +16,7 @@ import {
   ProductProjectionPagedSearchResponse,
   Product,
   ProductProjection,
+  CategoryPagedQueryResponse,
 } from '@commercetools/platform-sdk';
 
 import { ProductsQueryArgs } from './interfaces/types';
@@ -250,6 +251,17 @@ class Api {
         id: undefined,
       };
     }
+  }
+
+  public async getCategories(): Promise<ClientResponse<CategoryPagedQueryResponse> | undefined> {
+    return await this.anonymApiRoot
+      .categories()
+      .get({
+        queryArgs: {
+          limit: 100,
+        },
+      })
+      .execute();
   }
 
   public async getProductsList(

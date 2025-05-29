@@ -1,7 +1,7 @@
 import './Products-list.css';
 import { useEffect, useState } from 'react';
 import api from '@/api/api';
-import { ProductProjectionPagedSearchResponse } from '@commercetools/platform-sdk';
+import { Category, ProductProjectionPagedSearchResponse } from '@commercetools/platform-sdk';
 import ProductCard from '@/components/ProductCard/ProductCard';
 import PaginationControls from '@/components/products-list/PaginationControls';
 import { ProductProjectionSearchArgs } from '@/api/interfaces/types';
@@ -13,15 +13,23 @@ const ProductList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [appliedSearchQuery, setAppliedSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [categories, setCategories] = useState<Category[]>([]);
   const [offset, setOffset] = useState(0);
   const [limit, setLimit] = useState<number>(5);
 
   const limitOptions = [5, 10, 15, 25, 30, 50, 100];
-  const categories = [
-    { id: '1', name: 'Electronics' },
-    { id: '2', name: 'Clothing' },
-    { id: '3', name: 'Books' },
-  ];
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await api.getCategories();
+        if (response) setCategories(response.body.results);
+      } catch (error) {
+        console.error('Failed to load categories', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -98,11 +106,17 @@ const ProductList: React.FC = () => {
           <input
             type="text"
             placeholder="Search products..."
+            title="min 2 characters"
             value={searchQuery}
             onChange={handleSearchChange}
             onKeyDown={handleKeyDown}
           />
-          <button onClick={applySearch} className="search-button">
+          <button
+            onClick={applySearch}
+            className="search-button"
+            title="min 2 characters"
+            disabled={searchQuery.trim().length < 2}
+          >
             Search
           </button>
         </div>
@@ -110,9 +124,7 @@ const ProductList: React.FC = () => {
         <select value={selectedCategory} onChange={handleCategoryChange}>
           <option value="">All Categories</option>
           {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
+            <option value={category.id}>{category.name?.['en-US'] || category.key}</option>
           ))}
         </select>
       </div>
