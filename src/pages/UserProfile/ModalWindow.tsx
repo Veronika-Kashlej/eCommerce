@@ -1,4 +1,5 @@
 import React from 'react';
+import './ModalWindow.css';
 
 interface ModalProps {
   onClose: () => void;

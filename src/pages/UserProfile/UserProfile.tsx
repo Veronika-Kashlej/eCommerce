@@ -1,11 +1,12 @@
 import api from '@/api/api';
-import { Address, User } from '@/types/interfaces';
+import { Address, CustomerUpdateCustomerAction, User } from '@/types/interfaces';
 import React, { useEffect, useState } from 'react';
 import WaitingModal from '@/components/waiting/Waiting';
 import './UserProfile.css';
 import { useNavigate } from 'react-router-dom';
 import ModalWindow from './ModalWindow';
 import EditForm from './EditForm';
+//import handleSave from './api-edit-form';
 //import { EditFormProps } from '@/types/interfaces';
 
 const UserProfile: React.FC = () => {
@@ -108,35 +109,84 @@ const UserProfile: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async (mode: 'personal' | 'address') => {
+    const actions: CustomerUpdateCustomerAction[] = [];
+
+    if (mode === 'personal') {
+      if (editData?.firstName && editData?.firstName !== user?.firstName) {
+        actions.push({ action: 'setFirstName', firstName: editData!.firstName });
+      }
+      if (editData?.lastName && editData?.lastName !== user?.lastName) {
+        actions.push({ action: 'setLastName', lastName: editData!.lastName });
+      }
+      if ((editData as User).dob !== user?.dob) {
+        actions.push({ action: 'setDateOfBirth', dateOfBirth: (editData as User).dob });
+      }
+    } else if (mode === 'address' && currentAddress && editData && currentAddress.id) {
+      actions.push({
+        action: 'changeAddress',
+        addressId: currentAddress.id,
+        address: {
+          streetName: (editData as Address).streetName,
+          city: (editData as Address).city,
+          postalCode: (editData as Address).postalCode,
+          country: (editData as Address).country,
+        },
+      });
+    }
+
+    if (actions.length > 0) {
+      //const response = await api.updateCustomer({ actions });
+      const response = await api.updateCustomer({
+        firstName: editData?.firstName,
+        lastName: editData?.lastName,
+        dateOfBirth: (editData as User).dob,
+        //addresses: actions,
+      });
+      if (response.success) {
+        // обновляем локальное состояние
+        if (mode === 'personal') {
+          if (editData && editData?.firstName && editData?.lastName && (editData as User)?.dob) {
+            setUser((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    firstName: editData!.firstName as string,
+                    lastName: editData!.lastName as string,
+                    dob: (editData as User)!.dob,
+                  }
+                : prev
+            );
+          }
+        } else if (mode === 'address') {
+          // обновляем список адресов
+          setUser((prev) => {
+            if (!prev) return prev;
+            const updatedAddresses = prev.addresses
+              ? prev.addresses.map((addr) =>
+                  addr.id === currentAddress?.id ? { ...addr, ...editData } : addr
+                )
+              : [];
+            return { ...prev, addresses: updatedAddresses };
+          });
+        }
+        alert('Данные успешно обновлены');
+      } else {
+        alert('Ошибка при обновлении данных');
+      }
+    }
     setIsModalOpen(false);
   };
+
+  // const handleSave = () => {
+  //   setIsModalOpen(false);
+  // };
 
   // Обработка сохранения
   // const handleOpenModal = (address: Address) => {
   //   setModalAddress(address);
   //   setEditData({ ...address });
   //   setIsModalOpen(true);
-  // };
-
-  // const handleSaveAddress = async () => {
-  //   if (modalAddress && editData) {
-  //     // вызов API для обновления адреса
-  //     const response = await api.updateAddress(modalAddress.id, editData);
-  //     if (response.success) {
-  //       // обновляем локальный список адресов
-  //       setUser((prev) => {
-  //         if (!prev) return prev;
-  //         const updatedAddresses = prev.addresses.map((addr) =>
-  //           addr.id === modalAddress.id ? { ...addr, ...editData } : addr
-  //         );
-  //         return { ...prev, addresses: updatedAddresses };
-  //       });
-  //       setIsModalOpen(false);
-  //     } else {
-  //       alert('Ошибка при обновлении адреса');
-  //     }
-  //   }
   // };
 
   if (loading) return <WaitingModal isOpen={true} />;
@@ -157,7 +207,9 @@ const UserProfile: React.FC = () => {
             <strong>Date of birth:</strong> {user.dob}
           </p>
         )}
-        <button onClick={() => handleOpenModal('personal')}>Изменить</button>
+        <button className="edit_button" onClick={() => handleOpenModal('personal')}>
+          Edit
+        </button>
       </section>
 
       <section>
@@ -175,7 +227,9 @@ const UserProfile: React.FC = () => {
               </p>
               <p>{addr.postalCode}</p>
               <p>{addr.country}</p>
-              <button onClick={() => handleOpenModal('address', addr)}>Изменить</button>
+              <button className="edit_button" onClick={() => handleOpenModal('address', addr)}>
+                Edit
+              </button>
               {addr.id === defaultShippingAddr?.id && (
                 <span className="default-label">Default shipping address</span>
               )}
@@ -199,7 +253,9 @@ const UserProfile: React.FC = () => {
               </p>
               <p>{addr.postalCode}</p>
               <p>{addr.country}</p>
-              <button onClick={() => handleOpenModal('address', addr)}>Изменить</button>
+              <button className="edit_button" onClick={() => handleOpenModal('address', addr)}>
+                Edit
+              </button>
               {addr.id === defaultBillingAddr?.id && (
                 <span className="default-label">Default billing address</span>
               )}
@@ -220,7 +276,9 @@ const UserProfile: React.FC = () => {
               </p>
               <p>{addr.postalCode}</p>
               <p>{addr.country}</p>
-              <button onClick={() => handleOpenModal('address', addr)}>Edit</button>
+              <button className="edit_button" onClick={() => handleOpenModal('address', addr)}>
+                Edit
+              </button>
             </div>
           ))
         ) : (

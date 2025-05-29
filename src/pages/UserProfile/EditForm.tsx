@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Address, EditFormProps, User } from '@/types/interfaces';
+// import handleSave from './api-edit-form';
 
 const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: EditFormProps<T>) => {
   const [formData, setFormData] = useState<T | null>(data);
-  // const [userData, setUserData] = useState<User | null>(null);
-  // const [editAddress, setEditAddress] = useState<Address | null>(null);
-  // const [modalMode, setModalMode] = useState<'personal' | 'address'>('personal');
-  // const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     setFormData(data);
@@ -15,13 +12,6 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!formData) return;
     const { name, value } = e.target;
-    //setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    // setFormData((prev) => {
-    //   if (prev === null) return prev;
-    //   return { ...prev, [name]: value };
-    // });
-    // onChange({ ...formData, [e.target.name]: e.target.value });
-    //onChange({ ...formData, [name]: value });
     const newData = { ...formData!, [name]: value } as T;
     setFormData(newData);
     onChange(newData);
@@ -79,7 +69,9 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
           />
         </>
       )}
-      <button onClick={onSave}>Save</button>
+      <button className="edit_button" onClick={() => onSave(mode)}>
+        Save
+      </button>
     </div>
   );
 };

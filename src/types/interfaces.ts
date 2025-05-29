@@ -61,5 +61,15 @@ export interface EditFormProps<T extends User | Address> {
   mode: 'personal' | 'address';
   data: T;
   onChange: (data: T) => void;
-  onSave: () => void;
+  onSave: (mode: 'personal' | 'address') => Promise<void>;
 }
+
+export type CustomerUpdateCustomerAction =
+  | { action: 'setFirstName'; firstName: string }
+  | { action: 'setLastName'; lastName: string }
+  | { action: 'setDateOfBirth'; dateOfBirth: string }
+  | { action: 'changeAddress'; addressId: string; address: Address }
+  | { action: 'addAddress'; address: Address }
+  | { action: 'removeAddress'; addressId: string }
+  | { action: 'setDefaultShippingAddress'; addressId: string }
+  | { action: 'setDefaultBillingAddress'; addressId: string };

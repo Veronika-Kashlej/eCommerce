@@ -7,7 +7,7 @@
   background-color: #f0f4f8;
   padding: 20px;
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px var(--box-shadow);
   margin-bottom: 30px;
   transition: box-shadow 0.3s;
 }
@@ -55,7 +55,7 @@
 
 .address:hover {
   transition: box-shadow 0.3s;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 16px var(--box-shadow);
 }
 
 .address.default {
@@ -78,6 +78,24 @@
   border-radius: 1px;
 }
 
+.edit_button {
+  background-color: var(--background-color-break-button-hover);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.1rem;
+}
+
+.edit_button:hover {
+  background-color: var(--background-color-break-button);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px var(--box-shadow);
+}
+
 @media (max-width: 768px) {
   .addresses-container {
     max-height: 200px;
@@ -98,14 +116,14 @@
 }
 
 .modal-content {
-  background: #fff;
+  background: var(--background-color);
   max-height: 80vh;
   width: 80%;
   padding: 20px;
   border-radius: 10px;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 20px var(--box-shadow);
 }
 
 .close-btn {
