@@ -6,6 +6,10 @@ import ProductCard from '@/components/ProductCard/ProductCard';
 import PaginationControls from '@/components/products-list/PaginationControls';
 import { ProductProjectionSearchArgs } from '@/api/interfaces/types';
 
+interface CategoryTree extends Category {
+  children?: CategoryTree[];
+}
+
 const ProductList: React.FC = () => {
   const [products, setProducts] = useState<ProductProjectionPagedSearchResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -13,17 +17,55 @@ const ProductList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [appliedSearchQuery, setAppliedSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
+  const [categoryTree, setCategoryTree] = useState<CategoryTree[]>([]);
+  const [subcategories, setSubcategories] = useState<Category[]>([]);
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [offset, setOffset] = useState(0);
   const [limit, setLimit] = useState<number>(5);
 
   const limitOptions = [5, 10, 15, 25, 30, 50, 100];
 
+  // const getTopLevelCategories = (categories: Category[]): Category[] => {
+  //   return categories.filter(category => !category.parent);
+  // };
+
+  const getTopLevelCategories = (categories: Category[]): Category[] => {
+    return categories.filter((category) => !category.parent?.obj?.id);
+  };
+
+  const buildCategoryTree = (categories: Category[]): CategoryTree[] => {
+    const tree: CategoryTree[] = [];
+    const mappedCategories: Record<string, CategoryTree> = {};
+
+    categories.forEach((category) => {
+      mappedCategories[category.id] = { ...category, children: [] };
+    });
+
+    categories.forEach((category) => {
+      const parentId = category.parent?.obj?.id;
+      if (parentId && mappedCategories[parentId]) {
+        mappedCategories[parentId].children?.push(mappedCategories[category.id]);
+      } else {
+        tree.push(mappedCategories[category.id]);
+      }
+    });
+
+    return tree;
+  };
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await api.getCategories();
-        if (response) setCategories(response.body.results);
+        if (response) {
+          const topLevelCategories = getTopLevelCategories(response.body.results);
+          setCategories(topLevelCategories);
+          const tree = buildCategoryTree(response.body.results);
+          setCategoryTree(tree);
+        }
       } catch (error) {
         console.error('Failed to load categories', error);
       }
@@ -32,24 +74,38 @@ const ProductList: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (selectedCategory) {
+      const parentCategory = categoryTree.find((cat) => cat.id === selectedCategory);
+      setSubcategories(parentCategory?.children || []);
+      setSelectedSubcategory('');
+    } else {
+      setSubcategories([]);
+      setSelectedSubcategory('');
+    }
+  }, [selectedCategory, categoryTree]);
+
+  useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
         setError(null);
 
+        const categoryFilters = [];
+        if (selectedCategory) categoryFilters.push(`categories.id:"${selectedCategory}"`);
+        if (selectedSubcategory && subcategories.some((sc) => sc.id === selectedSubcategory)) {
+          categoryFilters.push(`categories.id:"${selectedSubcategory}"`);
+        }
+
         const params: ProductProjectionSearchArgs = {
           limit,
           offset,
           ...(appliedSearchQuery && { searchTerm: appliedSearchQuery }),
-          filter: selectedCategory ? [`categories.id:"${selectedCategory}"`] : undefined,
+          filter: categoryFilters.length > 0 ? categoryFilters : undefined,
           facet: ['variants.attributes.color', 'variants.attributes.size'],
         };
 
         const response = await api.getProductsList(params);
-
-        if (response) {
-          setProducts(response.body);
-        }
+        if (response) setProducts(response.body);
       } catch (err) {
         setError('Failed to load products');
         console.error(err);
@@ -59,7 +115,12 @@ const ProductList: React.FC = () => {
     };
 
     fetchProducts();
-  }, [appliedSearchQuery, selectedCategory, offset, limit]);
+  }, [appliedSearchQuery, selectedCategory, selectedSubcategory, subcategories, offset, limit]);
+
+  const handleSubcategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedSubcategory(e.target.value);
+    setOffset(0);
+  };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -78,6 +139,7 @@ const ProductList: React.FC = () => {
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedCategory(e.target.value);
+    setSelectedSubcategory('');
     setOffset(0);
   };
 
@@ -102,6 +164,30 @@ const ProductList: React.FC = () => {
       <h2>Product List</h2>
 
       <div className="product-filters">
+        <select value={selectedCategory} onChange={handleCategoryChange}>
+          <option value="">All Categories</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name?.['en-US'] || category.key}
+            </option>
+          ))}
+        </select>
+
+        {selectedCategory && subcategories.length > 0 && (
+          <select
+            value={selectedSubcategory}
+            onChange={handleSubcategoryChange}
+            className="subcategory-select"
+          >
+            <option value="">All Subcategories</option>
+            {subcategories.map((subcategory) => (
+              <option key={subcategory.id} value={subcategory.id}>
+                {subcategory.name?.['en-US'] || subcategory.key}
+              </option>
+            ))}
+          </select>
+        )}
+
         <div className="search-container">
           <input
             type="text"
@@ -120,13 +206,6 @@ const ProductList: React.FC = () => {
             Search
           </button>
         </div>
-
-        <select value={selectedCategory} onChange={handleCategoryChange}>
-          <option value="">All Categories</option>
-          {categories.map((category) => (
-            <option value={category.id}>{category.name?.['en-US'] || category.key}</option>
-          ))}
-        </select>
       </div>
 
       <PaginationControls

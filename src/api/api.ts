@@ -259,6 +259,7 @@ class Api {
       .get({
         queryArgs: {
           limit: 100,
+          expand: ['parent'],
         },
       })
       .execute();
