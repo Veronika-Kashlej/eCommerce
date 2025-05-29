@@ -1,12 +1,13 @@
 import './Products-list.css';
 import { useEffect, useState } from 'react';
+import { Breadcrumbs } from './Breadcrumbs';
 import api from '@/api/api';
 import { Category, ProductProjectionPagedSearchResponse } from '@commercetools/platform-sdk';
 import ProductCard from '@/components/ProductCard/ProductCard';
 import PaginationControls from '@/components/products-list/PaginationControls';
 import { ProductProjectionSearchArgs } from '@/api/interfaces/types';
 
-interface CategoryTree extends Category {
+export interface CategoryTree extends Category {
   children?: CategoryTree[];
 }
 
@@ -28,9 +29,22 @@ const ProductList: React.FC = () => {
 
   const limitOptions = [5, 10, 15, 25, 30, 50, 100];
 
-  // const getTopLevelCategories = (categories: Category[]): Category[] => {
-  //   return categories.filter(category => !category.parent);
-  // };
+  const handleBreadcrumbSelect = (categoryId: string) => {
+    if (categoryId === '') {
+      setSelectedCategory('');
+      setSelectedSubcategory('');
+    } else {
+      const isSubcategory = subcategories.some((sc) => sc.id === categoryId);
+
+      if (isSubcategory) {
+        setSelectedSubcategory(categoryId);
+      } else {
+        setSelectedCategory(categoryId);
+        setSelectedSubcategory('');
+      }
+    }
+    setOffset(0);
+  };
 
   const getTopLevelCategories = (categories: Category[]): Category[] => {
     return categories.filter((category) => !category.parent?.obj?.id);
@@ -162,6 +176,12 @@ const ProductList: React.FC = () => {
   return (
     <section className="product-list-container">
       <h2>Product List</h2>
+      <Breadcrumbs
+        categoryTree={categoryTree}
+        selectedCategory={selectedCategory}
+        selectedSubcategory={selectedSubcategory}
+        onCategorySelect={handleBreadcrumbSelect}
+      />
 
       <div className="product-filters">
         <select value={selectedCategory} onChange={handleCategoryChange}>
