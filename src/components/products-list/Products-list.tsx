@@ -7,9 +7,14 @@ import ProductCard from '@/components/ProductCard/ProductCard';
 import PaginationControls from '@/components/products-list/PaginationControls';
 import { ProductProjectionSearchArgs } from '@/api/interfaces/types';
 
+import SortingControls from '@/components/products-list/SortingControls';
+import { SortState } from '@/types/interfaces';
+
 export interface CategoryTree extends Category {
   children?: CategoryTree[];
 }
+
+type SortField = 'price' | 'name';
 
 const ProductList: React.FC = () => {
   const [products, setProducts] = useState<ProductProjectionPagedSearchResponse | null>(null);
@@ -23,11 +28,89 @@ const ProductList: React.FC = () => {
   const [categoryTree, setCategoryTree] = useState<CategoryTree[]>([]);
   const [subcategories, setSubcategories] = useState<Category[]>([]);
 
+  const [sort, setSort] = useState<SortState>({
+    price: '',
+    name: '',
+    combined: false,
+  });
+
+  const [sortHistory, setSortHistory] = useState<SortField[]>([]);
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [offset, setOffset] = useState(0);
   const [limit, setLimit] = useState<number>(5);
 
   const limitOptions = [5, 10, 15, 25, 30, 50, 100];
+
+  const updateSortHistory = (field: SortField) => {
+    setSortHistory((prev) => {
+      const newHistory = [...prev, field];
+      return newHistory
+        .slice(-2)
+        .filter((item): item is SortField => item === 'price' || item === 'name');
+    });
+  };
+
+  const handlePriceSort = (combined: boolean) => {
+    updateSortHistory('price');
+    setSort((prev) => {
+      if (combined && prev.name) {
+        return {
+          ...prev,
+          price: prev.price === 'asc' ? 'desc' : 'asc',
+          combined: true,
+        };
+      }
+      return {
+        ...prev,
+        price: prev.price === 'asc' ? 'desc' : 'asc',
+        name: combined ? prev.name : '',
+        combined,
+      };
+    });
+    setOffset(0);
+  };
+
+  const handleNameSort = (combined: boolean) => {
+    updateSortHistory('name');
+    setSort((prev) => {
+      if (combined && prev.price) {
+        return {
+          ...prev,
+          name: prev.name === 'asc' ? 'desc' : 'asc',
+          combined: true,
+        };
+      }
+      return {
+        ...prev,
+        name: prev.name === 'asc' ? 'desc' : 'asc',
+        price: combined ? prev.price : '',
+        combined,
+      };
+    });
+    setOffset(0);
+  };
+
+  const toggleCombinedSort = () => {
+    setSort((prev) => {
+      const newCombined = !prev.combined;
+
+      if (prev.combined && !newCombined && prev.price && prev.name) {
+        const lastSort = sortHistory[sortHistory.length - 1] || 'price';
+        return lastSort === 'price'
+          ? { ...prev, name: '', combined: newCombined }
+          : { ...prev, price: '', combined: newCombined };
+      }
+
+      return { ...prev, combined: newCombined };
+    });
+    setOffset(0);
+  };
+
+  const resetSorting = () => {
+    setSort({ price: '', name: '', combined: false });
+    setOffset(0);
+  };
 
   const handleBreadcrumbSelect = (categoryId: string) => {
     if (categoryId === '') {
@@ -110,12 +193,23 @@ const ProductList: React.FC = () => {
           categoryFilters.push(`categories.id:"${selectedSubcategory}"`);
         }
 
+        const sortParams = [];
+        if (sort.price && sort.name && sort.combined) {
+          sortParams.push(`price ${sort.price}`);
+          sortParams.push(`name.en-US ${sort.name}`);
+        } else if (sort.price) {
+          sortParams.push(`price ${sort.price}`);
+        } else if (sort.name) {
+          sortParams.push(`name.en-US ${sort.name}`);
+        }
+
         const params: ProductProjectionSearchArgs = {
           limit,
           offset,
           ...(appliedSearchQuery && { searchTerm: appliedSearchQuery }),
           filter: categoryFilters.length > 0 ? categoryFilters : undefined,
           facet: ['variants.attributes.color', 'variants.attributes.size'],
+          ...(sortParams.length > 0 && { sort: sortParams }),
         };
 
         const response = await api.getProductsList(params);
@@ -129,7 +223,15 @@ const ProductList: React.FC = () => {
     };
 
     fetchProducts();
-  }, [appliedSearchQuery, selectedCategory, selectedSubcategory, subcategories, offset, limit]);
+  }, [
+    appliedSearchQuery,
+    selectedCategory,
+    selectedSubcategory,
+    subcategories,
+    offset,
+    limit,
+    sort,
+  ]);
 
   const handleSubcategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedSubcategory(e.target.value);
@@ -226,6 +328,14 @@ const ProductList: React.FC = () => {
             Search
           </button>
         </div>
+
+        <SortingControls
+          sort={sort}
+          onPriceSort={handlePriceSort}
+          onNameSort={handleNameSort}
+          onReset={resetSorting}
+          onToggleCombined={toggleCombinedSort}
+        />
       </div>
 
       <PaginationControls

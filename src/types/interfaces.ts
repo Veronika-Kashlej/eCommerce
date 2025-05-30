@@ -84,3 +84,8 @@ export interface ProductImage {
   label?: string;
 }
 
+export type SortState = {
+  price: '' | 'asc' | 'desc';
+  name: '' | 'asc' | 'desc';
+  combined: boolean;
+};
