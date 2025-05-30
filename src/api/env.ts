@@ -1,3 +1,5 @@
+import ModalWindow from '@/components/modal/ModalWindow';
+
 const requiredEnvVars: string[] = [
   'VITE_CTP_PROJECT_KEY',
   'VITE_CTP_SCOPES',
@@ -9,6 +11,7 @@ const requiredEnvVars: string[] = [
 
 for (const envVar of requiredEnvVars) {
   if (!import.meta.env[envVar]) {
+    ModalWindow.alert(`Missing environment variable: ${envVar}`, 'Server notification!');
     throw new Error(`Missing environment variable: ${envVar}`);
   }
 }

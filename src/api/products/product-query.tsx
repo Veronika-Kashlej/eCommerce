@@ -58,13 +58,26 @@ export async function getProductsList(
 ): Promise<ClientResponse<ProductProjectionPagedSearchResponse> | undefined> {
   console.log('Original queryArgs:', queryArgs);
   try {
+    let allowedFuzzyLevel = 2;
+    if (queryArgs?.searchTerm) {
+      const searchTermLength = queryArgs.searchTerm.trim().length;
+
+      if (searchTermLength <= 2) {
+        allowedFuzzyLevel = 0;
+      } else if (searchTermLength >= 3 && searchTermLength <= 5) {
+        allowedFuzzyLevel = Math.min(1, queryArgs.fuzzyLevel ?? 1);
+      } else {
+        allowedFuzzyLevel = Math.min(2, queryArgs.fuzzyLevel ?? 2);
+      }
+    }
+
     const preparedQueryArgs: Record<string, QueryParam> = {
       limit: 20,
       offset: 0,
-      fuzzy: true,
-      fuzzyLevel: 2,
       staged: false,
       ...queryArgs,
+      fuzzy: queryArgs?.searchTerm ? true : false,
+      fuzzyLevel: queryArgs?.searchTerm ? allowedFuzzyLevel : undefined,
       ...(queryArgs?.searchTerm ? { 'text.en-US': `${queryArgs.searchTerm}*` } : {}),
     };
 
