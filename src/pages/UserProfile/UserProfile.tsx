@@ -26,9 +26,15 @@ const UserProfile: React.FC = () => {
   const [editData, setEditData] = useState<User | Address | null>(null);
   const [currentAddress, setCurrentAddress] = useState<Address | null>(null);
 
-  if (currentAddress) {
-    console.log();
-  }
+  const [addressChangedTrigger, setAddressChangedTrigger] = useState<boolean>(false);
+
+  // useEffect(() => {
+  //   console.log('Обновленный user:', user);
+  // }, [user]);
+
+  // if (currentAddress) {
+  //   console.log();
+  // }
 
   useEffect(() => {
     if (!api.loginned) {
@@ -114,8 +120,8 @@ const UserProfile: React.FC = () => {
 
   const handleSave = async (mode: 'personal' | 'address') => {
     let response: CustomerResponse;
-
     let temp: CustomerUpdateData;
+
     if (mode === 'personal') {
       temp = {
         firstName: editData?.firstName,
@@ -125,7 +131,6 @@ const UserProfile: React.FC = () => {
 
       response = await api.updateCustomer(temp);
       localChanges();
-      console.log(`response: ${response}`);
     }
 
     if (mode === 'address' && currentAddress && editData && currentAddress.id) {
@@ -167,7 +172,7 @@ const UserProfile: React.FC = () => {
 
           setUser((prev) => {
             console.log('user: ', user);
-            // if (!prev || !prev.addresses) return prev;
+            //if (!prev || !prev.addresses) return prev;
             console.log('addresses:', JSON.stringify(currentAddress?.streetName, null, 2)); //!!!!!!!!!!!!!!
             const updatedAddresses = prev?.addresses?.map((addr) =>
               addr.id === currentAddress?.id ? { ...addr, ...editData } : addr
@@ -184,12 +189,18 @@ const UserProfile: React.FC = () => {
           });
         }
         alert('Данные успешно обновлены');
+        setAddressChangedTrigger((prev) => !prev); //!!!!!!!!!!!!!!!!!!!!
       } else {
         alert('Ошибка при обновлении данных');
       }
     }
     setIsModalOpen(false);
   };
+
+  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  useEffect(() => {
+    console.log('Адрес изменился, триггер сработал');
+  }, [addressChangedTrigger]);
 
   if (loading) return <WaitingModal isOpen={true} />;
   if (error) return <p>{error}</p>;
