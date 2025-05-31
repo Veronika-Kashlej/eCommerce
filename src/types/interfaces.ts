@@ -11,7 +11,8 @@ export interface IFormData {
   firstName: string;
   lastName: string;
   password: string;
-  dob: string;
+  // dob: string; //TODO change
+  dateOfBirth: string;
   shippingStreet: string;
   shippingCity: string;
   shippingPostalCode: string;
@@ -37,7 +38,8 @@ export const postalCodePatterns: PostalCodePatterns = {
 export interface User {
   firstName: string;
   lastName: string;
-  dob: string;
+  // dob: string; // TODO  change
+  dateOfBirth: string;
   addresses?: Address[];
 }
 
@@ -45,6 +47,7 @@ export interface Address extends CtAddress {
   Billing?: boolean;
   defaultBilling?: boolean;
   defaultShipping?: boolean;
+  dateOfBirth?: string;
 }
 
 // interface Address {
@@ -64,16 +67,37 @@ export interface EditFormProps<T extends User | Address> {
   onSave: (mode: 'personal' | 'address') => Promise<void>;
 }
 
-export type CustomerUpdateCustomerAction =
-  | { action: 'setFirstName'; firstName: string }
-  | { action: 'setLastName'; lastName: string }
-  | { action: 'setDateOfBirth'; dateOfBirth: string }
-  | { action: 'changeAddress'; addressId: string; address: Address }
-  | { action: 'addAddress'; address: Address }
-  | { action: 'removeAddress'; addressId: string }
-  | { action: 'setDefaultShippingAddress'; addressId: string }
-  | { action: 'setDefaultBillingAddress'; addressId: string };
+// export type CustomerUpdateCustomerAction =
+//   | { action: 'setFirstName'; firstName: string }
+//   | { action: 'setLastName'; lastName: string }
+//   | { action: 'setDateOfBirth'; dateOfBirth: string }
+//   | { action: 'changeAddress'; addressId: string; address: Address }
+//   | { action: 'addAddress'; address: Address }
+//   | { action: 'removeAddress'; addressId: string }
+//   | { action: 'setDefaultShippingAddress'; addressId: string }
+//   | { action: 'setDefaultBillingAddress'; addressId: string };
 
+// export interface CustomerUpdateCustomerAction {
+//   action:
+//     | 'setFirstName'
+//     | 'setLastName'
+//     | 'setDateOfBirth'
+//     | 'changeAddress'
+//     | 'addAddress'
+//     | 'removeAddress'
+//     | 'setDefaultShippingAddress'
+//     | 'setDefaultBillingAddress';
+//   firstName?: string; // for 'setFirstName'
+//   lastName?: string; // for 'setLastName'
+//   dateOfBirth?: string; // for 'setDateOfBirth'
+//   addressId?: string; // for 'changeAddress', 'removeAddress', 'setDefaultShippingAddress', 'setDefaultBillingAddress'
+//   address?: Address; // for 'changeAddress', 'addAddress'
+// }
+// export interface AddressAction {
+//   action: 'changeAddress' | 'addAddress' | 'removeAddress';
+//   addressId?: string;
+//   address?: Address;
+// }
 export interface Attribute {
   name: string;
 }

@@ -34,10 +34,10 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
             onChange={handleChange}
           />
           <input
-            name="dob"
+            name="dateOfBirth"
             placeholder="Date of birth"
             type="date"
-            value={(formData as User).dob}
+            value={formData!.dateOfBirth}
             onChange={handleChange}
           />
         </>
