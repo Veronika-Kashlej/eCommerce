@@ -20,7 +20,7 @@ export const authMiddlewareOptions: AuthMiddlewareOptions = {
   tokenCache: {
     get: () => {
       const store: string | null = localStorage.getItem('anonymToken');
-      if (!store) return api.clearTokenCustomer();
+      if (!store) return api.clearTokenAnonym();
 
       try {
         const cachedData: unknown = JSON.parse(store);
@@ -32,9 +32,9 @@ export const authMiddlewareOptions: AuthMiddlewareOptions = {
             return cachedData;
           }
         }
-        return api.clearTokenCustomer();
+        return api.clearTokenAnonym();
       } catch {
-        return api.clearTokenCustomer();
+        return api.clearTokenAnonym();
       }
     },
     set: (token) => {
