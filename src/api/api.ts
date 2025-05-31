@@ -44,9 +44,26 @@ class Api {
     this.anonymClient = new ClientBuilder()
       .withClientCredentialsFlow(authMiddlewareOptions)
       .withHttpMiddleware(httpMiddlewareOptions)
-      .withLoggerMiddleware() // todo remove logger after dev
+      // .withLoggerMiddleware() // todo remove logger after dev
       .build();
     this.anonymApiRoot = createApiBuilderFromCtpClient(this.anonymClient).withProjectKey({
+      projectKey: env.projectKey,
+    });
+
+    this.initApiRoot();
+  }
+
+  private initApiRoot() {
+    const token = this.getTokenCustomer;
+    if (!token) return;
+    const fixedToken = token.token.startsWith('Bearer ') ? token.token : `Bearer ${token.token}`;
+    const client = new ClientBuilder()
+      .withExistingTokenFlow(fixedToken, { force: true })
+      .withHttpMiddleware(httpMiddlewareOptions)
+      // .withLoggerMiddleware() // todo remove logger after dev
+      .build();
+
+    this.apiRoot = createApiBuilderFromCtpClient(client).withProjectKey({
       projectKey: env.projectKey,
     });
   }
@@ -90,7 +107,7 @@ class Api {
 
   public get loginned(): boolean {
     const token: TokenStore | undefined = this.getTokenCustomer;
-    if (token && new Date() < new Date(token.expirationTime)) {
+    if (this.apiRoot && token && new Date() < new Date(token.expirationTime)) {
       return true;
     } else return false;
   }
@@ -129,6 +146,11 @@ class Api {
 
   public clearTokenCustomer(): TokenStore {
     localStorage.removeItem('commercetoolsToken');
+    return { token: '', expirationTime: 0, refreshToken: undefined };
+  }
+
+  public clearTokenAnonym(): TokenStore {
+    localStorage.removeItem('anonymToken');
     return { token: '', expirationTime: 0, refreshToken: undefined };
   }
 
