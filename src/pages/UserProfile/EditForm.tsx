@@ -1,11 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Address, EditFormProps, User } from '@/types/interfaces';
-import { validateEmail } from '@/utils/validations';
+import {
+  validateDate,
+  validateEmail,
+  validateFirstName,
+  validateLastName,
+  validatePassword,
+} from '@/utils/validations';
 // import handleSave from './api-edit-form';
 
 const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: EditFormProps<T>) => {
   const [formData, setFormData] = useState<T>(data);
   const [emailError, setEmailError] = useState<string>('');
+  const [firstNameError, setFirstNameError] = useState<string>('');
+  const [lastNameError, setLastNameError] = useState<string>('');
+  const [dateError, setDateError] = useState<string>('');
+  const [passError, setPassError] = useState<string>('');
 
   useEffect(() => {
     setFormData(data);
@@ -18,11 +28,22 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
     if (name === 'email') {
       const validation = validateEmail(value);
       setEmailError(validation.isValid ? '' : (validation.message as string));
-      // if (!validation.isValid) {
-      //   setEmailError(validation.message as string);
-      // } else {
-      //   setEmailError('');
-      // }
+    }
+    if (name === 'firstName') {
+      const validation = validateFirstName(value);
+      setFirstNameError(validation.isValid ? '' : (validation.message as string));
+    }
+    if (name === 'lastName') {
+      const validation = validateLastName(value);
+      setLastNameError(validation.isValid ? '' : (validation.message as string));
+    }
+    if (name === 'dateOfBirth') {
+      const validation = validateDate(value);
+      setDateError(validation.isValid ? '' : (validation.message as string));
+    }
+    if (name === 'password') {
+      const validation = validatePassword(value);
+      setPassError(validation.isValid ? '' : (validation.message as string));
     }
     const newData = { ...formData!, [name]: value } as T;
     setFormData(newData);
@@ -45,12 +66,14 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
             value={formData!.firstName}
             onChange={handleChange}
           />
+          {firstNameError && <div style={{ color: 'red' }}>{firstNameError}</div>}
           <input
             name="lastName"
             placeholder="LastName"
             value={formData!.lastName}
             onChange={handleChange}
           />
+          {lastNameError && <div style={{ color: 'red' }}>{lastNameError}</div>}
           <input
             name="dateOfBirth"
             placeholder="Date of birth"
@@ -58,6 +81,7 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
             value={formData!.dateOfBirth}
             onChange={handleChange}
           />
+          {dateError && <div style={{ color: 'red' }}>{dateError}</div>}
           <div style={{ marginBottom: '20px' }}>
             <label style={{ fontWeight: 'bold', color: '#007bff' }}>Change Email (Login):</label>
             <input
@@ -87,6 +111,7 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
                 width: '100%',
               }}
             />
+            {passError && <div style={{ color: 'red' }}>{passError}</div>}
           </div>
         </>
       ) : (

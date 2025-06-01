@@ -10,7 +10,7 @@ export const validateEmail = (email: string): ValidationResult => {
     return { isValid: false, message: 'Email should not contain leading or trailing spaces' };
   }
 
-  const emailRegex: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex: RegExp = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   if (!emailRegex.test(email.trim())) {
     return {
       isValid: false,
