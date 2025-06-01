@@ -87,3 +87,8 @@ export interface ProductProjectionSearchArgs {
   storeProjection?: string;
   searchTerm?: string;
 }
+export interface ChangePasswordResult {
+  success: boolean;
+  message: string;
+  response?: ClientResponse<Customer>;
+}
