@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Address, EditFormProps, User } from '@/types/interfaces';
+import { validateEmail } from '@/utils/validations';
 // import handleSave from './api-edit-form';
 
 const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: EditFormProps<T>) => {
-  const [formData, setFormData] = useState<T | null>(data);
+  const [formData, setFormData] = useState<T>(data);
+  const [emailError, setEmailError] = useState<string>('');
 
   useEffect(() => {
     setFormData(data);
@@ -12,9 +14,25 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!formData) return;
     const { name, value } = e.target;
+
+    if (name === 'email') {
+      const validation = validateEmail(value);
+      setEmailError(validation.isValid ? '' : (validation.message as string));
+      // if (!validation.isValid) {
+      //   setEmailError(validation.message as string);
+      // } else {
+      //   setEmailError('');
+      // }
+    }
     const newData = { ...formData!, [name]: value } as T;
     setFormData(newData);
     onChange(newData);
+  };
+  const handleSaveClick = () => {
+    if (emailError) {
+      return;
+    }
+    onSave(mode);
   };
 
   return (
@@ -40,6 +58,36 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
             value={formData!.dateOfBirth}
             onChange={handleChange}
           />
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ fontWeight: 'bold', color: '#007bff' }}>Change Email (Login):</label>
+            <input
+              name="email"
+              type="email"
+              value={formData?.email ?? ''}
+              onChange={handleChange}
+              style={{
+                border: '2px solid #007bff',
+                padding: '8px',
+                width: '100%',
+                marginBottom: '10px',
+              }}
+            />
+            {emailError && <div style={{ color: 'red' }}>{emailError}</div>}
+          </div>
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ fontWeight: 'bold', color: '#007bff' }}>Change Password:</label>
+            <input
+              name="password"
+              type="password"
+              value={(formData as User)?.password ?? ''}
+              onChange={handleChange}
+              style={{
+                border: '2px solid #007bff',
+                padding: '8px',
+                width: '100%',
+              }}
+            />
+          </div>
         </>
       ) : (
         <>
@@ -69,7 +117,7 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
           />
         </>
       )}
-      <button className="edit_button" onClick={() => onSave(mode)}>
+      <button className="edit_button" onClick={handleSaveClick}>
         Save
       </button>
     </div>

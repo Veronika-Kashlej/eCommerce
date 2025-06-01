@@ -26,6 +26,11 @@ const UserProfile: React.FC = () => {
   const [editData, setEditData] = useState<User | Address | null>(null);
   const [currentAddress, setCurrentAddress] = useState<Address | null>(null);
 
+  const [messageModalOpen, setMessageModalOpen] = useState(false);
+  const [messageText, setMessageText] = useState('');
+
+  const [emailError, setEmailError] = useState<string>('');
+
   const [addressChangedTrigger, setAddressChangedTrigger] = useState<boolean>(false);
 
   // useEffect(() => {
@@ -101,6 +106,22 @@ const UserProfile: React.FC = () => {
       });
   }, []);
 
+  const showMessage = (text: string) => {
+    setMessageText(text);
+    setMessageModalOpen(true);
+  };
+  const handleCloseMessage = () => {
+    setMessageModalOpen(false);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') handleCloseMessage();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleOpenModal = (mode: 'personal' | 'address', address?: Address) => {
     setModalMode(mode);
     if (mode === 'personal') {
@@ -109,6 +130,8 @@ const UserProfile: React.FC = () => {
           firstName: user.firstName,
           lastName: user.lastName,
           dateOfBirth: user.dateOfBirth,
+          email: user.email,
+          password: '',
         });
       }
     } else if (address) {
@@ -127,7 +150,11 @@ const UserProfile: React.FC = () => {
         firstName: editData?.firstName,
         lastName: editData?.lastName,
         dateOfBirth: editData?.dateOfBirth,
+        email: editData?.email,
       };
+      if ((editData as User)?.password) {
+        //await api.changePassword((editData as User).password); //!!!!!!! Активировать когда будет метод API
+      }
 
       response = await api.updateCustomer(temp);
       localChanges();
@@ -188,10 +215,10 @@ const UserProfile: React.FC = () => {
             return prev ? { ...prev!, addresses: updatedAddresses } : prev;
           });
         }
-        alert('Данные успешно обновлены');
+        showMessage('Data updated successfully');
         setAddressChangedTrigger((prev) => !prev); //!!!!!!!!!!!!!!!!!!!!
       } else {
-        alert('Ошибка при обновлении данных');
+        showMessage('Error updating data');
       }
     }
     setIsModalOpen(false);
@@ -305,7 +332,19 @@ const UserProfile: React.FC = () => {
             data={editData!}
             onChange={(data: User | Address) => setEditData(data)}
             onSave={handleSave}
+            setEmailError={setEmailError}
+            emailError={emailError}
           />
+        </ModalWindow>
+      )}
+      {messageModalOpen && (
+        <ModalWindow onClose={handleCloseMessage}>
+          <div className="handleMessage_wrap">
+            <p>{messageText}</p>
+            <button className="edit_button" onClick={handleCloseMessage}>
+              OK
+            </button>
+          </div>
         </ModalWindow>
       )}
     </div>
