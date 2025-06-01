@@ -19,12 +19,17 @@ import {
   CategoryPagedQueryResponse,
 } from '@commercetools/platform-sdk';
 
+
 import { ProductProjectionSearchArgs } from './interfaces/types';
+
+import { ChangePasswordResult, ProductsQueryArgs } from './interfaces/types';
+
 import env from './env';
 
 import { registerCustomer } from './customers/customer-registration';
 import { getCurrentCustomer } from './customers/customer-get';
 import { updateCustomer } from './customers/customer-update';
+import { changePassword } from './customers/customer-change-password';
 import { CustomerUpdateData } from './interfaces/types';
 import { getProductsList } from './products/product-query';
 import { getProductById, getProductProjectionById } from './products/product-by-id';
@@ -73,6 +78,20 @@ class Api {
       Api.instance = new Api();
     }
     return Api.instance;
+  }
+
+  public async changePassword(
+    currentPassword: string,
+    newPassword: string
+  ): Promise<ChangePasswordResult> {
+    if (!this.loginned) {
+      return {
+        success: false,
+        message: 'User is not authenticated',
+      };
+    }
+
+    return changePassword(this.apiRoot, currentPassword, newPassword);
   }
 
   public async getCurrentCustomer() {
