@@ -1,5 +1,4 @@
 .product-list-container {
-  padding: 24px;
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -8,10 +7,9 @@
   font-size: 28px;
   font-weight: 700;
   color: #2d3748;
-  margin-bottom: 24px;
   text-align: center;
   position: relative;
-  padding-bottom: 12px;
+  margin: 0;
 }
 
 .product-list-container h2::after {

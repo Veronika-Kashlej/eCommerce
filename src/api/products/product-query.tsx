@@ -56,7 +56,7 @@ export async function getProductsList(
   apiRoot: ByProjectKeyRequestBuilder,
   queryArgs?: ProductProjectionSearchArgs
 ): Promise<ClientResponse<ProductProjectionPagedSearchResponse> | undefined> {
-  console.log('Original queryArgs:', queryArgs);
+  // console.log('Original queryArgs:', queryArgs);
   try {
     let allowedFuzzyLevel = 2;
     if (queryArgs?.searchTerm) {
@@ -87,7 +87,7 @@ export async function getProductsList(
       }
     });
 
-    console.log('Prepared queryArgs:', preparedQueryArgs);
+    // console.log('Prepared queryArgs:', preparedQueryArgs);
 
     const response = await apiRoot
       .productProjections()
@@ -97,7 +97,7 @@ export async function getProductsList(
       })
       .execute();
 
-    console.log(`Found ${response.body.results.length} products`);
+    // console.log(`Found ${response.body.results.length} products`);
     return response;
   } catch (error) {
     console.error('Search failed:', {

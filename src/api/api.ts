@@ -19,7 +19,7 @@ import {
   CategoryPagedQueryResponse,
 } from '@commercetools/platform-sdk';
 
-import { ProductsQueryArgs } from './interfaces/types';
+import { ProductProjectionSearchArgs } from './interfaces/types';
 import env from './env';
 
 import { registerCustomer } from './customers/customer-registration';
@@ -288,10 +288,40 @@ class Api {
   }
 
   public async getProductsList(
-    queryArgs?: ProductsQueryArgs
+    queryArgs?: ProductProjectionSearchArgs
   ): Promise<ClientResponse<ProductProjectionPagedSearchResponse> | undefined> {
     if (!this.anonymApiRoot) return undefined;
     return getProductsList(this.anonymApiRoot, queryArgs);
+  }
+
+  public async getProductsFacets(): Promise<void> {
+    try {
+      // if (this.anonymApiRoot) {
+      const res: ClientResponse<ProductProjectionPagedSearchResponse> = await this.anonymApiRoot
+        .productProjections()
+        .search()
+        .get({
+          queryArgs: {
+            facet: [
+              // 'variants.attributes.brand',
+              // 'masterVariant.attributes.color.en-US',
+              'variants.attributes.color.en-US',
+              // 'variants.attributes.color.en',
+              // 'variants.attributes.color'
+            ],
+            limit: 0,
+          },
+        })
+        .execute();
+      console.log('getProductsFacets =', res);
+
+      // const products: ProductInfo[] = body.results.map((item) => getBriefInfoFromProductProjection(item));
+      // return products;
+      // }
+    } catch (error) {
+      console.error('Error while receiving goods:', error);
+      // return [];
+    }
   }
 
   public async getProductById(productId: string): Promise<Product | undefined> {
