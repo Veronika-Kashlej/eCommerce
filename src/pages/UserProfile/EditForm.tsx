@@ -5,9 +5,8 @@ import {
   validateEmail,
   validateFirstName,
   validateLastName,
-  validatePassword,
+  //validatePassword,
 } from '@/utils/validations';
-// import handleSave from './api-edit-form';
 
 const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: EditFormProps<T>) => {
   const [formData, setFormData] = useState<T>(data);
@@ -15,7 +14,7 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
   const [firstNameError, setFirstNameError] = useState<string>('');
   const [lastNameError, setLastNameError] = useState<string>('');
   const [dateError, setDateError] = useState<string>('');
-  const [passError, setPassError] = useState<string>('');
+  //const [passError, setPassError] = useState<string>('');
 
   useEffect(() => {
     setFormData(data);
@@ -41,10 +40,10 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
       const validation = validateDate(value);
       setDateError(validation.isValid ? '' : (validation.message as string));
     }
-    if (name === 'password') {
-      const validation = validatePassword(value);
-      setPassError(validation.isValid ? '' : (validation.message as string));
-    }
+    // if (name === 'password') {
+    //   const validation = validatePassword(value);
+    //   setPassError(validation.isValid ? '' : (validation.message as string));
+    // }
     const newData = { ...formData!, [name]: value } as T;
     setFormData(newData);
     onChange(newData);
@@ -97,21 +96,6 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
               }}
             />
             {emailError && <div style={{ color: 'red' }}>{emailError}</div>}
-          </div>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontWeight: 'bold', color: '#007bff' }}>Change Password:</label>
-            <input
-              name="password"
-              type="password"
-              value={(formData as User)?.password ?? ''}
-              onChange={handleChange}
-              style={{
-                border: '2px solid #007bff',
-                padding: '8px',
-                width: '100%',
-              }}
-            />
-            {passError && <div style={{ color: 'red' }}>{passError}</div>}
           </div>
         </>
       ) : (

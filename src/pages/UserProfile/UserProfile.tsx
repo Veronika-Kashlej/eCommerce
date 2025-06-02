@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import ModalWindow from './ModalWindow';
 import EditForm from './EditForm';
 import { CustomerResponse, CustomerUpdateData } from '@/api/interfaces/types';
+import ChangePasswordForm from './ChangePasswordForm';
 
 const UserProfile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -30,6 +31,7 @@ const UserProfile: React.FC = () => {
   const [messageText, setMessageText] = useState('');
 
   const [emailError, setEmailError] = useState<string>('');
+  const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
 
   const [addressChangedTrigger, setAddressChangedTrigger] = useState<boolean>(false);
 
@@ -152,9 +154,9 @@ const UserProfile: React.FC = () => {
         dateOfBirth: editData?.dateOfBirth,
         email: editData?.email,
       };
-      if ((editData as User)?.password) {
-        //await api.changePassword((editData as User).password); //!!!!!!! Активировать когда будет метод API
-      }
+      // if ((editData as User)?.password) {
+      //   await api.changePassword((editData as User).password); //!!!!!!! Активировать когда будет метод API
+      // }
 
       response = await api.updateCustomer(temp);
       localChanges();
@@ -247,9 +249,20 @@ const UserProfile: React.FC = () => {
             <strong>Date of birth:</strong> {user.dateOfBirth}
           </p>
         )}
-        <button className="edit_button" onClick={() => handleOpenModal('personal')}>
-          Edit
-        </button>
+        <div className="edit__button_wrapper">
+          <button className="edit_button" onClick={() => handleOpenModal('personal')}>
+            Edit
+          </button>
+          <button className="edit_button" onClick={() => setPasswordModalOpen(true)}>
+            Edit password
+          </button>
+        </div>
+
+        {isPasswordModalOpen && (
+          <ModalWindow onClose={() => setPasswordModalOpen(false)}>
+            <ChangePasswordForm onClose={() => setPasswordModalOpen(false)} />
+          </ModalWindow>
+        )}
       </section>
 
       <section>
