@@ -7,6 +7,7 @@ import {
   validateLastName,
   //validatePassword,
 } from '@/utils/validations';
+//import { Country } from '@/types/enums';
 
 const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: EditFormProps<T>) => {
   const [formData, setFormData] = useState<T>(data);
@@ -124,6 +125,22 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
             value={(formData as Address).country}
             onChange={handleChange}
           />
+          {/* <select
+            name="country"
+            value={(formData as Address).country}
+            onChange={(e) => {
+              const country = e.target.value as keyof typeof Country;
+              setFormData((prev) => (prev ? { ...prev, country } : prev));
+            }}
+            style={{ width: '100%', padding: '8px' }}
+          >
+            <option value={Country.EMPTY}>Select Country</option>
+            {Object.keys(Country).map((key) => (
+              <option key={key} value={key}>
+                {Country[key as keyof typeof Country]}
+              </option>
+            ))}
+          </select> */}
         </>
       )}
       <button className="edit_button" onClick={handleSaveClick}>

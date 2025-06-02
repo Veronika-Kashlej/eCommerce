@@ -8,6 +8,7 @@ import ModalWindow from './ModalWindow';
 import EditForm from './EditForm';
 import { CustomerResponse, CustomerUpdateData } from '@/api/interfaces/types';
 import ChangePasswordForm from './ChangePasswordForm';
+//import { Country } from '@/types/enums';
 
 const UserProfile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -178,6 +179,38 @@ const UserProfile: React.FC = () => {
       response = await api.updateCustomer(temp);
       localChanges();
       console.log(`response: ${response}`);
+      setAddressChangedTrigger((prev) => !prev);
+    }
+
+    // Open new address by button "New address"
+    if (mode === 'address') {
+      // const newAddress: Address = {
+      temp = {
+        addresses: {
+          action: 'addAddress',
+          address: {
+            id: '',
+            streetName: (editData as Address).streetName,
+            city: (editData as Address).city,
+            postalCode: (editData as Address).postalCode,
+            country: (editData as Address).country,
+            //country: Country.EMPTY,
+          },
+        },
+      };
+
+      //const response = await api.addAddress(newAddress);
+      response = await api.updateCustomer(temp);
+      // if (response.success && response.response?.body.addresses) {
+      //   setUser((prev) => {
+      //     if (!prev) return prev;
+      //     return {
+      //       ...prev,
+      //       addresses: [...prev.addresses, ...response.response.body.addresses],
+      //     };
+      //   });
+      //   setAddressChangedTrigger((prev) => !prev);
+      // }
     }
 
     async function localChanges(): Promise<void> {
@@ -267,6 +300,18 @@ const UserProfile: React.FC = () => {
 
       <section>
         <h2 className="addresses-container">Customer addresses:</h2>
+
+        <button
+          className="edit_button"
+          onClick={() => {
+            setCurrentAddress(null);
+            setEditData({ streetName: '', city: '', postalCode: '', country: '' });
+            setModalMode('address');
+            setIsModalOpen(true);
+          }}
+        >
+          New address
+        </button>
 
         <h3>Shipping addresses</h3>
         {shippingAddresses.length > 0 ? (
