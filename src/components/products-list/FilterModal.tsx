@@ -11,13 +11,21 @@ interface CachedFacets {
   timestamp: number;
 }
 
+interface SavedFilters {
+  priceRange: [number, number];
+  colors: string[];
+  finish: string[];
+  timestamp: number;
+}
+
 const CACHE_EXPIRY_TIME = 15 * 60 * 1000;
+const FILTERS_STORAGE_KEY = 'productFilters';
 
 interface FilterModalProps {
   isOpen: boolean;
   onClose: () => void;
   onApply: (filters: { priceRange: [number, number]; colors: string[]; finish: string[] }) => void;
-  onReset: () => void;
+  // onReset: () => void;
   currentFilters: {
     priceRange: [number, number];
     colors: string[];
@@ -29,7 +37,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
   isOpen,
   onClose,
   onApply,
-  onReset,
+  // onReset,
   currentFilters,
 }) => {
   const [priceRange, setPriceRange] = useState<[number, number]>(currentFilters.priceRange);
@@ -51,9 +59,47 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      fetchAvailableAttributes();
+      const loadData = async () => {
+        await fetchAvailableAttributes();
+        await loadSavedFilters();
+      };
+      loadData();
     }
   }, [isOpen]);
+
+  const loadSavedFilters = async () => {
+    const savedData = await localStorage.getItem(FILTERS_STORAGE_KEY);
+    if (savedData) {
+      try {
+        const parsedData: SavedFilters = JSON.parse(savedData);
+        if (Date.now() - parsedData.timestamp < CACHE_EXPIRY_TIME) {
+          setPriceRange(parsedData.priceRange);
+          setSelectedColors(parsedData.colors);
+          setSelectedFinish(parsedData.finish);
+          return;
+        }
+      } catch (e) {
+        console.error('Failed to parse saved filters', e);
+      }
+    }
+    // setPriceRange(currentFilters.priceRange);
+    // setSelectedColors(currentFilters.colors);
+    // setSelectedFinish(currentFilters.finish);
+  };
+
+  const saveFilters = () => {
+    const filtersToSave: SavedFilters = {
+      priceRange,
+      colors: selectedColors,
+      finish: selectedFinish,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filtersToSave));
+  };
+
+  // const clearSavedFilters = () => {
+  //   localStorage.removeItem(FILTERS_STORAGE_KEY);
+  // };
 
   const fetchAvailableAttributes = async () => {
     const cachedData = getCachedFacets();
@@ -66,8 +112,6 @@ const FilterModal: React.FC<FilterModalProps> = ({
       });
 
       if (
-        !priceRange[0] ||
-        !priceRange[1] ||
         priceRange[0] !== availableAttributes.minPrice ||
         priceRange[1] !== availableAttributes.maxPrice
       ) {
@@ -172,6 +216,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
   };
 
   const handleApply = () => {
+    saveFilters();
     onApply({
       priceRange,
       colors: selectedColors,
@@ -181,10 +226,11 @@ const FilterModal: React.FC<FilterModalProps> = ({
   };
 
   const handleReset = () => {
+    // clearSavedFilters();
     setSelectedColors([]);
     setSelectedFinish([]);
     setPriceRange([availableAttributes.minPrice, availableAttributes.maxPrice]);
-    onReset();
+    // onReset();
   };
 
   if (!isOpen) return null;

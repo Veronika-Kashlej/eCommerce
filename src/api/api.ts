@@ -19,10 +19,7 @@ import {
   CategoryPagedQueryResponse,
 } from '@commercetools/platform-sdk';
 
-
-import { ProductProjectionSearchArgs } from './interfaces/types';
-
-import { ChangePasswordResult, ProductsQueryArgs } from './interfaces/types';
+import { ChangePasswordResult, ProductProjectionSearchArgs } from './interfaces/types';
 
 import env from './env';
 

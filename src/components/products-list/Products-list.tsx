@@ -62,14 +62,14 @@ const ProductList: React.FC = () => {
     setOffset(0);
   };
 
-  const handleResetFilters = () => {
-    setActiveFilters({
-      priceRange: [0, 10000],
-      colors: [],
-      finish: [],
-    });
-    setOffset(0);
-  };
+  // const handleResetFilters = () => {
+  //   setActiveFilters({
+  //     priceRange: [0, 10000],
+  //     colors: [],
+  //     finish: [],
+  //   });
+  //   setOffset(0);
+  // };
 
   const updateSortHistory = (field: SortField) => {
     setSortHistory((prev) => {
@@ -433,7 +433,7 @@ const ProductList: React.FC = () => {
         isOpen={isFilterModalOpen}
         onClose={closeFilterModal}
         onApply={handleApplyFilters}
-        onReset={handleResetFilters}
+        // onReset={handleResetFilters}
         currentFilters={activeFilters}
       />
     </section>
