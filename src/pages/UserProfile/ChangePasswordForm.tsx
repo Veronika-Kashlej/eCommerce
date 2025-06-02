@@ -47,6 +47,8 @@ const ChangePasswordForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     <div style={{ padding: '20px' }}>
       <h3>Edit password</h3>
       <input
+        name="password"
+        className={`input ${error ? 'error' : ''}`}
         type={showPassword ? 'text' : 'password'}
         placeholder="Current password"
         value={currentPassword}
@@ -54,6 +56,8 @@ const ChangePasswordForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         style={{ width: '100%', marginBottom: '10px' }}
       />
       <input
+        name="password"
+        className={`input ${error ? 'error' : ''}`}
         type={showPassword ? 'text' : 'password'}
         placeholder="New password"
         value={newPassword}
@@ -62,9 +66,9 @@ const ChangePasswordForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       />
 
       <input
-        type={showPassword ? 'text' : 'password'}
-        className={`input ${error ? 'error' : ''}`}
         name="password"
+        className={`input ${error ? 'error' : ''}`}
+        type={showPassword ? 'text' : 'password'}
         placeholder="Confirming new password"
         value={confirmPassword}
         onChange={(e) => setConfirmPassword(e.target.value)}
