@@ -1,13 +1,14 @@
 import api from '@/api/api';
-import { Address, CustomerUpdateCustomerAction, User } from '@/types/interfaces';
+import { Address, User } from '@/types/interfaces';
 import React, { useEffect, useState } from 'react';
 import WaitingModal from '@/components/waiting/Waiting';
 import './UserProfile.css';
 import { useNavigate } from 'react-router-dom';
 import ModalWindow from './ModalWindow';
 import EditForm from './EditForm';
-//import handleSave from './api-edit-form';
-//import { EditFormProps } from '@/types/interfaces';
+import { CustomerResponse, CustomerUpdateData } from '@/api/interfaces/types';
+import ChangePasswordForm from './ChangePasswordForm';
+//import { Country } from '@/types/enums';
 
 const UserProfile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -27,9 +28,21 @@ const UserProfile: React.FC = () => {
   const [editData, setEditData] = useState<User | Address | null>(null);
   const [currentAddress, setCurrentAddress] = useState<Address | null>(null);
 
-  if (currentAddress) {
-    console.log();
-  }
+  const [messageModalOpen, setMessageModalOpen] = useState(false);
+  const [messageText, setMessageText] = useState('');
+
+  const [emailError, setEmailError] = useState<string>('');
+  const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
+
+  const [addressChangedTrigger, setAddressChangedTrigger] = useState<boolean>(false);
+
+  // useEffect(() => {
+  //   console.log('Обновленный user:', user);
+  // }, [user]);
+
+  // if (currentAddress) {
+  //   console.log();
+  // }
 
   useEffect(() => {
     if (!api.loginned) {
@@ -78,7 +91,7 @@ const UserProfile: React.FC = () => {
           setUser({
             firstName: customerData.firstName!,
             lastName: customerData.lastName!,
-            dob: customerData.dateOfBirth!,
+            dateOfBirth: customerData.dateOfBirth!,
             addresses: addresses,
           });
           setBillingAddresses(billingAddresses);
@@ -96,11 +109,33 @@ const UserProfile: React.FC = () => {
       });
   }, []);
 
+  const showMessage = (text: string) => {
+    setMessageText(text);
+    setMessageModalOpen(true);
+  };
+  const handleCloseMessage = () => {
+    setMessageModalOpen(false);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') handleCloseMessage();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleOpenModal = (mode: 'personal' | 'address', address?: Address) => {
     setModalMode(mode);
     if (mode === 'personal') {
       if (user) {
-        setEditData({ firstName: user.firstName, lastName: user.lastName, dob: user.dob });
+        setEditData({
+          firstName: user.firstName,
+          lastName: user.lastName,
+          dateOfBirth: user.dateOfBirth,
+          email: user.email,
+          password: '',
+        });
       }
     } else if (address) {
       setCurrentAddress(address);
@@ -110,84 +145,124 @@ const UserProfile: React.FC = () => {
   };
 
   const handleSave = async (mode: 'personal' | 'address') => {
-    const actions: CustomerUpdateCustomerAction[] = [];
+    let response: CustomerResponse;
+    let temp: CustomerUpdateData;
 
     if (mode === 'personal') {
-      if (editData?.firstName && editData?.firstName !== user?.firstName) {
-        actions.push({ action: 'setFirstName', firstName: editData!.firstName });
-      }
-      if (editData?.lastName && editData?.lastName !== user?.lastName) {
-        actions.push({ action: 'setLastName', lastName: editData!.lastName });
-      }
-      if ((editData as User).dob !== user?.dob) {
-        actions.push({ action: 'setDateOfBirth', dateOfBirth: (editData as User).dob });
-      }
-    } else if (mode === 'address' && currentAddress && editData && currentAddress.id) {
-      actions.push({
-        action: 'changeAddress',
-        addressId: currentAddress.id,
-        address: {
-          streetName: (editData as Address).streetName,
-          city: (editData as Address).city,
-          postalCode: (editData as Address).postalCode,
-          country: (editData as Address).country,
-        },
-      });
-    }
-
-    if (actions.length > 0) {
-      //const response = await api.updateCustomer({ actions });
-      const response = await api.updateCustomer({
+      temp = {
         firstName: editData?.firstName,
         lastName: editData?.lastName,
-        dateOfBirth: (editData as User).dob,
-        //addresses: actions,
-      });
+        dateOfBirth: editData?.dateOfBirth,
+        email: editData?.email,
+      };
+      // if ((editData as User)?.password) {
+      //   await api.changePassword((editData as User).password); //!!!!!!! Активировать когда будет метод API
+      // }
+
+      response = await api.updateCustomer(temp);
+      localChanges();
+    }
+
+    if (mode === 'address' && currentAddress && editData && currentAddress.id) {
+      temp = {
+        addresses: {
+          action: 'changeAddress',
+          addressId: currentAddress.id,
+          address: {
+            streetName: (editData as Address)?.streetName,
+            city: (editData as Address)?.city,
+            postalCode: (editData as Address)?.postalCode,
+            country: (editData as Address).country,
+          },
+        },
+      };
+      response = await api.updateCustomer(temp);
+      localChanges();
+      console.log(`response: ${response}`);
+      setAddressChangedTrigger((prev) => !prev);
+    }
+
+    // Open new address by button "New address"
+    if (mode === 'address') {
+      // const newAddress: Address = {
+      temp = {
+        addresses: {
+          action: 'addAddress',
+          address: {
+            id: '',
+            streetName: (editData as Address).streetName,
+            city: (editData as Address).city,
+            postalCode: (editData as Address).postalCode,
+            country: (editData as Address).country,
+            //country: Country.EMPTY,
+          },
+        },
+      };
+
+      //const response = await api.addAddress(newAddress);
+      response = await api.updateCustomer(temp);
+      // if (response.success && response.response?.body.addresses) {
+      //   setUser((prev) => {
+      //     if (!prev) return prev;
+      //     return {
+      //       ...prev,
+      //       addresses: [...prev.addresses, ...response.response.body.addresses],
+      //     };
+      //   });
+      //   setAddressChangedTrigger((prev) => !prev);
+      // }
+    }
+
+    async function localChanges(): Promise<void> {
       if (response.success) {
         // обновляем локальное состояние
         if (mode === 'personal') {
-          if (editData && editData?.firstName && editData?.lastName && (editData as User)?.dob) {
-            setUser((prev) =>
-              prev
+          if (editData && editData?.firstName && editData?.lastName && editData.dateOfBirth) {
+            setUser((prev) => {
+              return prev
                 ? {
                     ...prev,
                     firstName: editData!.firstName as string,
                     lastName: editData!.lastName as string,
-                    dob: (editData as User)!.dob,
+                    dateOfBirth: (editData as User)!.dateOfBirth,
                   }
-                : prev
-            );
+                : prev;
+            });
           }
         } else if (mode === 'address') {
           // обновляем список адресов
+
           setUser((prev) => {
-            if (!prev) return prev;
-            const updatedAddresses = prev.addresses
-              ? prev.addresses.map((addr) =>
-                  addr.id === currentAddress?.id ? { ...addr, ...editData } : addr
-                )
-              : [];
-            return { ...prev, addresses: updatedAddresses };
+            console.log('user: ', user);
+            //if (!prev || !prev.addresses) return prev;
+            console.log('addresses:', JSON.stringify(currentAddress?.streetName, null, 2)); //!!!!!!!!!!!!!!
+            const updatedAddresses = prev?.addresses?.map((addr) =>
+              addr.id === currentAddress?.id ? { ...addr, ...editData } : addr
+            );
+            // const updatedAddresses = prev.addresses
+            //   ? prev.addresses.map((addr) =>
+            //       addr.id === currentAddress?.id ? { ...addr, ...editData } : addr
+            //     )
+            //   : [];
+            console.log('prev: ', prev); //!!!!!!!!!!!
+            console.log(updatedAddresses); //!!!!!!!!!!!!!!!!
+            console.log('end: ', prev ? { ...prev!, addresses: updatedAddresses } : prev); //!!!!
+            return prev ? { ...prev!, addresses: updatedAddresses } : prev;
           });
         }
-        alert('Данные успешно обновлены');
+        showMessage('Data updated successfully');
+        setAddressChangedTrigger((prev) => !prev); //!!!!!!!!!!!!!!!!!!!!
       } else {
-        alert('Ошибка при обновлении данных');
+        showMessage('Error updating data');
       }
     }
     setIsModalOpen(false);
   };
 
-  // const handleSave = () => {
-  //   setIsModalOpen(false);
-  // };
-
-  // Обработка сохранения
-  // const handleOpenModal = (address: Address) => {
-  //   setModalAddress(address);
-  //   setEditData({ ...address });
-  //   setIsModalOpen(true);
-  // };
+  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  useEffect(() => {
+    console.log('Адрес изменился, триггер сработал');
+  }, [addressChangedTrigger]);
 
   if (loading) return <WaitingModal isOpen={true} />;
   if (error) return <p>{error}</p>;
@@ -202,18 +277,41 @@ const UserProfile: React.FC = () => {
           {' / '}
           {user.lastName}
         </p>
-        {user.dob && (
+        {user.dateOfBirth && (
           <p>
-            <strong>Date of birth:</strong> {user.dob}
+            <strong>Date of birth:</strong> {user.dateOfBirth}
           </p>
         )}
-        <button className="edit_button" onClick={() => handleOpenModal('personal')}>
-          Edit
-        </button>
+        <div className="edit__button_wrapper">
+          <button className="edit_button" onClick={() => handleOpenModal('personal')}>
+            Edit
+          </button>
+          <button className="edit_button" onClick={() => setPasswordModalOpen(true)}>
+            Edit password
+          </button>
+        </div>
+
+        {isPasswordModalOpen && (
+          <ModalWindow onClose={() => setPasswordModalOpen(false)}>
+            <ChangePasswordForm onClose={() => setPasswordModalOpen(false)} />
+          </ModalWindow>
+        )}
       </section>
 
       <section>
         <h2 className="addresses-container">Customer addresses:</h2>
+
+        <button
+          className="edit_button"
+          onClick={() => {
+            setCurrentAddress(null);
+            setEditData({ streetName: '', city: '', postalCode: '', country: '' });
+            setModalMode('address');
+            setIsModalOpen(true);
+          }}
+        >
+          New address
+        </button>
 
         <h3>Shipping addresses</h3>
         {shippingAddresses.length > 0 ? (
@@ -292,7 +390,19 @@ const UserProfile: React.FC = () => {
             data={editData!}
             onChange={(data: User | Address) => setEditData(data)}
             onSave={handleSave}
+            setEmailError={setEmailError}
+            emailError={emailError}
           />
+        </ModalWindow>
+      )}
+      {messageModalOpen && (
+        <ModalWindow onClose={handleCloseMessage}>
+          <div className="handleMessage_wrap">
+            <p>{messageText}</p>
+            <button className="edit_button" onClick={handleCloseMessage}>
+              OK
+            </button>
+          </div>
         </ModalWindow>
       )}
     </div>

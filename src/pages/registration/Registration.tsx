@@ -25,7 +25,7 @@ function Registration() {
     firstName: '',
     lastName: '',
     password: '',
-    dob: '',
+    dateOfBirth: '',
     shippingStreet: '',
     shippingCity: '',
     shippingPostalCode: '',
@@ -42,7 +42,7 @@ function Registration() {
     firstName: '*required field',
     lastName: '*required field',
     password: '*required field',
-    dob: '*required field',
+    dateOfBirth: '*required field',
     shippingStreet: '*required field',
     shippingCity: '*required field',
     shippingPostalCode: '*required field',
@@ -225,7 +225,7 @@ function Registration() {
     const firstNameValidation = validations.validateFirstName(formData.firstName);
     const lastNameValidation = validations.validateLastName(formData.lastName);
     const passwordValidation = validations.validatePassword(formData.password);
-    const dateValidation = validations.validateDate(formData.dob);
+    const dateValidation = validations.validateDate(formData.dateOfBirth);
     const shippingStreetValidation = validations.validateStreet(formData.shippingStreet);
     const shippingCityValidation = validations.validateCity(formData.shippingCity);
     const shippingPostalCodeValidation = validations.validatePostalCode(
@@ -257,7 +257,7 @@ function Registration() {
         firstName: firstNameValidation.message || '',
         lastName: lastNameValidation.message || '',
         password: passwordValidation.message || '',
-        dob: dateValidation.message || '',
+        dateOfBirth: dateValidation.message || '',
         shippingStreet: shippingStreetValidation.message || '',
         shippingCity: shippingCityValidation.message || '',
         shippingPostalCode: shippingPostalCodeValidation.message || '',
@@ -320,7 +320,7 @@ function Registration() {
         password: formData.password,
         firstName: formData.firstName,
         lastName: formData.lastName,
-        dateOfBirth: formData.dob,
+        dateOfBirth: formData.dateOfBirth,
         addresses,
         shippingAddresses: [0],
         billingAddresses: [1],
@@ -470,14 +470,14 @@ function Registration() {
           <label htmlFor="dob-input">Date of Birth</label>
           <input
             id="dob-input"
-            className={`input ${errors.dob ? 'error' : ''}`}
+            className={`input ${errors.dateOfBirth ? 'error' : ''}`}
             type="date"
             name="dob"
-            value={formData.dob}
+            value={formData.dateOfBirth}
             onChange={handleChange}
             max={new Date().toISOString().split('T')[0]}
           />
-          {errors.dob && <span className="error-message">{errors.dob}</span>}
+          {errors.dateOfBirth && <span className="error-message">{errors.dateOfBirth}</span>}
         </div>
         <fieldset>
           <h3>Shipping Address</h3>

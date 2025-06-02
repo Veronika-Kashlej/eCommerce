@@ -135,3 +135,26 @@
   font-size: 24px;
   cursor: pointer;
 }
+
+.handleMessage_wrap {
+  padding: '20px';
+  text-align: 'center';
+}
+
+.password-change-toggle {
+  position: absolute;
+  right: 10px;
+  top: 80px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.edit__button_wrapper {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}

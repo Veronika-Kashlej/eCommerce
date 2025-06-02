@@ -11,7 +11,7 @@ export interface IFormData {
   firstName: string;
   lastName: string;
   password: string;
-  dob: string;
+  dateOfBirth: string;
   shippingStreet: string;
   shippingCity: string;
   shippingPostalCode: string;
@@ -37,14 +37,17 @@ export const postalCodePatterns: PostalCodePatterns = {
 export interface User {
   firstName: string;
   lastName: string;
-  dob: string;
+  dateOfBirth: string;
   addresses?: Address[];
+  email?: string;
+  password?: string;
 }
 
 export interface Address extends CtAddress {
   Billing?: boolean;
   defaultBilling?: boolean;
   defaultShipping?: boolean;
+  dateOfBirth?: string;
 }
 
 // interface Address {
@@ -62,17 +65,9 @@ export interface EditFormProps<T extends User | Address> {
   data: T;
   onChange: (data: T) => void;
   onSave: (mode: 'personal' | 'address') => Promise<void>;
+  setEmailError?: React.Dispatch<React.SetStateAction<string>>;
+  emailError?: string;
 }
-
-export type CustomerUpdateCustomerAction =
-  | { action: 'setFirstName'; firstName: string }
-  | { action: 'setLastName'; lastName: string }
-  | { action: 'setDateOfBirth'; dateOfBirth: string }
-  | { action: 'changeAddress'; addressId: string; address: Address }
-  | { action: 'addAddress'; address: Address }
-  | { action: 'removeAddress'; addressId: string }
-  | { action: 'setDefaultShippingAddress'; addressId: string }
-  | { action: 'setDefaultBillingAddress'; addressId: string };
 
 export interface Attribute {
   name: string;
