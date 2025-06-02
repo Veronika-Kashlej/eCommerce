@@ -9,6 +9,7 @@ import { ProductProjectionSearchArgs } from '@/api/interfaces/types';
 
 import SortingControls from '@/components/products-list/SortingControls';
 import { SortState } from '@/types/interfaces';
+import FilterModal from '@/components/products-list/FilterModal';
 
 export interface CategoryTree extends Category {
   children?: CategoryTree[];
@@ -27,6 +28,13 @@ const ProductList: React.FC = () => {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
   const [categoryTree, setCategoryTree] = useState<CategoryTree[]>([]);
   const [subcategories, setSubcategories] = useState<Category[]>([]);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+
+  const [activeFilters, setActiveFilters] = useState({
+    priceRange: [0, 10000] as [number, number],
+    colors: [] as string[],
+    finish: [] as string[],
+  });
 
   const [sort, setSort] = useState<SortState>({
     price: '',
@@ -41,6 +49,27 @@ const ProductList: React.FC = () => {
   const [limit, setLimit] = useState<number>(5);
 
   const limitOptions = [5, 10, 15, 25, 30, 50, 100];
+
+  const openFilterModal = () => setIsFilterModalOpen(true);
+  const closeFilterModal = () => setIsFilterModalOpen(false);
+
+  const handleApplyFilters = (filters: {
+    priceRange: [number, number];
+    colors: string[];
+    finish: string[];
+  }) => {
+    setActiveFilters(filters);
+    setOffset(0);
+  };
+
+  // const handleResetFilters = () => {
+  //   setActiveFilters({
+  //     priceRange: [0, 10000],
+  //     colors: [],
+  //     finish: [],
+  //   });
+  //   setOffset(0);
+  // };
 
   const updateSortHistory = (field: SortField) => {
     setSortHistory((prev) => {
@@ -187,7 +216,26 @@ const ProductList: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const categoryFilters = [];
+        const filterQueries: string[] = [];
+
+        filterQueries.push(
+          `variants.price.centAmount:range (${activeFilters.priceRange[0] * 100} to ${activeFilters.priceRange[1] * 100})`
+        );
+
+        if (activeFilters.colors.length > 0) {
+          filterQueries.push(
+            `variants.attributes.color.en-US:"${activeFilters.colors.join('","')}"`
+          );
+        }
+
+        if (activeFilters.finish.length > 0) {
+          filterQueries.push(
+            `variants.attributes.finish.en-US:"${activeFilters.finish.join('","')}"`
+          );
+        }
+
+        const categoryFilters: string[] = [];
+
         if (selectedCategory) categoryFilters.push(`categories.id:"${selectedCategory}"`);
         if (selectedSubcategory && subcategories.some((sc) => sc.id === selectedSubcategory)) {
           categoryFilters.push(`categories.id:"${selectedSubcategory}"`);
@@ -203,16 +251,26 @@ const ProductList: React.FC = () => {
           sortParams.push(`name.en-US ${sort.name}`);
         }
 
+        const filter: string[] = [];
+
+        if (categoryFilters.length > 0) filter.push(...categoryFilters);
+        if (filterQueries.length > 0) filter.push(...filterQueries);
+
+        // console.log('categoryFilters = ', categoryFilters);
+        // console.log('filterQueries = ', filterQueries);
+        // console.log('filter = ', filter);
+
         const params: ProductProjectionSearchArgs = {
           limit,
           offset,
           ...(appliedSearchQuery && { searchTerm: appliedSearchQuery }),
-          filter: categoryFilters.length > 0 ? categoryFilters : undefined,
-          facet: ['variants.attributes.color', 'variants.attributes.size'],
+          filter: filter.length > 0 ? filter : undefined,
           ...(sortParams.length > 0 && { sort: sortParams }),
         };
 
         const response = await api.getProductsList(params);
+        // console.log('getProductsList = ', response);
+
         if (response) setProducts(response.body);
       } catch (err) {
         setError('Failed to load products');
@@ -231,6 +289,7 @@ const ProductList: React.FC = () => {
     offset,
     limit,
     sort,
+    activeFilters,
   ]);
 
   const handleSubcategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -336,6 +395,10 @@ const ProductList: React.FC = () => {
           onReset={resetSorting}
           onToggleCombined={toggleCombinedSort}
         />
+
+        <button onClick={openFilterModal} className="filter-button">
+          Filters
+        </button>
       </div>
 
       <PaginationControls
@@ -364,6 +427,14 @@ const ProductList: React.FC = () => {
         onNext={handleNextPage}
         onLimitChange={handleLimitChange}
         limitOptions={limitOptions}
+      />
+
+      <FilterModal
+        isOpen={isFilterModalOpen}
+        onClose={closeFilterModal}
+        onApply={handleApplyFilters}
+        // onReset={handleResetFilters}
+        currentFilters={activeFilters}
       />
     </section>
   );
