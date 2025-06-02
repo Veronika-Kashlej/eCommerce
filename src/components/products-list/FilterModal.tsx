@@ -64,6 +64,16 @@ const FilterModal: React.FC<FilterModalProps> = ({
         minPrice: cachedData.minPrice,
         maxPrice: cachedData.maxPrice,
       });
+
+      if (
+        !priceRange[0] ||
+        !priceRange[1] ||
+        priceRange[0] !== availableAttributes.minPrice ||
+        priceRange[1] !== availableAttributes.maxPrice
+      ) {
+        setPriceRange([availableAttributes.minPrice, availableAttributes.maxPrice]);
+      }
+
       return;
     }
 
@@ -71,11 +81,11 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
     try {
       const response = await api.getProductsList({
-        limit: 0,
+        limit: 1,
         facet: [
           'variants.attributes.color.en-US',
           'variants.attributes.finish.en-US',
-          'variants.attributes.price:range(0 to 1000000)',
+          'variants.prices.value.centAmount:range(0 to 1000000)',
         ],
       });
 
@@ -94,19 +104,24 @@ const FilterModal: React.FC<FilterModalProps> = ({
               ? facets['variants.attributes.finish.en-US'].terms.map((t) => t.term)
               : [],
           minPrice:
-            'ranges' in facets['variants.attributes.price']
-              ? facets['variants.attributes.price'].ranges[0]?.min || 0
+            'ranges' in facets['variants.prices.value.centAmount']
+              ? facets['variants.prices.value.centAmount'].ranges[0]?.min / 100 || 0
               : 0,
           maxPrice:
-            'ranges' in facets['variants.attributes.price']
-              ? facets['variants.attributes.price'].ranges[0]?.max || 10000
-              : 10000,
+            'ranges' in facets['variants.prices.value.centAmount']
+              ? facets['variants.prices.value.centAmount'].ranges[0]?.max / 100 || 100
+              : 100,
         };
 
         setAvailableAttributes(newAttributes);
         cacheFacets(newAttributes);
 
-        if (!priceRange[0] && !priceRange[1]) {
+        if (
+          !priceRange[0] ||
+          !priceRange[1] ||
+          priceRange[0] !== newAttributes.minPrice ||
+          priceRange[1] !== newAttributes.maxPrice
+        ) {
           setPriceRange([newAttributes.minPrice, newAttributes.maxPrice]);
         }
       }
