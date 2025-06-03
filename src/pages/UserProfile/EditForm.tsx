@@ -11,11 +11,17 @@ import { Country, CountryLabels } from '@/types/enums';
 
 const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: EditFormProps<T>) => {
   const [formData, setFormData] = useState<T>(data);
-  const [emailError, setEmailError] = useState<string>('');
-  const [firstNameError, setFirstNameError] = useState<string>('');
-  const [lastNameError, setLastNameError] = useState<string>('');
-  const [dateError, setDateError] = useState<string>('');
+  //const [emailError, setEmailError] = useState<string>('');
+  //const [firstNameError, setFirstNameError] = useState<string>('');
+  //const [lastNameError, setLastNameError] = useState<string>('');
+  //const [dateError, setDateError] = useState<string>('');
   //const [passError, setPassError] = useState<string>('');
+  const [errors, setErrors] = useState<{ [key: string]: string }>({
+    firstName: '',
+    lastName: '',
+    dateOfBirth: '',
+    email: '',
+  });
 
   useEffect(() => {
     setFormData(data);
@@ -27,19 +33,39 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
 
     if (name === 'email') {
       const validation = validateEmail(value);
-      setEmailError(validation.isValid ? '' : (validation.message as string));
+      setErrors((prev) => ({
+        ...prev,
+        email: validation.isValid ? '' : (validation.message ?? ''),
+      }));
     }
     if (name === 'firstName') {
       const validation = validateFirstName(value);
-      setFirstNameError(validation.isValid ? '' : (validation.message as string));
+      setErrors((prev) => ({
+        ...prev,
+        firstName: validation.isValid ? '' : (validation.message ?? ''),
+      }));
     }
     if (name === 'lastName') {
       const validation = validateLastName(value);
-      setLastNameError(validation.isValid ? '' : (validation.message as string));
+      setErrors((prev) => ({
+        ...prev,
+        lastName: validation.isValid ? '' : (validation.message ?? ''),
+      }));
     }
     if (name === 'dateOfBirth') {
       const validation = validateDate(value);
-      setDateError(validation.isValid ? '' : (validation.message as string));
+      if (!validation.isValid) {
+        setErrors((prev) => ({ ...prev, dateOfBirth: validation.message ?? '' }));
+        // } else {
+        //   const birth = new Date(value);
+        //   const age = new Date().getFullYear() - birth.getFullYear();
+        //   if (age < 18) {
+        //     setErrors((prev) => ({ ...prev, dateOfBirth: 'You must be at least 18 years old' }));
+        //     return;
+      } else {
+        setErrors((prev) => ({ ...prev, dateOfBirth: '' }));
+      }
+      // }
     }
     // if (name === 'password') {
     //   const validation = validatePassword(value);
@@ -50,7 +76,7 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
     onChange(newData);
   };
   const handleSaveClick = () => {
-    if (emailError) {
+    if (Object.values(errors).some((msg) => msg !== '')) {
       return;
     }
     onSave(mode);
@@ -66,14 +92,14 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
             value={formData!.firstName}
             onChange={handleChange}
           />
-          {firstNameError && <div style={{ color: 'red' }}>{firstNameError}</div>}
+          {errors.firstName && <div style={{ color: 'red' }}>{errors.firstName}</div>}
           <input
             name="lastName"
             placeholder="LastName"
             value={formData!.lastName}
             onChange={handleChange}
           />
-          {lastNameError && <div style={{ color: 'red' }}>{lastNameError}</div>}
+          {errors.lastName && <div style={{ color: 'red' }}>{errors.lastName}</div>}
           <input
             name="dateOfBirth"
             placeholder="Date of birth"
@@ -81,7 +107,7 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
             value={formData!.dateOfBirth}
             onChange={handleChange}
           />
-          {dateError && <div style={{ color: 'red' }}>{dateError}</div>}
+          {errors.dateOfBirth && <div style={{ color: 'red' }}>{errors.dateOfBirth}</div>}
           <div style={{ marginBottom: '20px' }}>
             <label style={{ fontWeight: 'bold', color: '#007bff' }}>Change Email (Login):</label>
             <input
@@ -96,7 +122,7 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
                 marginBottom: '10px',
               }}
             />
-            {emailError && <div style={{ color: 'red' }}>{emailError}</div>}
+            {errors.email && <div style={{ color: 'red' }}>{errors.email}</div>}
           </div>
         </>
       ) : (
@@ -146,7 +172,11 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
           </select>
         </>
       )}
-      <button className="edit_button" onClick={handleSaveClick}>
+      <button
+        className="edit_button"
+        disabled={Object.values(errors).some((msg) => msg !== '')}
+        onClick={handleSaveClick}
+      >
         Save
       </button>
     </div>

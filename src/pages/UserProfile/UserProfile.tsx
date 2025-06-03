@@ -155,9 +155,6 @@ const UserProfile: React.FC = () => {
         dateOfBirth: editData?.dateOfBirth,
         email: editData?.email,
       };
-      // if ((editData as User)?.password) {
-      //   await api.changePassword((editData as User).password); //!!!!!!! Активировать когда будет метод API
-      // }
 
       response = await api.updateCustomer(temp);
       localChanges();
