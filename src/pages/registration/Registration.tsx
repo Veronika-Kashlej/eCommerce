@@ -472,7 +472,7 @@ function Registration() {
             id="dob-input"
             className={`input ${errors.dateOfBirth ? 'error' : ''}`}
             type="date"
-            name="dob"
+            name="dateOfBirth"
             value={formData.dateOfBirth}
             onChange={handleChange}
             max={new Date().toISOString().split('T')[0]}
