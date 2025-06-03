@@ -7,7 +7,7 @@ import {
   validateLastName,
   //validatePassword,
 } from '@/utils/validations';
-//import { Country } from '@/types/enums';
+import { Country, CountryLabels } from '@/types/enums';
 
 const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: EditFormProps<T>) => {
   const [formData, setFormData] = useState<T>(data);
@@ -119,28 +119,31 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
             value={(formData as Address).postalCode}
             onChange={handleChange}
           />
-          <input
+          {/* <input
             name="country"
             placeholder="Country"
             value={(formData as Address).country}
             onChange={handleChange}
-          />
-          {/* <select
+          /> */}
+          <select
+            disabled={true}
             name="country"
             value={(formData as Address).country}
             onChange={(e) => {
-              const country = e.target.value as keyof typeof Country;
-              setFormData((prev) => (prev ? { ...prev, country } : prev));
+              const countryKey = e.target.value as keyof typeof Country;
+              setFormData((prev) => {
+                const newData = { ...(prev as T), country: countryKey } as T;
+                onChange(newData);
+                return newData;
+              });
             }}
-            style={{ width: '100%', padding: '8px' }}
           >
-            <option value={Country.EMPTY}>Select Country</option>
-            {Object.keys(Country).map((key) => (
+            {Object.keys(CountryLabels).map((key) => (
               <option key={key} value={key}>
-                {Country[key as keyof typeof Country]}
+                {CountryLabels[key as keyof typeof CountryLabels]}
               </option>
             ))}
-          </select> */}
+          </select>
         </>
       )}
       <button className="edit_button" onClick={handleSaveClick}>

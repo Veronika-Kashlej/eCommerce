@@ -8,7 +8,7 @@ import ModalWindow from './ModalWindow';
 import EditForm from './EditForm';
 import { CustomerResponse, CustomerUpdateData } from '@/api/interfaces/types';
 import ChangePasswordForm from './ChangePasswordForm';
-//import { Country } from '@/types/enums';
+//import { CountryLabels } from '@/types/enums';
 
 const UserProfile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -194,7 +194,7 @@ const UserProfile: React.FC = () => {
             city: (editData as Address).city,
             postalCode: (editData as Address).postalCode,
             country: (editData as Address).country,
-            //country: Country.EMPTY,
+            // country: CountryLabels,
           },
         },
       };

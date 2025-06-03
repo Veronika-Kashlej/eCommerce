@@ -39,7 +39,8 @@
   color: var(--black);
 }
 
-.modal-content input {
+.modal-content input,
+.modal-content select {
   padding: 12px 15px;
   margin-bottom: 15px;
   border: 1px solid var(--border-color);
