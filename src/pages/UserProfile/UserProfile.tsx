@@ -261,6 +261,77 @@ const UserProfile: React.FC = () => {
     console.log('Адрес изменился, триггер сработал');
   }, [addressChangedTrigger]);
 
+  const [confirmDialog, setConfirmDialog] = useState<{
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
+
+  const handleDeleteAddress = (addressId: string) => {
+    setConfirmDialog({
+      message: 'Are you sure you want to delete this address?',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        const response = await api.updateCustomer({
+          addresses: {
+            action: 'removeAddress',
+            addressId: addressId,
+          },
+        });
+        if (response.success) {
+          setUser((prev) => {
+            if (!prev || !prev.addresses) return prev;
+            return {
+              ...prev,
+              addresses: prev.addresses.filter((addr) => addr.id !== addressId),
+            };
+          });
+          setAddressChangedTrigger((prev) => !prev);
+        }
+      },
+    });
+  };
+
+  const handleSetDefaultAddress = (addressId: string, type: 'billing' | 'shipping') => {
+    setConfirmDialog({
+      message: `Назначить этот адрес как ${type === 'billing' ? 'billing' : 'shipping'}?`,
+      onConfirm: async () => {
+        setConfirmDialog(null);
+
+        //const addr = prev.addresses.find((a) => a.id === addressId);
+        const response = await api.updateCustomer({
+          addresses: {
+            action: 'changeAddress',
+            addressId: addressId,
+            address: {
+              streetName: addr.streetName,
+              city: addr.city,
+              postalCode: addr.postalCode,
+              country: addr.country,
+            },
+          },
+
+          defaultBillingAddress: type === 'billing' ? addressId : undefined,
+          defaultShippingAddress: type === 'shipping' ? addressId : undefined,
+        });
+
+        if (response.success) {
+          console.log('Done'); //!!!!!!!!!  проверка
+
+          setUser((prev) => {
+            if (!prev || !prev.addresses) return prev;
+            const updatedAddresses = prev.addresses.map((addr) => ({
+              ...addr,
+              defaultBilling: type === 'billing' && addr.id === addressId,
+              defaultShipping: type === 'shipping' && addr.id === addressId,
+            }));
+            return { ...prev, addresses: updatedAddresses };
+          });
+          setAddressChangedTrigger((prev) => !prev);
+        }
+      },
+    });
+  };
+
   if (loading) return <WaitingModal isOpen={true} />;
   if (error) return <p>{error}</p>;
   if (!user) return null;
@@ -322,8 +393,23 @@ const UserProfile: React.FC = () => {
               </p>
               <p>{addr.postalCode}</p>
               <p>{addr.country}</p>
-              <button className="edit_button" onClick={() => handleOpenModal('address', addr)}>
+              <button
+                className="edit_button address_btn"
+                onClick={() => handleOpenModal('address', addr)}
+              >
                 Edit
+              </button>
+              <button
+                className="edit_button address_btn"
+                onClick={() => addr.id && handleDeleteAddress(addr.id)}
+              >
+                Delete
+              </button>
+              <button
+                className="edit_button address_btn"
+                onClick={() => addr.id && handleSetDefaultAddress(addr.id, 'shipping')}
+              >
+                Назначить как shipping
               </button>
               {addr.id === defaultShippingAddr?.id && (
                 <span className="default-label">Default shipping address</span>
@@ -348,8 +434,23 @@ const UserProfile: React.FC = () => {
               </p>
               <p>{addr.postalCode}</p>
               <p>{addr.country}</p>
-              <button className="edit_button" onClick={() => handleOpenModal('address', addr)}>
+              <button
+                className="edit_button address_btn"
+                onClick={() => handleOpenModal('address', addr)}
+              >
                 Edit
+              </button>
+              <button
+                className="edit_button address_btn"
+                onClick={() => addr.id && handleDeleteAddress(addr.id)}
+              >
+                Delete
+              </button>
+              <button
+                className="edit_button address_btn"
+                onClick={() => addr.id && handleSetDefaultAddress(addr.id, 'billing')}
+              >
+                Назначить как billing
               </button>
               {addr.id === defaultBillingAddr?.id && (
                 <span className="default-label">Default billing address</span>
@@ -371,8 +472,29 @@ const UserProfile: React.FC = () => {
               </p>
               <p>{addr.postalCode}</p>
               <p>{addr.country}</p>
-              <button className="edit_button" onClick={() => handleOpenModal('address', addr)}>
+              <button
+                className="edit_button address_btn"
+                onClick={() => handleOpenModal('address', addr)}
+              >
                 Edit
+              </button>
+              <button
+                className="edit_button address_btn"
+                onClick={() => addr.id && handleDeleteAddress(addr.id)}
+              >
+                Delete
+              </button>
+              <button
+                className="edit_button address_btn"
+                onClick={() => addr.id && handleSetDefaultAddress(addr.id, 'shipping')}
+              >
+                Назначить как shipping
+              </button>
+              <button
+                className="edit_button address_btn"
+                onClick={() => addr.id && handleSetDefaultAddress(addr.id, 'billing')}
+              >
+                Назначить как billing
               </button>
             </div>
           ))
@@ -399,6 +521,22 @@ const UserProfile: React.FC = () => {
             <button className="edit_button" onClick={handleCloseMessage}>
               OK
             </button>
+          </div>
+        </ModalWindow>
+      )}
+      {confirmDialog && (
+        <ModalWindow onClose={() => setConfirmDialog(null)}>
+          <div style={{ padding: '20px' }}>
+            <p>{confirmDialog.message}</p>
+            <button
+              onClick={() => {
+                confirmDialog.onConfirm();
+                setConfirmDialog(null);
+              }}
+            >
+              Yes
+            </button>
+            <button onClick={() => setConfirmDialog(null)}>No</button>
           </div>
         </ModalWindow>
       )}

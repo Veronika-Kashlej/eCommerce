@@ -67,6 +67,8 @@ export interface EditFormProps<T extends User | Address> {
   onSave: (mode: 'personal' | 'address') => Promise<void>;
   setEmailError?: React.Dispatch<React.SetStateAction<string>>;
   emailError?: string;
+  onDeleteAddress?: (addressId: string) => Promise<void>;
+  onSetDefaultAddress?: (addressId: string, type: 'billing' | 'shipping') => Promise<void>;
 }
 
 export interface Attribute {
@@ -84,3 +86,15 @@ export type SortState = {
   name: '' | 'asc' | 'desc';
   combined: boolean;
 };
+
+export interface ConfirmDialogProps {
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+export interface AddressProps {
+  address: Address;
+  onDelete: (addressId: string) => void;
+  onSetDefault: (addressId: string, type: 'billing' | 'shipping') => void;
+}

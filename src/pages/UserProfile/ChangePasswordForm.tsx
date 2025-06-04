@@ -20,7 +20,6 @@ const ChangePasswordForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const validation: ValidationResult = validatePassword(newPassword);
     if (!validation.isValid) {
       setError(validation.message ?? '');
-      console.error('работает');
       return;
     }
     if (newPassword !== confirmPassword) {

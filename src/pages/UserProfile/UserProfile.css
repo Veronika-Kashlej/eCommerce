@@ -90,6 +90,10 @@
   font-size: 1.1rem;
 }
 
+.address_btn {
+  margin-right: 1%;
+}
+
 .edit_button:hover {
   background-color: var(--background-color-break-button);
   transform: translateY(-2px);

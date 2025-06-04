@@ -5,23 +5,21 @@ import {
   validateEmail,
   validateFirstName,
   validateLastName,
-  //validatePassword,
 } from '@/utils/validations';
 import { Country, CountryLabels } from '@/types/enums';
 
 const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: EditFormProps<T>) => {
   const [formData, setFormData] = useState<T>(data);
-  //const [emailError, setEmailError] = useState<string>('');
-  //const [firstNameError, setFirstNameError] = useState<string>('');
-  //const [lastNameError, setLastNameError] = useState<string>('');
-  //const [dateError, setDateError] = useState<string>('');
-  //const [passError, setPassError] = useState<string>('');
   const [errors, setErrors] = useState<{ [key: string]: string }>({
     firstName: '',
     lastName: '',
     dateOfBirth: '',
     email: '',
   });
+  // const [confirmDialog, setConfirmDialog] = useState<{
+  //   message: string;
+  //   onConfirm: () => void;
+  // } | null>(null);
 
   useEffect(() => {
     setFormData(data);
@@ -56,21 +54,10 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
       const validation = validateDate(value);
       if (!validation.isValid) {
         setErrors((prev) => ({ ...prev, dateOfBirth: validation.message ?? '' }));
-        // } else {
-        //   const birth = new Date(value);
-        //   const age = new Date().getFullYear() - birth.getFullYear();
-        //   if (age < 18) {
-        //     setErrors((prev) => ({ ...prev, dateOfBirth: 'You must be at least 18 years old' }));
-        //     return;
       } else {
         setErrors((prev) => ({ ...prev, dateOfBirth: '' }));
       }
-      // }
     }
-    // if (name === 'password') {
-    //   const validation = validatePassword(value);
-    //   setPassError(validation.isValid ? '' : (validation.message as string));
-    // }
     const newData = { ...formData!, [name]: value } as T;
     setFormData(newData);
     onChange(newData);
@@ -81,6 +68,36 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
     }
     onSave(mode);
   };
+
+  // const ConfirmDialog: React.FC<ConfirmDialogProps> = ({ message, onConfirm, onCancel }) => (
+  //   <div className="modal-backdrop">
+  //     <div className="modal-content">
+  //       <p>{message}</p>
+  //       <button onClick={onConfirm}>Да</button>
+  //       <button onClick={onCancel}>Нет</button>
+  //     </div>
+  //   </div>
+  // );
+
+  // const handleDeleteAddress = (addressId: string) => {
+  //   setConfirmDialog({
+  //     message: 'Вы уверены, что хотите удалить этот адрес?',
+  //     onConfirm: () => {
+  //       setConfirmDialog(null);
+  //       onDeleteAddress?.(addressId);
+  //     },
+  //   });
+  // };
+
+  // const handleSetDefault = (addressId: string, type: 'billing' | 'shipping') => {
+  //   setConfirmDialog({
+  //     message: `Вы уверены, что хотите назначить этот адрес как ${type}?`,
+  //     onConfirm: () => {
+  //       setConfirmDialog(null);
+  //       onSetDefaultAddress?.(addressId, type);
+  //     },
+  //   });
+  // };
 
   return (
     <div style={{ padding: '20px', maxHeight: '70vh', overflowY: 'auto' }}>
@@ -172,6 +189,29 @@ const EditForm = <T extends User | Address>({ mode, data, onChange, onSave }: Ed
           </select>
         </>
       )}
+      {/* <div>
+        {props.onDeleteAddress && (
+          <button
+            onClick={() => props.onDeleteAddress!(address.id)}
+            style={{ marginRight: '10px' }}
+          >
+            Удалить
+          </button>
+        )}
+        {props.onSetDefaultAddress && (
+          <>
+            <button
+              onClick={() => props.onSetDefaultAddress!(address.id, 'billing')}
+              style={{ marginRight: '10px' }}
+            >
+              Назначить как billing
+            </button>
+            <button onClick={() => props.onSetDefaultAddress!(address.id, 'shipping')}>
+              Назначить как shipping
+            </button>
+          </>
+        )}
+      </div> */}
       <button
         className="edit_button"
         disabled={Object.values(errors).some((msg) => msg !== '')}
