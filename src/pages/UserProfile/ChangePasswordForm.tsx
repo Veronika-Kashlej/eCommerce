@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import ModalWindow from './ModalWindow';
 import { ValidationResult } from '@/types/interfaces';
 import { validatePassword } from '@/utils/validations';
+import { useNavigate } from 'react-router-dom';
 
 const ChangePasswordForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -13,6 +14,7 @@ const ChangePasswordForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
 
   const handleChangePassword = async () => {
     setError('');
@@ -32,6 +34,8 @@ const ChangePasswordForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       const response = await api.changePassword(currentPassword, newPassword);
       if (response.success) {
         setMessage('Password changed successfully');
+        await api.logout();
+        navigate('/login');
       } else {
         setError('The current password is incorrect or an error');
       }
