@@ -291,28 +291,51 @@ const UserProfile: React.FC = () => {
     });
   };
 
-  const handleSetDefaultAddress = (addressId: string, type: 'billing' | 'shipping') => {
+  const handleSetDefaultAddress = (address: Address, type: 'billing' | 'shipping') => {
     setConfirmDialog({
       message: `Назначить этот адрес как ${type === 'billing' ? 'billing' : 'shipping'}?`,
       onConfirm: async () => {
         setConfirmDialog(null);
 
-        //const addr = prev.addresses.find((a) => a.id === addressId);
-        const response = await api.updateCustomer({
+        const updateData: CustomerUpdateData = {
           addresses: {
             action: 'changeAddress',
-            addressId: addressId,
+            addressId: address.id,
             address: {
-              streetName: addr.streetName,
-              city: addr.city,
-              postalCode: addr.postalCode,
-              country: addr.country,
+              streetName: address.streetName,
+              city: address.city,
+              postalCode: address.postalCode,
+              country: address.country,
             },
           },
+        };
 
-          defaultBillingAddress: type === 'billing' ? addressId : undefined,
-          defaultShippingAddress: type === 'shipping' ? addressId : undefined,
-        });
+        if (type === 'billing') {
+          updateData.defaultBillingAddress = undefined;
+        }
+
+        if (type === 'shipping') {
+          updateData.defaultShippingAddress = undefined;
+        }
+
+        const response = await api.updateCustomer(updateData);
+
+        // //const addr = prev.addresses.find((a) => a.id === addressId);
+        // const response = await api.updateCustomer({
+        //   addresses: {
+        //     action: 'changeAddress',
+        //     addressId: addressId,
+        //     address: {
+        //       streetName: addr.streetName,
+        //       city: addr.city,
+        //       postalCode: addr.postalCode,
+        //       country: addr.country,
+        //     },
+        //   },
+
+        //   defaultBillingAddress: type === 'billing' ? addressId : undefined,
+        //   defaultShippingAddress: type === 'shipping' ? addressId : undefined,
+        // });
 
         if (response.success) {
           console.log('Done'); //!!!!!!!!!  проверка
@@ -321,8 +344,8 @@ const UserProfile: React.FC = () => {
             if (!prev || !prev.addresses) return prev;
             const updatedAddresses = prev.addresses.map((addr) => ({
               ...addr,
-              defaultBilling: type === 'billing' && addr.id === addressId,
-              defaultShipping: type === 'shipping' && addr.id === addressId,
+              defaultBilling: type === 'billing' && addr.id === address.id,
+              defaultShipping: type === 'shipping' && addr.id === address.id,
             }));
             return { ...prev, addresses: updatedAddresses };
           });
@@ -407,7 +430,7 @@ const UserProfile: React.FC = () => {
               </button>
               <button
                 className="edit_button address_btn"
-                onClick={() => addr.id && handleSetDefaultAddress(addr.id, 'shipping')}
+                onClick={() => addr.id && handleSetDefaultAddress(addr, 'shipping')}
               >
                 Назначить как shipping
               </button>
@@ -448,7 +471,7 @@ const UserProfile: React.FC = () => {
               </button>
               <button
                 className="edit_button address_btn"
-                onClick={() => addr.id && handleSetDefaultAddress(addr.id, 'billing')}
+                onClick={() => addr.id && handleSetDefaultAddress(addr, 'billing')}
               >
                 Назначить как billing
               </button>
@@ -486,13 +509,13 @@ const UserProfile: React.FC = () => {
               </button>
               <button
                 className="edit_button address_btn"
-                onClick={() => addr.id && handleSetDefaultAddress(addr.id, 'shipping')}
+                onClick={() => addr.id && handleSetDefaultAddress(addr, 'shipping')}
               >
                 Назначить как shipping
               </button>
               <button
                 className="edit_button address_btn"
-                onClick={() => addr.id && handleSetDefaultAddress(addr.id, 'billing')}
+                onClick={() => addr.id && handleSetDefaultAddress(addr, 'billing')}
               >
                 Назначить как billing
               </button>

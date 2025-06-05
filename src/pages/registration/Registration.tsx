@@ -153,7 +153,7 @@ function Registration() {
         firstName: validations.validateFirstName,
         lastName: validations.validateLastName,
         password: validations.validatePassword,
-        dob: validations.validateDate,
+        dateOfBirth: validations.validateDate,
         shippingStreet: validations.validateStreet,
         shippingCity: validations.validateCity,
         billingStreet: validations.validateStreet,
@@ -367,7 +367,7 @@ function Registration() {
               case 'dateOfBirth':
                 setErrors((prevErrors) => ({
                   ...prevErrors,
-                  dob: element.detailedErrorMessage,
+                  dateOfBirth: element.detailedErrorMessage,
                 }));
                 break;
 

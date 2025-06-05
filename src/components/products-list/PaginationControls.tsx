@@ -27,10 +27,10 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
     <div className="pagination-controls">
       <div className="pagination">
         <button onClick={onPrev} disabled={offset === 0}>
-          Previous
+          Prev.
         </button>
         <span>
-          Page {currentPage} of {totalPages}
+          Page {currentPage} / {totalPages}
         </span>
         <button onClick={onNext} disabled={isNextDisabled}>
           Next
