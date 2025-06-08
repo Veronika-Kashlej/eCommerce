@@ -9,6 +9,7 @@ import api from '@/api/api';
 import { useEffect } from 'react';
 import UserProfile from './pages/UserProfile/UserProfile';
 import ProductPage from './components/ProductPage/ProductPage';
+import About from './pages/about/About';
 
 function App() {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ function App() {
       <Header />
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/about" element={<About />}></Route>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Registration />} />
         <Route path="/userprofile" element={<UserProfile />} />

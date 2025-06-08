@@ -16,6 +16,9 @@ const Header: React.FC = () => {
       </Link>
 
       <nav className="nav">
+        <Link to="/about" className="nav-link">
+          About us
+        </Link>
         {!api.loginned ? (
           <div className="auth-links">
             <Link to="/login" className="nav-link">
