@@ -1,0 +1,22 @@
+:root {
+  --header-height: 30px;
+  --max-page-width: 1280px;
+  --black: #000;
+  --background-color: #e0e0e0;
+  --background-color-break-button: #ff4757;
+  --background-color-break-button-hover: #ff6b81;
+  --color-break-button: white;
+  --box-shadow: rgba(0, 0, 0, 0.1);
+  --border-focus: #007bff;
+  --border-color: #ccc;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+  overflow: hidden;
+}
