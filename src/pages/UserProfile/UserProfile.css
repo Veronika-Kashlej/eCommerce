@@ -1,6 +1,7 @@
 .wrapper {
   padding: 20px;
   overflow-y: auto;
+  margin-top: 62px;
 }
 
 .first_section {
