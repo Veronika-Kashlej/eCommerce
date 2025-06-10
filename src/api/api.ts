@@ -17,11 +17,14 @@ import {
   Product,
   ProductProjection,
   CategoryPagedQueryResponse,
+  Cart,
 } from '@commercetools/platform-sdk';
 
 import { ChangePasswordResult, ProductProjectionSearchArgs } from './interfaces/types';
 
 import env from './env';
+
+import * as cart from './cart';
 
 import { registerCustomer } from './customers/customer-registration';
 import { getCurrentCustomer } from './customers/customer-get';
@@ -75,6 +78,14 @@ class Api {
       Api.instance = new Api();
     }
     return Api.instance;
+  }
+
+  public async createCart(): Promise<{
+    response?: ClientResponse<Cart>;
+    success: boolean;
+    message: string;
+  }> {
+    return await cart.createCart(this.apiRoot, this.anonymApiRoot, this.loginned);
   }
 
   public async changePassword(
