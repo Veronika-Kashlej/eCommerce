@@ -16,23 +16,6 @@ const Header: React.FC = () => {
         Home
       </Link>
 
-      {/* <button onClick={()=>api.cartCreate().then(r=> console.log(r))}>create cart</button> */}
-      <button onClick={() => api.cartGet().then((r) => console.log(r))}>get cart</button>
-      <button
-        onClick={() =>
-          api.cartAddItem('699a3c89-45ab-4c36-a774-4f2a3d570aea', 1).then((r) => console.log(r))
-        }
-      >
-        add cart
-      </button>
-      <button
-        onClick={() =>
-          api.cartRemoveItems('2b4c6fce-c2a7-4cf3-9656-37ab3577aa6a').then((r) => console.log(r))
-        }
-      >
-        rem cart
-      </button>
-
       <nav className="nav">
         <Link to="/about" className="nav-link">
           About us

@@ -18,6 +18,8 @@ import {
   ProductProjection,
   CategoryPagedQueryResponse,
   Cart,
+  MyCartUpdate,
+  MyCartDraft,
 } from '@commercetools/platform-sdk';
 
 import { ChangePasswordResult, ProductProjectionSearchArgs } from './interfaces/types';
@@ -250,6 +252,9 @@ class Api {
   }> {
     await this.logout();
 
+    const anonymousCart = await this.cartGet();
+    const anonymousId: string | undefined = anonymousCart.response?.body.anonymousId || undefined;
+
     try {
       const client = createPasswordClient(data.email, data.password);
       this.apiRoot = createApiBuilderFromCtpClient(client).withProjectKey({
@@ -265,6 +270,66 @@ class Api {
       const message = signed ? 'OK' : 'Not Signed';
 
       if (signed) {
+        if (anonymousId) {
+          try {
+            const userCart = await this.apiRoot
+              .me()
+              .activeCart()
+              .get()
+              .execute()
+              .catch(() => null);
+
+            const actions = anonymousCart.response?.body.lineItems.map((item) => ({
+              action: 'addLineItem' as const,
+              productId: item.productId,
+              variantId: item.variant?.id,
+              quantity: item.quantity,
+            }));
+
+            if (userCart) {
+              await this.apiRoot
+                .me()
+                .carts()
+                .withId({ ID: userCart.body.id })
+                .post({
+                  body: {
+                    version: userCart.body.version,
+                    actions,
+                  } as MyCartUpdate,
+                })
+                .execute();
+            } else {
+              await this.apiRoot
+                .me()
+                .carts()
+                .post({
+                  body: {
+                    currency: anonymousCart.response?.body.totalPrice.currencyCode,
+                    lineItems: anonymousCart.response?.body.lineItems.map((item) => ({
+                      productId: item.productId,
+                      variantId: item.variant?.id,
+                      quantity: item.quantity,
+                    })),
+                  } as MyCartDraft,
+                })
+                .execute();
+            }
+
+            if (anonymousCart.response)
+              await this.anonymApiRoot
+                .carts()
+                .withId({ ID: anonymousCart.response.body.id })
+                .delete({
+                  queryArgs: { version: anonymousCart.response.body.version },
+                })
+                .execute();
+
+            localStorage.removeItem('anonymousCartId');
+          } catch (mergeError) {
+            console.error('Error merging carts:', mergeError);
+          }
+        }
+
         this.notifyLoginStatusChange();
         return { response, signed, message };
       } else {
