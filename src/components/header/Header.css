@@ -16,6 +16,7 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  gap: 10px;
 }
 
 .auth-links {
@@ -53,4 +54,36 @@
   background-color: #ff6b81;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.basket-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.basket-icon {
+  width: 24px;
+  height: 24px;
+  margin-left: 5px;
+}
+
+.basket-link {
+  padding: 0.5rem;
+}
+
+.basket-count {
+  position: absolute;
+  top: -2px;
+  right: -3px;
+  background-color: #ff4757;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
 }

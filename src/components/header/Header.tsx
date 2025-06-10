@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import './Header.css';
 import api from '@/api/api';
 import { useNavigate } from 'react-router-dom';
+import basketLogo from './logo/basket.png';
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -19,6 +20,13 @@ const Header: React.FC = () => {
         <Link to="/about" className="nav-link">
           About us
         </Link>
+        <div className="basket-container">
+          <Link to="/basket" className="nav-link basket-link">
+            Basket
+            <img src={basketLogo} alt="basket" className="basket-icon" />
+            <span className="basket-count">0</span>
+          </Link>
+        </div>
         {!api.loginned ? (
           <div className="auth-links">
             <Link to="/login" className="nav-link">
