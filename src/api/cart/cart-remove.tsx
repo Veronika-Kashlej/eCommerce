@@ -62,5 +62,7 @@ export const removeFromCart = async (
       success: false,
       message: error instanceof Error ? error.message : 'Unknown error',
     };
+  } finally {
+    await api.notifyCartSubscribers();
   }
 };

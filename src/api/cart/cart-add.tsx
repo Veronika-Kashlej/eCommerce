@@ -59,6 +59,8 @@ export const addToCart = async (
             })
             .execute();
 
+      await api.notifyCartSubscribers();
+
       return {
         response,
         success: true,

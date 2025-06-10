@@ -46,6 +46,8 @@ class Api {
   private anonymClient: Client;
   private anonymApiRoot: ByProjectKeyRequestBuilder;
   private eventTarget = new EventTarget();
+  private cartSubscribers: Array<(isEmpty: boolean) => void> = [];
+  private lastCartState: boolean | undefined = undefined;
 
   private constructor() {
     this.anonymClient = new ClientBuilder()
@@ -75,11 +77,37 @@ class Api {
     });
   }
 
+  private async checkAndNotifyCartState(): Promise<void> {
+    const isEmpty = await this.isCartEmpty();
+
+    if (this.lastCartState !== isEmpty) {
+      this.lastCartState = isEmpty;
+      this.cartSubscribers.forEach((callback) => callback(isEmpty));
+    }
+  }
+
   public static getInstance(): Api {
     if (!Api.instance) {
       Api.instance = new Api();
     }
     return Api.instance;
+  }
+
+  public subscribeToCartChanges(callback: (isEmpty: boolean) => void): () => void {
+    this.cartSubscribers.push(callback);
+    this.checkAndNotifyCartState();
+
+    return () => {
+      this.cartSubscribers = this.cartSubscribers.filter((cb) => cb !== callback);
+    };
+  }
+
+  public async notifyCartSubscribers(): Promise<void> {
+    await this.checkAndNotifyCartState();
+  }
+
+  public async isCartEmpty(): Promise<boolean> {
+    return await cart.isCartEmpty(this.apiRoot, this.anonymApiRoot, this.loginned);
   }
 
   public async cartCreate(): Promise<{
