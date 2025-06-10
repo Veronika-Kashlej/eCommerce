@@ -9,13 +9,14 @@ import {
 export const createCart = async (
   apiRoot: ByProjectKeyRequestBuilder | undefined,
   anonymApiRoot: ByProjectKeyRequestBuilder,
-  loginned: boolean,
-  anonymousId?: string
+  loginned: boolean
 ): Promise<{ response?: ClientResponse<Cart>; success: boolean; message: string }> => {
+  let anonymousId: string | undefined;
   if (!loginned) anonymousId = 'anonymousId';
 
   const draft: CartDraft | MyCartDraft = {
-    currency: 'USD',
+    currency: 'EUR',
+    country: 'DE',
     ...(anonymousId && { anonymousId }),
   };
 

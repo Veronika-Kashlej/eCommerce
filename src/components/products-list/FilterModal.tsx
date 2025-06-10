@@ -267,7 +267,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                     min={availableAttributes.minPrice}
                     max={availableAttributes.maxPrice}
                   />
-                  <span>$</span>
+                  <span>€</span>
                 </div>
                 <input
                   type="range"

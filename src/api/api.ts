@@ -80,12 +80,38 @@ class Api {
     return Api.instance;
   }
 
-  public async createCart(): Promise<{
+  public async cartCreate(): Promise<{
     response?: ClientResponse<Cart>;
     success: boolean;
     message: string;
   }> {
     return await cart.createCart(this.apiRoot, this.anonymApiRoot, this.loginned);
+  }
+
+  public async cartGet(): Promise<{
+    response?: ClientResponse<Cart>;
+    success: boolean;
+    message: string;
+  }> {
+    return await cart.getCart(this.apiRoot, this.anonymApiRoot, this.loginned);
+  }
+
+  public async cartAddItem(
+    productId: string,
+    quantity: number = 1
+  ): Promise<{
+    response?: ClientResponse<Cart>;
+    success: boolean;
+    message: string;
+  }> {
+    return await cart.addToCart(
+      this.apiRoot,
+      this.anonymApiRoot,
+      this.loginned,
+      productId,
+      // variantId,
+      quantity
+    );
   }
 
   public async changePassword(
