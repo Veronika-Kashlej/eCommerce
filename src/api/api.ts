@@ -114,6 +114,14 @@ class Api {
     );
   }
 
+  public async cartRemoveItems(lineItemId: string): Promise<{
+    response?: ClientResponse<Cart>;
+    success: boolean;
+    message: string;
+  }> {
+    return await cart.removeFromCart(this.apiRoot, this.anonymApiRoot, this.loginned, lineItemId);
+  }
+
   public async changePassword(
     currentPassword: string,
     newPassword: string
