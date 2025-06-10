@@ -44,6 +44,10 @@ const EmptyMessage: React.FC<{ onStatusChange?: (isEmpty: boolean) => void }> = 
       }}
     >
       🛒 Oops! Your bag is empty. Start shopping and add products! 🚀
+      <br />
+      <a href="/" style={{ color: '#007bff', textDecoration: 'underline' }}>
+        Let's go!
+      </a>
     </div>
   );
 };
