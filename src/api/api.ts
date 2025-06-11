@@ -110,6 +110,14 @@ class Api {
     return await cart.isCartEmpty(this.apiRoot, this.anonymApiRoot, this.loginned);
   }
 
+  public async cartClear(): Promise<{
+    response?: ClientResponse<Cart>;
+    success: boolean;
+    message: string;
+  }> {
+    return await cart.clearCart(this.apiRoot, this.anonymApiRoot, this.loginned);
+  }
+
   public async cartCreate(): Promise<{
     response?: ClientResponse<Cart>;
     success: boolean;
