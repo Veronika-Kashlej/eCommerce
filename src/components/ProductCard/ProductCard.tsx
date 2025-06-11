@@ -1,10 +1,11 @@
-import { ProductProjection } from '@commercetools/platform-sdk';
+// import { ProductProjection } from '@commercetools/platform-sdk';
 import './ProductCard.css';
 import { Link } from 'react-router-dom';
+import { ProductCardProps } from '@/types/interfaces';
 
-interface ProductCardProps {
-  product: ProductProjection;
-}
+// interface ProductCardProps {
+//   product: ProductProjection;
+// }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const masterVariant = product.masterVariant;
