@@ -150,6 +150,7 @@ const ProductPage = () => {
       setIsLoading(true);
       await addToCart(product.id);
       setIsInCart(true);
+      window.dispatchEvent(new Event('cartUpdated'));
     } catch (error) {
       console.error('Error adding to cart:', error);
     } finally {
