@@ -1,18 +1,10 @@
-import {
-  CartDraft,
-  MyCartDraft,
-  Cart,
-  ByProjectKeyRequestBuilder,
-  ClientResponse,
-} from '@commercetools/platform-sdk';
+import { CartDraft, MyCartDraft } from '@commercetools/platform-sdk';
+import api from '../api';
+import { CartResponse } from '@/types/interfaces';
 
-export const createCart = async (
-  apiRoot: ByProjectKeyRequestBuilder | undefined,
-  anonymApiRoot: ByProjectKeyRequestBuilder,
-  loginned: boolean
-): Promise<{ response?: ClientResponse<Cart>; success: boolean; message: string }> => {
+export const createCart = async (): Promise<CartResponse> => {
   let anonymousId: string | undefined;
-  if (!loginned) anonymousId = 'anonymousId';
+  if (!api.loginned) anonymousId = 'anonymousId';
 
   const draft: CartDraft | MyCartDraft = {
     currency: 'EUR',
@@ -21,14 +13,13 @@ export const createCart = async (
   };
 
   try {
-    const response = loginned
-      ? apiRoot &&
-        (await apiRoot
+    const response = api.getApiRoot
+      ? await api.getApiRoot
           .me()
           .carts()
           .post({ body: draft as MyCartDraft })
-          .execute())
-      : await anonymApiRoot.carts().post({ body: draft }).execute();
+          .execute()
+      : await api.getAnonymApiRoot.carts().post({ body: draft }).execute();
 
     return {
       response,

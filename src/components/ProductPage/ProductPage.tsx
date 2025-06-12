@@ -8,6 +8,7 @@ import { ProductImage } from '@/types/interfaces';
 import { useEffect, useState } from 'react';
 import api from '@/api/api';
 import ImageModal from '../image-modal/ImageModal';
+import { addToCart, checkItemAvailability, getCart } from '@/api/cart';
 
 const ProductPage = () => {
   const { productId } = useParams();
@@ -16,6 +17,9 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(!state?.product);
   const [, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isInCart, setIsInCart] = useState(false);
+  const [availabilityMessage, setAvailabilityMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setProduct(null);
@@ -39,6 +43,30 @@ const ProductPage = () => {
       };
       fetchProduct();
     }
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        if (productId) {
+          const availability = await checkItemAvailability(productId, 1);
+          setAvailabilityMessage(availability.available ? 'Add to cart' : 'Unavailable');
+
+          const cart = await getCart();
+          if (cart.response) {
+            const isProductInCart = cart.response.body.lineItems.some(
+              (item) => item.productId === productId
+            );
+            setIsInCart(isProductInCart);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking availability or cart:', error);
+        setAvailabilityMessage('Error checking availability');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, [productId, state?.product]);
 
   if (loading) {
@@ -111,6 +139,30 @@ const ProductPage = () => {
   };
 
   const modal = selectedImage && <ImageModal images={images} onClose={closeModal} />;
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isInCart || availabilityMessage === 'Unavailable') return;
+
+    try {
+      setIsLoading(true);
+      await addToCart(product.id);
+      setIsInCart(true);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getButtonText = () => {
+    if (isLoading) return 'Loading...';
+    if (isInCart) return 'In Cart';
+    return availabilityMessage || 'Add to Cart';
+  };
+
   return (
     <div className="product-page">
       {modal}
@@ -148,6 +200,13 @@ const ProductPage = () => {
             )}
           </div>
         )}
+        <button
+          className={`add-to-cart-btn ${isInCart ? 'in-cart' : ''} ${availabilityMessage === 'Unavailable' ? 'unavailable' : ''}`}
+          onClick={handleAddToCart}
+          disabled={isInCart || availabilityMessage === 'Unavailable'}
+        >
+          {getButtonText()}{' '}
+        </button>
       </div>
 
       <div className="product-details">

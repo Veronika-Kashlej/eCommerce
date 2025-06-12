@@ -1,19 +1,8 @@
-import {
-  Cart,
-  MyCartRemoveLineItemAction,
-  MyCartUpdate,
-  CartUpdate,
-  ByProjectKeyRequestBuilder,
-  ClientResponse,
-} from '@commercetools/platform-sdk';
+import { MyCartRemoveLineItemAction, MyCartUpdate, CartUpdate } from '@commercetools/platform-sdk';
 import api from '../api';
+import { CartResponse } from '@/types/interfaces';
 
-export const removeFromCart = async (
-  apiRoot: ByProjectKeyRequestBuilder | undefined,
-  anonymApiRoot: ByProjectKeyRequestBuilder,
-  loginned: boolean,
-  lineItemId: string
-): Promise<{ response?: ClientResponse<Cart>; success: boolean; message: string }> => {
+export const removeFromCart = async (lineItemId: string): Promise<CartResponse> => {
   try {
     const activeCart = await api.cartGet();
     if (!activeCart.response) {
@@ -28,9 +17,8 @@ export const removeFromCart = async (
       lineItemId,
     };
 
-    const response = loginned
-      ? apiRoot &&
-        (await apiRoot
+    const response = api.getApiRoot
+      ? await api.getApiRoot
           .me()
           .carts()
           .withId({ ID: activeCart.response.body.id })
@@ -40,8 +28,8 @@ export const removeFromCart = async (
               actions: [updateAction],
             } as MyCartUpdate,
           })
-          .execute())
-      : await anonymApiRoot
+          .execute()
+      : await api.getAnonymApiRoot
           .carts()
           .withId({ ID: activeCart.response.body.id })
           .post({

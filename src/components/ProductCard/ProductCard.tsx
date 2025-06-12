@@ -2,12 +2,17 @@
 import './ProductCard.css';
 import { Link } from 'react-router-dom';
 import { ProductCardProps } from '@/types/interfaces';
+import { useEffect, useState } from 'react';
+import { addToCart, checkItemAvailability, getCart } from '@/api/cart';
 
 // interface ProductCardProps {
 //   product: ProductProjection;
 // }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+  const [isInCart, setIsInCart] = useState(false);
+  const [availabilityMessage, setAvailabilityMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const masterVariant = product.masterVariant;
   const firstImage = masterVariant.images?.[0];
   const productName = product.name['en-US'];
@@ -28,11 +33,57 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       currency: currencyCode,
     }).format(cents / 100);
   };
-
   const discountPercentage =
     hasDiscount && originalPriceCents && discountedPriceCents
       ? Math.round((1 - discountedPriceCents / originalPriceCents) * 100)
       : 0;
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const availability = await checkItemAvailability(product.id, 1);
+        setAvailabilityMessage(availability.available ? 'Add to cart' : 'Unavailable');
+
+        const cart = await getCart();
+        if (cart.response) {
+          const isProductInCart = cart.response.body.lineItems.some(
+            (item) => item.productId === product.id
+          );
+          setIsInCart(isProductInCart);
+        }
+      } catch (error) {
+        console.error('Error checking availability or cart:', error);
+        setAvailabilityMessage('Error checking availability');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [product.id]);
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isInCart || availabilityMessage === 'Unavailable') return;
+
+    try {
+      setIsLoading(true);
+      await addToCart(product.id);
+      setIsInCart(true);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getButtonText = () => {
+    if (isLoading) return 'Loading...';
+    if (isInCart) return 'In Cart';
+    return availabilityMessage || 'Add to Cart';
+  };
 
   return (
     <Link to={`/product/${product.id}`} className="product-card" state={{ product }}>
@@ -67,6 +118,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <span className="current-price">{formatPrice(originalPriceCents)}</span>
           )}
         </div>
+        <button
+          className={`add-to-cart-btn ${isInCart ? 'in-cart' : ''} ${availabilityMessage === 'Unavailable' ? 'unavailable' : ''}`}
+          onClick={handleAddToCart}
+          disabled={isInCart || availabilityMessage === 'Unavailable'}
+        >
+          {getButtonText()}{' '}
+        </button>
       </div>
     </Link>
   );

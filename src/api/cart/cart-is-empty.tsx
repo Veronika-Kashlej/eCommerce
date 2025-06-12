@@ -1,14 +1,10 @@
-import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk';
+import api from '../api';
 
-export const isCartEmpty = async (
-  apiRoot: ByProjectKeyRequestBuilder | undefined,
-  anonymApiRoot: ByProjectKeyRequestBuilder,
-  loginned: boolean
-): Promise<boolean> => {
+export const isCartEmpty = async (): Promise<boolean> => {
   try {
-    const cartResponse = loginned
-      ? apiRoot && (await apiRoot.me().activeCart().get().execute())
-      : await anonymApiRoot
+    const cartResponse = api.getApiRoot
+      ? await api.getApiRoot.me().activeCart().get().execute()
+      : await api.getAnonymApiRoot
           .carts()
           .withId({ ID: localStorage.getItem('anonymousCartId') || '' })
           .get()
