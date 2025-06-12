@@ -1,5 +1,9 @@
 import { Country } from './enums';
+
 import { Cart, ClientResponse, Address as CtAddress } from '@commercetools/platform-sdk';
+
+import { ProductProjection } from '@commercetools/platform-sdk';
+
 
 export interface ValidationResult {
   isValid: boolean;
@@ -99,6 +103,7 @@ export interface AddressProps {
   onSetDefault: (addressId: string, type: 'billing' | 'shipping') => void;
 }
 
+
 export interface AvailabilityResult {
   available: boolean;
   message?: string;
@@ -109,4 +114,8 @@ export interface CartResponse {
   response?: ClientResponse<Cart>;
   success: boolean;
   message: string;
+}
+
+export interface ProductCardProps {
+  product: ProductProjection;
 }
