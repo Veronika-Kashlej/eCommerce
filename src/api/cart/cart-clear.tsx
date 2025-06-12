@@ -1,15 +1,11 @@
-import { Cart, ByProjectKeyRequestBuilder, ClientResponse } from '@commercetools/platform-sdk';
 import api from '../api';
+import { CartResponse } from '@/types/interfaces';
 
-export const clearCart = async (
-  apiRoot: ByProjectKeyRequestBuilder | undefined,
-  anonymApiRoot: ByProjectKeyRequestBuilder,
-  loginned: boolean
-): Promise<{ response?: ClientResponse<Cart>; success: boolean; message: string }> => {
+export const clearCart = async (): Promise<CartResponse> => {
   try {
-    const activeCart = loginned
-      ? await apiRoot?.me().activeCart().get().execute()
-      : await anonymApiRoot
+    const activeCart = api.getApiRoot
+      ? await api.getApiRoot.me().activeCart().get().execute()
+      : await api.getAnonymApiRoot
           .carts()
           .withId({ ID: localStorage.getItem('anonymousCartId') || '' })
           .get()
@@ -28,8 +24,8 @@ export const clearCart = async (
       quantity: item.quantity,
     }));
 
-    if (loginned && apiRoot) {
-      const response = await apiRoot
+    if (api.getApiRoot) {
+      const response = await api.getApiRoot
         .me()
         .carts()
         .withId({ ID: activeCart.body.id })
@@ -49,7 +45,7 @@ export const clearCart = async (
         message: 'Cart cleared successfully',
       };
     } else {
-      const response = await anonymApiRoot
+      const response = await api.getAnonymApiRoot
         .carts()
         .withId({ ID: activeCart.body.id })
         .post({

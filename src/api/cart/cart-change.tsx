@@ -1,16 +1,15 @@
 import {
-  ClientResponse,
-  Cart,
   MyCartChangeLineItemQuantityAction,
   MyCartUpdate,
   CartUpdate,
 } from '@commercetools/platform-sdk';
 import api from '../api';
+import { CartResponse } from '@/types/interfaces';
 
 export const changeItemQuantity = async (
   lineItemId: string,
   newQuantity: number
-): Promise<{ response?: ClientResponse<Cart>; success: boolean; message: string }> => {
+): Promise<CartResponse> => {
   if (newQuantity < 0) {
     return {
       success: false,
@@ -60,9 +59,9 @@ export const changeItemQuantity = async (
       quantity: newQuantity,
     };
 
-    const response = api.loginned
-      ? await api
-          .getApiRoot!.me()
+    const response = api.getApiRoot
+      ? await api.getApiRoot
+          .me()
           .carts()
           .withId({ ID: activeCart.body.id })
           .post({

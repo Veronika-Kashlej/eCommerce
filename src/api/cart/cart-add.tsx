@@ -1,23 +1,14 @@
-import {
-  Cart,
-  MyCartAddLineItemAction,
-  MyCartUpdate,
-  CartUpdate,
-  ByProjectKeyRequestBuilder,
-  ClientResponse,
-} from '@commercetools/platform-sdk';
+import { MyCartAddLineItemAction, MyCartUpdate, CartUpdate } from '@commercetools/platform-sdk';
 import api from '../api';
+import { CartResponse } from '@/types/interfaces';
 
 export const addToCart = async (
-  apiRoot: ByProjectKeyRequestBuilder | undefined,
-  anonymApiRoot: ByProjectKeyRequestBuilder,
-  loginned: boolean,
   productId: string,
   quantity: number = 1,
   attempt: number = 0,
   maxAttempts: number = 3,
   variantId?: number
-): Promise<{ response?: ClientResponse<Cart>; success: boolean; message: string }> => {
+): Promise<CartResponse> => {
   const availability = await api.cartCheckItem(productId, quantity, variantId);
 
   if (!availability.available) {
@@ -44,9 +35,8 @@ export const addToCart = async (
         quantity,
       };
 
-      const response = loginned
-        ? apiRoot &&
-          (await apiRoot
+      const response = api.getApiRoot
+        ? await api.getApiRoot
             .me()
             .carts()
             .withId({ ID: activeCart.response.body.id })
@@ -56,8 +46,8 @@ export const addToCart = async (
                 actions: [updateAction],
               } as MyCartUpdate,
             })
-            .execute())
-        : await anonymApiRoot
+            .execute()
+        : await api.getAnonymApiRoot
             .carts()
             .withId({ ID: activeCart.response.body.id })
             .post({
@@ -84,19 +74,11 @@ export const addToCart = async (
         };
       }
 
-      if (!loginned) {
+      if (!api.loginned) {
         localStorage.setItem('anonymousCartId', createResponse.response.body.id);
       }
 
-      return await addToCart(
-        apiRoot,
-        anonymApiRoot,
-        loginned,
-        productId,
-        quantity,
-        attempt + 1,
-        maxAttempts
-      );
+      return await addToCart(productId, quantity, attempt + 1, maxAttempts);
     }
   } catch (error) {
     return {
