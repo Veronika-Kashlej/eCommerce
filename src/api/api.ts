@@ -35,6 +35,7 @@ import { changePassword } from './customers/customer-change-password';
 import { CustomerUpdateData } from './interfaces/types';
 import { getProductsList } from './products/product-query';
 import { getProductById, getProductProjectionById } from './products/product-by-id';
+import { AvailabilityResult } from '@/types/interfaces';
 
 type registeredResponseMessage =
   | Array<{ detailedErrorMessage: string; code: string; error: string; message: string }>
@@ -91,6 +92,14 @@ class Api {
       Api.instance = new Api();
     }
     return Api.instance;
+  }
+
+  public get getApiRoot(): ByProjectKeyRequestBuilder | undefined {
+    return this.apiRoot;
+  }
+
+  public get getAnonymApiRoot(): ByProjectKeyRequestBuilder {
+    return this.anonymApiRoot;
   }
 
   public subscribeToCartChanges(callback: (isEmpty: boolean) => void): () => void {
@@ -160,6 +169,25 @@ class Api {
     return await cart.removeFromCart(this.apiRoot, this.anonymApiRoot, this.loginned, lineItemId);
   }
 
+  public async cartChangeItems(
+    lineItemId: string,
+    newQuantity: number
+  ): Promise<{
+    response?: ClientResponse<Cart>;
+    success: boolean;
+    message: string;
+  }> {
+    return await cart.changeItemQuantity(lineItemId, newQuantity);
+  }
+
+  public async cartCheckItem(
+    productId: string,
+    requestedQuantity: number,
+    variantId?: number
+  ): Promise<AvailabilityResult> {
+    return await cart.checkItemAvailability(productId, requestedQuantity, variantId);
+  }
+
   public async changePassword(
     currentPassword: string,
     newPassword: string
@@ -188,10 +216,6 @@ class Api {
 
   public offLoginStatusChange(callback: () => void): void {
     this.eventTarget.addEventListener('loginStatusChanged', callback);
-  }
-
-  public get getAnonymApiRoot(): ByProjectKeyRequestBuilder {
-    return this.anonymApiRoot;
   }
 
   public get getTokenCustomer(): TokenStore | undefined {

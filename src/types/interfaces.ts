@@ -98,3 +98,9 @@ export interface AddressProps {
   onDelete: (addressId: string) => void;
   onSetDefault: (addressId: string, type: 'billing' | 'shipping') => void;
 }
+
+export interface AvailabilityResult {
+  available: boolean;
+  message?: string;
+  availableQuantity?: number;
+}

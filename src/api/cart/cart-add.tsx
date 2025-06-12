@@ -13,11 +13,20 @@ export const addToCart = async (
   anonymApiRoot: ByProjectKeyRequestBuilder,
   loginned: boolean,
   productId: string,
-  // variantId: number,
   quantity: number = 1,
   attempt: number = 0,
-  maxAttempts: number = 3
+  maxAttempts: number = 3,
+  variantId?: number
 ): Promise<{ response?: ClientResponse<Cart>; success: boolean; message: string }> => {
+  const availability = await api.cartCheckItem(productId, quantity, variantId);
+
+  if (!availability.available) {
+    return {
+      success: false,
+      message: availability.message || 'Not enough stock',
+    };
+  }
+
   if (attempt >= maxAttempts) {
     return {
       success: false,
