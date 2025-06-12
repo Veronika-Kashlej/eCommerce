@@ -17,7 +17,6 @@ import {
   Product,
   ProductProjection,
   CategoryPagedQueryResponse,
-  Cart,
   MyCartUpdate,
   MyCartDraft,
 } from '@commercetools/platform-sdk';
@@ -35,6 +34,7 @@ import { changePassword } from './customers/customer-change-password';
 import { CustomerUpdateData } from './interfaces/types';
 import { getProductsList } from './products/product-query';
 import { getProductById, getProductProjectionById } from './products/product-by-id';
+import { AvailabilityResult, CartResponse } from '@/types/interfaces';
 
 type registeredResponseMessage =
   | Array<{ detailedErrorMessage: string; code: string; error: string; message: string }>
@@ -93,6 +93,14 @@ class Api {
     return Api.instance;
   }
 
+  public get getApiRoot(): ByProjectKeyRequestBuilder | undefined {
+    return this.apiRoot;
+  }
+
+  public get getAnonymApiRoot(): ByProjectKeyRequestBuilder {
+    return this.anonymApiRoot;
+  }
+
   public subscribeToCartChanges(callback: (isEmpty: boolean) => void): () => void {
     this.cartSubscribers.push(callback);
     this.checkAndNotifyCartState();
@@ -107,49 +115,43 @@ class Api {
   }
 
   public async isCartEmpty(): Promise<boolean> {
-    return await cart.isCartEmpty(this.apiRoot, this.anonymApiRoot, this.loginned);
+    return await cart.isCartEmpty();
   }
 
-  public async cartCreate(): Promise<{
-    response?: ClientResponse<Cart>;
-    success: boolean;
-    message: string;
-  }> {
-    return await cart.createCart(this.apiRoot, this.anonymApiRoot, this.loginned);
+  public async cartClear(): Promise<CartResponse> {
+    return await cart.clearCart();
   }
 
-  public async cartGet(): Promise<{
-    response?: ClientResponse<Cart>;
-    success: boolean;
-    message: string;
-  }> {
-    return await cart.getCart(this.apiRoot, this.anonymApiRoot, this.loginned);
+  public async cartCreate(): Promise<CartResponse> {
+    return await cart.createCart();
   }
 
-  public async cartAddItem(
-    productId: string,
-    quantity: number = 1
-  ): Promise<{
-    response?: ClientResponse<Cart>;
-    success: boolean;
-    message: string;
-  }> {
+  public async cartGet(): Promise<CartResponse> {
+    return await cart.getCart();
+  }
+
+  public async cartAddItem(productId: string, quantity: number = 1): Promise<CartResponse> {
     return await cart.addToCart(
-      this.apiRoot,
-      this.anonymApiRoot,
-      this.loginned,
       productId,
       // variantId,
       quantity
     );
   }
 
-  public async cartRemoveItems(lineItemId: string): Promise<{
-    response?: ClientResponse<Cart>;
-    success: boolean;
-    message: string;
-  }> {
-    return await cart.removeFromCart(this.apiRoot, this.anonymApiRoot, this.loginned, lineItemId);
+  public async cartRemoveItems(lineItemId: string): Promise<CartResponse> {
+    return await cart.removeFromCart(lineItemId);
+  }
+
+  public async cartChangeItems(lineItemId: string, newQuantity: number): Promise<CartResponse> {
+    return await cart.changeItemQuantity(lineItemId, newQuantity);
+  }
+
+  public async cartCheckItem(
+    productId: string,
+    requestedQuantity: number,
+    variantId?: number
+  ): Promise<AvailabilityResult> {
+    return await cart.checkItemAvailability(productId, requestedQuantity, variantId);
   }
 
   public async changePassword(
@@ -180,10 +182,6 @@ class Api {
 
   public offLoginStatusChange(callback: () => void): void {
     this.eventTarget.addEventListener('loginStatusChanged', callback);
-  }
-
-  public get getAnonymApiRoot(): ByProjectKeyRequestBuilder {
-    return this.anonymApiRoot;
   }
 
   public get getTokenCustomer(): TokenStore | undefined {

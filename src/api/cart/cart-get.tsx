@@ -1,13 +1,10 @@
-import { ByProjectKeyRequestBuilder, Cart, ClientResponse } from '@commercetools/platform-sdk';
+import api from '../api';
+import { CartResponse } from '@/types/interfaces';
 
-export const getCart = async (
-  apiRoot: ByProjectKeyRequestBuilder | undefined,
-  anonymApiRoot: ByProjectKeyRequestBuilder,
-  loginned: boolean
-): Promise<{ response?: ClientResponse<Cart>; success: boolean; message: string }> => {
+export const getCart = async (): Promise<CartResponse> => {
   try {
-    if (loginned) {
-      const response = apiRoot && (await apiRoot.me().activeCart().get().execute());
+    if (api.getApiRoot) {
+      const response = await api.getApiRoot.me().activeCart().get().execute();
       return {
         response,
         success: true,
@@ -22,7 +19,7 @@ export const getCart = async (
         };
       }
 
-      const response = await anonymApiRoot.carts().withId({ ID: cartId }).get().execute();
+      const response = await api.getAnonymApiRoot.carts().withId({ ID: cartId }).get().execute();
       return {
         response,
         success: true,
