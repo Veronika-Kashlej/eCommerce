@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { ProductCardProps } from '@/types/interfaces';
 import { useEffect, useState } from 'react';
 import { addToCart, checkItemAvailability, getCart } from '@/api/cart';
+import api from '@/api/api';
 
 // interface ProductCardProps {
 //   product: ProductProjection;
@@ -76,6 +77,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       console.error('Error adding to cart:', error);
     } finally {
       setIsLoading(false);
+    }
+
+    // TODO: удалить эту проверку наличия товара в корзине
+    try {
+      if (api.getApiRoot) {
+        const response = await api.getApiRoot.me().activeCart().get().execute();
+        const lineItems = response.body.lineItems;
+        console.log('Товары в корзине:', lineItems);
+      } else {
+        console.error('api.getApiRoot is undefined');
+      }
+    } catch (error) {
+      console.error('Ошибка при получении корзины:', error);
     }
   };
 
