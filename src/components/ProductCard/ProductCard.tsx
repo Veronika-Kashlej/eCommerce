@@ -3,7 +3,8 @@ import './ProductCard.css';
 import { Link } from 'react-router-dom';
 import { ProductCardProps } from '@/types/interfaces';
 import { useEffect, useState } from 'react';
-import { addToCart, checkItemAvailability, getCart } from '@/api/cart';
+import { addToCart, checkItemAvailability, getCart, removeFromCart } from '@/api/cart';
+import modalWindow from '../modal/ModalWindow';
 
 // interface ProductCardProps {
 //   product: ProductProjection;
@@ -79,10 +80,42 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       setIsLoading(false);
     }
   };
+  const handleRemoveFromCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
 
+    if (!isInCart || !product.id) return;
+
+    try {
+      setIsLoading(true);
+      const cartResponse = await getCart();
+      if (!cartResponse.response) {
+        console.error('No cart found');
+        return;
+      }
+
+      const lineItem = cartResponse.response.body.lineItems.find(
+        (item) => item.productId === product.id
+      );
+
+      if (!lineItem) {
+        console.error('Product not found in cart');
+        return;
+      }
+
+      await removeFromCart(lineItem.id);
+      setIsInCart(false);
+      window.dispatchEvent(new Event('cartUpdated'));
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+      modalWindow.alert(`${error}. Please try again.`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const getButtonText = () => {
     if (isLoading) return 'Loading...';
-    if (isInCart) return 'In Cart';
+    if (isInCart) return 'Remove from cart';
     return availabilityMessage || 'Add to Cart';
   };
 
@@ -120,9 +153,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           )}
         </div>
         <button
-          className={`add-to-cart-btn ${isInCart ? 'in-cart' : ''} ${availabilityMessage === 'Unavailable' ? 'unavailable' : ''}`}
-          onClick={handleAddToCart}
-          disabled={isInCart || availabilityMessage === 'Unavailable'}
+          className={`add-to-cart-btn ${isInCart ? 'remove-from-cart' : ''} ${availabilityMessage === 'Unavailable' ? 'unavailable' : ''}`}
+          onClick={isInCart ? handleRemoveFromCart : handleAddToCart}
+          disabled={isLoading || availabilityMessage === 'Unavailable'}
         >
           {getButtonText()}{' '}
         </button>
