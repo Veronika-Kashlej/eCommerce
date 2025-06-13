@@ -11,6 +11,7 @@ const Header: React.FC = () => {
   const navigate = useNavigate();
   async function logout() {
     await api.logout();
+    setCountProducts(0);
     navigate('/login');
   }
   useEffect(() => {
