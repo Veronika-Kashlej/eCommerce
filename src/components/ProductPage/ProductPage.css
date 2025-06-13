@@ -144,7 +144,7 @@
   border-radius: 8px;
 }
 
-.product-page .original-price {
+.original-price {
   text-decoration: line-through;
   color: #6c757d;
   font-size: 1.2rem;
@@ -158,7 +158,7 @@
   margin-top: 0.5rem;
 }
 
-.product-page .discounted-price {
+.discounted-price {
   color: #dc3545;
   font-size: 1.8rem;
   font-weight: bold;
