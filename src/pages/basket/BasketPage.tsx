@@ -98,13 +98,9 @@ const BasketPage: React.FC = () => {
     const result = await api.cartChangeItems(lineItemId, currentQuantity + 1);
     if (result.success && result.response) {
       updateCartState(result.response.body.lineItems);
-      console.log('Обновленная корзина:', result.response);
+      //console.log('Обновленная корзина:', result.response);
     } else {
-      //modalWindow.alert(result.message);
-      console.log(lineItemId);
-      console.log(currentQuantity + 1);
-      console.log(result.success);
-      console.log(result.response);
+      modalWindow.alert(result.message);
     }
   };
 
