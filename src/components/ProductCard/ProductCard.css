@@ -169,3 +169,17 @@
     padding: 3px 6px;
   }
 }
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+}
+
+/* .item-quantity-change {
+  width: 15px;
+  height: 30px;
+} */
+
+.quantity {
+  margin: 0 15px;
+}

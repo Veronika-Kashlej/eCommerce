@@ -4,6 +4,8 @@ import { clearCart, getCart, removeFromCart } from '@/api/cart';
 import { LineItem } from '@commercetools/platform-sdk';
 import './BasketPage.css';
 import modalWindow from '@/components/modal/ModalWindow';
+import { MdDelete } from 'react-icons/md';
+import api from '@/api/api';
 
 const BasketPage: React.FC = () => {
   const [isCartEmpty, setIsCartEmpty] = useState(true);
@@ -91,6 +93,31 @@ const BasketPage: React.FC = () => {
       setIsClearing(false);
     }
   };
+
+  const handleIncreaseQuantity = async (lineItemId: string, currentQuantity: number) => {
+    const result = await api.cartChangeItems(lineItemId, currentQuantity + 1);
+    if (result.success && result.response) {
+      updateCartState(result.response.body.lineItems);
+      console.log('Обновленная корзина:', result.response);
+    } else {
+      //modalWindow.alert(result.message);
+      console.log(lineItemId);
+      console.log(currentQuantity + 1);
+      console.log(result.success);
+      console.log(result.response);
+    }
+  };
+
+  const handleDecreaseQuantity = async (lineItemId: string, currentQuantity: number) => {
+    const newQuantity = currentQuantity > 1 ? currentQuantity - 1 : 0;
+    const result = await api.cartChangeItems(lineItemId, newQuantity);
+    if (result.success && result.response) {
+      updateCartState(result.response.body.lineItems);
+    } else {
+      modalWindow.alert(result.message);
+    }
+  };
+
   return (
     <div className="basket-page-container">
       <h1 className="basket-title">Your Shopping Cart</h1>
@@ -131,6 +158,23 @@ const BasketPage: React.FC = () => {
                     )}
                   </p>
                   <div className="item-quantity">Quantity: {item.quantity}</div>
+                  <div className="quantity-controls">
+                    <button
+                      className="item-quantity-change"
+                      onClick={() => handleDecreaseQuantity(item.id, item.quantity)}
+                      title="Decrease quantity"
+                    >
+                      {item.quantity > 1 ? '-' : <MdDelete size={15} color="#555" />}{' '}
+                    </button>
+                    <span className="quantity">{item.quantity}</span>
+                    <button
+                      className="item-quantity-change"
+                      onClick={() => handleIncreaseQuantity(item.id, item.quantity)}
+                      title="Increase quantity"
+                    >
+                      +
+                    </button>
+                  </div>
                   <button
                     className="remove-item-btn"
                     onClick={() => handleRemoveItem(item.id)}

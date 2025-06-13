@@ -4,7 +4,6 @@ import { Cart, ClientResponse, Address as CtAddress } from '@commercetools/platf
 
 import { ProductProjection } from '@commercetools/platform-sdk';
 
-
 export interface ValidationResult {
   isValid: boolean;
   message?: string;
@@ -102,7 +101,6 @@ export interface AddressProps {
   onDelete: (addressId: string) => void;
   onSetDefault: (addressId: string, type: 'billing' | 'shipping') => void;
 }
-
 
 export interface AvailabilityResult {
   available: boolean;
