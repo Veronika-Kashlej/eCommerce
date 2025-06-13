@@ -36,7 +36,12 @@ import { changePassword } from './customers/customer-change-password';
 import { CustomerUpdateData } from './interfaces/types';
 import { getProductsList } from './products/product-query';
 import { getProductById, getProductProjectionById } from './products/product-by-id';
-import { AvailabilityResult, CartResponse, DiscountCodeResponse } from '@/types/interfaces';
+import {
+  AvailabilityResult,
+  CartDiscountsResponse,
+  CartResponse,
+  DiscountCodeResponse,
+} from '@/types/interfaces';
 
 type registeredResponseMessage =
   | Array<{ detailedErrorMessage: string; code: string; error: string; message: string }>
@@ -126,6 +131,16 @@ class Api {
 
   public async discountRemove(discountCodeId: string): Promise<ClientResponse<Cart>> {
     return await discount.removeDiscountCode(discountCodeId);
+  }
+
+  public async discountCartGet(): Promise<CartDiscountsResponse> {
+    return await discount.getCartDiscounts();
+  }
+
+  public async discountCartGetFormatted() {
+    const cart = await this.cartGet();
+    if (!cart.response) throw new Error('Cart not found');
+    return discount.getCartDiscountsFormatted(cart.response.body);
   }
 
   public async isCartEmpty(): Promise<boolean> {

@@ -4,6 +4,8 @@ import {
   Cart,
   ClientResponse,
   Address as CtAddress,
+  DirectDiscount,
+  DiscountCodeInfo,
   DiscountCodePagedQueryResponse,
 } from '@commercetools/platform-sdk';
 
@@ -126,4 +128,10 @@ export interface ProductCardProps {
 export interface DiscountCodeResponse {
   response?: ClientResponse<DiscountCodePagedQueryResponse>;
   codes: Array<{ code: string; name?: string; description?: string; validUntil?: string }>;
+}
+
+export interface CartDiscountsResponse {
+  directDiscounts?: DirectDiscount[];
+  discountCodes?: DiscountCodeInfo[];
+  cart?: Cart;
 }
