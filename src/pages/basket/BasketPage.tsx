@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import EmptyMessage from './EmptyMessage';
-import { getCart, removeFromCart } from '@/api/cart';
+import { clearCart, getCart, removeFromCart } from '@/api/cart';
 import { LineItem } from '@commercetools/platform-sdk';
 import './BasketPage.css';
 import modalWindow from '@/components/modal/ModalWindow';
@@ -10,6 +10,7 @@ const BasketPage: React.FC = () => {
   const [items, setItems] = useState<LineItem[]>([]);
   const [totalPrice, setTotalPrice] = useState(0);
   const [isRemoving, setIsRemoving] = useState<string | null>(null);
+  const [isClearing, setIsClearing] = useState(false);
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -65,7 +66,31 @@ const BasketPage: React.FC = () => {
       setIsRemoving(null);
     }
   };
+  const handleClearCart = async () => {
+    const confirmed = await modalWindow.confirm(
+      'Are you sure you want to clear your entire cart?',
+      'Clear Shopping Cart'
+    );
 
+    if (!confirmed) return;
+
+    try {
+      setIsClearing(true);
+      const response = await clearCart();
+
+      if (response.success) {
+        updateCartState([]);
+        window.dispatchEvent(new Event('cartUpdated'));
+      } else {
+        modalWindow.alert(response.message || 'Failed to clear cart');
+      }
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+      modalWindow.alert('Error clearing cart. Please try again.');
+    } finally {
+      setIsClearing(false);
+    }
+  };
   return (
     <div className="basket-page-container">
       <h1 className="basket-title">Your Shopping Cart</h1>
@@ -122,6 +147,9 @@ const BasketPage: React.FC = () => {
             <h3 className="summary-title">Order Summary</h3>
             <span className="total-price">{formatPrice(totalPrice * 100)}</span>
           </div>
+          <button className="clear-cart-btn" onClick={handleClearCart} disabled={isClearing}>
+            {isClearing ? 'Clearing...' : 'Clear Cart'}
+          </button>
         </div>
       )}
     </div>
