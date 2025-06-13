@@ -1,27 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import EmptyMessage from './EmptyMessage';
-import { getCart } from '@/api/cart';
+import { getCart, removeFromCart } from '@/api/cart';
 import { LineItem } from '@commercetools/platform-sdk';
 import './BasketPage.css';
+import modalWindow from '@/components/modal/ModalWindow';
 
 const BasketPage: React.FC = () => {
   const [isCartEmpty, setIsCartEmpty] = useState(true);
   const [items, setItems] = useState<LineItem[]>([]);
   const [totalPrice, setTotalPrice] = useState(0);
+  const [isRemoving, setIsRemoving] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCart = async () => {
       try {
         const response = await getCart();
         if (response.response) {
-          const cartItems = response.response.body.lineItems;
-          setItems(cartItems);
-          setIsCartEmpty(cartItems.length === 0);
-
-          const total = cartItems.reduce((sum: number, item) => {
-            return sum + item.totalPrice.centAmount / 100;
-          }, 0);
-          setTotalPrice(total);
+          updateCartState(response.response.body.lineItems);
         }
       } catch (error) {
         console.error('Error loading cart:', error);
@@ -30,11 +25,45 @@ const BasketPage: React.FC = () => {
     fetchCart();
   }, []);
 
+  const updateCartState = (cartItems: LineItem[]) => {
+    setItems(cartItems);
+    setIsCartEmpty(cartItems.length === 0);
+
+    const total = cartItems.reduce((sum: number, item) => {
+      return sum + item.totalPrice.centAmount / 100;
+    }, 0);
+    setTotalPrice(total);
+  };
+
   const formatPrice = (cents: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'EUR',
     }).format(cents / 100);
+  };
+
+  const handleRemoveItem = async (lineItemId: string) => {
+    try {
+      setIsRemoving(lineItemId);
+      const response = await removeFromCart(lineItemId);
+      if (response.response) {
+        const updatedItems = items.filter((item) => item.id !== lineItemId);
+        setItems(updatedItems);
+        setIsCartEmpty(updatedItems.length === 0);
+
+        const removedItem = items.find((item) => item.id === lineItemId);
+        if (removedItem) {
+          setTotalPrice((prev) => prev - removedItem.totalPrice.centAmount / 100);
+        }
+
+        window.dispatchEvent(new Event('cartUpdated'));
+      }
+    } catch (error) {
+      console.error('Error removing item:', error);
+      modalWindow.alert(`${error}. Please try again.`);
+    } finally {
+      setIsRemoving(null);
+    }
   };
 
   return (
@@ -77,6 +106,13 @@ const BasketPage: React.FC = () => {
                     )}
                   </p>
                   <div className="item-quantity">Quantity: {item.quantity}</div>
+                  <button
+                    className="remove-item-btn"
+                    onClick={() => handleRemoveItem(item.id)}
+                    disabled={isRemoving === item.id}
+                  >
+                    {isRemoving === item.id ? 'Removing...' : 'Remove'}
+                  </button>
                 </div>
               </div>
             ))}
