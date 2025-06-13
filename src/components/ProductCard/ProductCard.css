@@ -147,14 +147,6 @@
   background-color: #dc3545;
 }
 
-.add-to-cart-btn.in-cart {
-  background-color: #2196f3;
-}
-
-.add-to-cart-btn.in-cart:hover:not(:disabled) {
-  background-color: #0b7dda;
-}
-
 @media (max-width: 768px) {
   .product-title {
     font-size: 16px;

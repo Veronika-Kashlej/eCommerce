@@ -228,6 +228,14 @@
   pointer-events: none;
 }
 
+.add-to-cart-btn.remove-from-cart {
+  background-color: #ff4444;
+}
+
+.add-to-cart-btn.remove-from-cart:hover {
+  background-color: #cc0000;
+}
+
 @media (max-width: 900px) {
   .product-page {
     grid-template-columns: 1fr;
