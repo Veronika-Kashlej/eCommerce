@@ -87,3 +87,17 @@
   font-size: 12px;
   font-weight: bold;
 }
+
+.promos-block {
+  display: flex;
+  flex-direction: column;
+  background-color: #ff4757;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.1rem;
+}

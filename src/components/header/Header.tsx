@@ -8,12 +8,15 @@ import { useEffect, useState } from 'react';
 
 const Header: React.FC = () => {
   const [countProducts, setCountProducts] = useState(0);
+  const [activePromos, setActivePromos] = useState<string[]>([]);
   const navigate = useNavigate();
+
   async function logout() {
     await api.logout();
     setCountProducts(0);
     navigate('/login');
   }
+
   useEffect(() => {
     const updateCartCount = async () => {
       const cart = (await getCart()).response;
@@ -24,15 +27,34 @@ const Header: React.FC = () => {
     };
     window.addEventListener('cartUpdated', handleCartUpdate);
     updateCartCount();
+
+    const fetchPromos = async () => {
+      const { response, success } = await api.discountGet();
+      if (success && response) {
+        setActivePromos(response.body.results.map((c) => c.code));
+      }
+    };
+    fetchPromos();
+
     return () => {
       window.removeEventListener('cartUpdated', handleCartUpdate);
     };
   }, []);
+
   return (
     <header className="header">
       <Link to="/" className="nav-link">
         Home
       </Link>
+
+      <div className="promos-block">
+        <h4>Promo codes:</h4>
+        <ul>
+          {activePromos.map((code) => (
+            <li key={code}>{code}</li>
+          ))}
+        </ul>
+      </div>
 
       <nav className="nav">
         <Link to="/about" className="nav-link">

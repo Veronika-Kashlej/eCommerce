@@ -13,6 +13,11 @@ const BasketPage: React.FC = () => {
   const [totalPrice, setTotalPrice] = useState(0);
   const [isRemoving, setIsRemoving] = useState<string | null>(null);
   const [isClearing, setIsClearing] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  //const [discountPercent, setDiscountPercent] = useState(0);
+  // const [originalTotal, setOriginalTotal] = useState(0);
+  //const [discountedTotal, setDiscountedTotal] = useState(0);
+  const [discountApplied, setDiscountApplied] = useState(false);
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -115,6 +120,27 @@ const BasketPage: React.FC = () => {
     }
   };
 
+  const handleApplyPromo = async () => {
+    const result = await api.discountApply(promoCode);
+    if (result.success && result.response) {
+      const discountInfo = result.response.body.discount;
+      let discountPercent = 0;
+
+      if (discountInfo.type === 'relative') {
+        discountPercent = discountInfo.value / 100;
+      }
+
+      const total = items.reduce((sum, item) => sum + item.totalPrice.centAmount, 0);
+      setOriginalTotal(total);
+      const newTotal = total * (1 - discountPercent);
+      setDiscountedTotal(newTotal);
+      setDiscountPercent(discountPercent);
+      setDiscountApplied(true);
+    } else {
+      alert(result.message);
+    }
+  };
+
   return (
     <div className="basket-page-container">
       <h1 className="basket-title">Your Shopping Cart</h1>
@@ -140,8 +166,19 @@ const BasketPage: React.FC = () => {
 
                 <div className="item-details">
                   <h3 className="item-name">{item.name['en-US']}</h3>
+
+                  <div className="promo-input">
+                    <input
+                      type="text"
+                      placeholder="Promo code"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value)}
+                    />
+                    <button onClick={handleApplyPromo}>Apply</button>
+                  </div>
+
                   <p className="item-price">
-                    {item.price.discounted ? (
+                    {item.price.discounted || discountApplied ? (
                       <>
                         <span className="original-price">
                           {formatPrice(item.price.value.centAmount)}
