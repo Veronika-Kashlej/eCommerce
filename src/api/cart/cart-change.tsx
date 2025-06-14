@@ -42,8 +42,8 @@ export const changeItemQuantity = async (
 
     const availability = await api.cartCheckItem(
       lineItem.productId,
-      lineItem.variant?.id,
-      newQuantity
+      newQuantity,
+      lineItem.variant?.id
     );
 
     if (!availability.available) {
