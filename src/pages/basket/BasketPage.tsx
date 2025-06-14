@@ -109,6 +109,7 @@ const BasketPage: React.FC = () => {
     const result = await api.cartChangeItems(lineItemId, newQuantity);
     if (result.success && result.response) {
       updateCartState(result.response.body.lineItems);
+      window.dispatchEvent(new Event('cartUpdated'));
     } else {
       modalWindow.alert(result.message);
     }
