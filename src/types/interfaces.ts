@@ -1,9 +1,15 @@
 import { Country } from './enums';
 
-import { Cart, ClientResponse, Address as CtAddress } from '@commercetools/platform-sdk';
+import {
+  Cart,
+  ClientResponse,
+  Address as CtAddress,
+  DirectDiscount,
+  DiscountCodeInfo,
+  DiscountCodePagedQueryResponse,
+} from '@commercetools/platform-sdk';
 
 import { ProductProjection } from '@commercetools/platform-sdk';
-
 
 export interface ValidationResult {
   isValid: boolean;
@@ -103,7 +109,6 @@ export interface AddressProps {
   onSetDefault: (addressId: string, type: 'billing' | 'shipping') => void;
 }
 
-
 export interface AvailabilityResult {
   available: boolean;
   message?: string;
@@ -118,4 +123,15 @@ export interface CartResponse {
 
 export interface ProductCardProps {
   product: ProductProjection;
+}
+
+export interface DiscountCodeResponse {
+  response?: ClientResponse<DiscountCodePagedQueryResponse>;
+  codes: Array<{ code: string; name?: string; description?: string; validUntil?: string }>;
+}
+
+export interface CartDiscountsResponse {
+  directDiscounts?: DirectDiscount[];
+  discountCodes?: DiscountCodeInfo[];
+  cart?: Cart;
 }

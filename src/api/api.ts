@@ -19,6 +19,7 @@ import {
   CategoryPagedQueryResponse,
   MyCartUpdate,
   MyCartDraft,
+  Cart,
 } from '@commercetools/platform-sdk';
 
 import { ChangePasswordResult, ProductProjectionSearchArgs } from './interfaces/types';
@@ -26,6 +27,7 @@ import { ChangePasswordResult, ProductProjectionSearchArgs } from './interfaces/
 import env from './env';
 
 import * as cart from './cart';
+import * as discount from './discount';
 
 import { registerCustomer } from './customers/customer-registration';
 import { getCurrentCustomer } from './customers/customer-get';
@@ -34,7 +36,12 @@ import { changePassword } from './customers/customer-change-password';
 import { CustomerUpdateData } from './interfaces/types';
 import { getProductsList } from './products/product-query';
 import { getProductById, getProductProjectionById } from './products/product-by-id';
-import { AvailabilityResult, CartResponse } from '@/types/interfaces';
+import {
+  AvailabilityResult,
+  CartDiscountsResponse,
+  CartResponse,
+  DiscountCodeResponse,
+} from '@/types/interfaces';
 
 type registeredResponseMessage =
   | Array<{ detailedErrorMessage: string; code: string; error: string; message: string }>
@@ -112,6 +119,28 @@ class Api {
 
   public async notifyCartSubscribers(): Promise<void> {
     await this.checkAndNotifyCartState();
+  }
+
+  public async discountGet(): Promise<DiscountCodeResponse> {
+    return await discount.getActiveDiscountCodes();
+  }
+
+  public async discountApply(code: string): Promise<ClientResponse<Cart>> {
+    return await discount.applyDiscountCode(code);
+  }
+
+  public async discountRemove(discountCodeId: string): Promise<ClientResponse<Cart>> {
+    return await discount.removeDiscountCode(discountCodeId);
+  }
+
+  public async discountCartGet(): Promise<CartDiscountsResponse> {
+    return await discount.getCartDiscounts();
+  }
+
+  public async discountCartGetFormatted() {
+    const cart = await this.cartGet();
+    if (!cart.response) throw new Error('Cart not found');
+    return discount.getCartDiscountsFormatted(cart.response.body);
   }
 
   public async isCartEmpty(): Promise<boolean> {
