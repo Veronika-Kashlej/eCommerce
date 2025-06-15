@@ -29,8 +29,8 @@ const Header: React.FC = () => {
     updateCartCount();
 
     const fetchPromos = async () => {
-      const { response, success } = await api.discountGet();
-      if (success && response) {
+      const { response } = await api.discountGet();
+      if (response) {
         setActivePromos(response.body.results.map((c) => c.code));
       }
     };
