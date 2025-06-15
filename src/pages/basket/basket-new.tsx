@@ -14,6 +14,10 @@ const BasketPage: React.FC = () => {
   const [isRemoving, setIsRemoving] = useState<string | null>(null);
   const [isClearing, setIsClearing] = useState(false);
   const [promoCode, setPromoCode] = useState('');
+  //const [discountPercent, setDiscountPercent] = useState(0);
+  //const [originalTotal, setOriginalTotal] = useState(0);
+  //const [discountedTotal, setDiscountedTotal] = useState(0);
+  //const [discountApplied, setDiscountApplied] = useState(false);
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -116,18 +120,34 @@ const BasketPage: React.FC = () => {
     }
   };
 
-  //___________________________________________
   const handleApplyPromo = async () => {
     try {
       const result = await api.discountApply(promoCode);
-      console.log(result);
       if (result && result.body) {
-        const discountDetails = await api.discountCartGet();
-        const discountCodes = discountDetails.discountCodes || [];
+        // Получаем текущие скидки
+        const discounts = result.body.directDiscounts;
+        console.log(discounts);
+        let discountPercent = 0;
 
-        console.log(discountCodes);
-        console.log(discountCodes[0].discountCode);
-        //______________________________
+        if (discounts && discounts.length > 0) {
+          // Предположим, что у скидки есть поле value или процент
+          const discount = discounts[0];
+          // Здесь зависит от структуры DirectDiscount
+          // Например, если есть поле value или percentage
+          // Предположим, что есть поле value в виде числа процентов
+          if ('value' in discount && typeof discount.value === 'number') {
+            discountPercent = discount.value / 100;
+          }
+        }
+
+        // Расчет цен
+        const totalCents = items.reduce((sum, item) => sum + item.totalPrice.centAmount, 0);
+        const originalTotalCents = totalCents;
+        const newTotalCents = Math.round(totalCents * (1 - discountPercent));
+
+        setOriginalTotal(originalTotalCents);
+        setDiscountedTotal(newTotalCents);
+        setDiscountApplied(true);
       } else {
         alert('Failed to apply discount code');
       }
@@ -136,7 +156,6 @@ const BasketPage: React.FC = () => {
       alert('Failed to apply promo code. Please try again.');
     }
   };
-  //_______________________________________________________________
 
   return (
     <div className="basket-page-container">
@@ -176,8 +195,9 @@ const BasketPage: React.FC = () => {
 
                 <div className="item-details">
                   <h3 className="item-name">{item.name['en-US']}</h3>
+
                   <p className="item-price">
-                    {item.price.discounted ? (
+                    {item.price.discounted || discountApplied ? (
                       <>
                         <span className="original-price">
                           {formatPrice(item.price.value.centAmount)}
