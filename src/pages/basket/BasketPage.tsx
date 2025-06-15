@@ -15,9 +15,9 @@ const BasketPage: React.FC = () => {
   const [isClearing, setIsClearing] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   //const [discountPercent, setDiscountPercent] = useState(0);
-  // const [originalTotal, setOriginalTotal] = useState(0);
+  //const [originalTotal, setOriginalTotal] = useState(0);
   //const [discountedTotal, setDiscountedTotal] = useState(0);
-  const [discountApplied, setDiscountApplied] = useState(false);
+  //const [discountApplied, setDiscountApplied] = useState(false);
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -145,6 +145,19 @@ const BasketPage: React.FC = () => {
     <div className="basket-page-container">
       <h1 className="basket-title">Your Shopping Cart</h1>
 
+      <div className="promo-input">
+        <input
+          className="promo-input-space"
+          type="text"
+          placeholder="Promo code"
+          value={promoCode}
+          onChange={(e) => setPromoCode(e.target.value)}
+        />
+        <button className="apply-btn" onClick={handleApplyPromo}>
+          Apply
+        </button>
+      </div>
+
       {isCartEmpty ? (
         <EmptyMessage />
       ) : (
@@ -166,16 +179,6 @@ const BasketPage: React.FC = () => {
 
                 <div className="item-details">
                   <h3 className="item-name">{item.name['en-US']}</h3>
-
-                  <div className="promo-input">
-                    <input
-                      type="text"
-                      placeholder="Promo code"
-                      value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value)}
-                    />
-                    <button onClick={handleApplyPromo}>Apply</button>
-                  </div>
 
                   <p className="item-price">
                     {item.price.discounted || discountApplied ? (

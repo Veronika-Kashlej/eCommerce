@@ -43,50 +43,53 @@ const Header: React.FC = () => {
 
   return (
     <header className="header">
-      <Link to="/" className="nav-link">
-        Home
-      </Link>
-
-      <div className="promos-block">
-        <h4>Promo codes:</h4>
-        <ul>
-          {activePromos.map((code) => (
-            <li key={code}>{code}</li>
-          ))}
-        </ul>
-      </div>
-
-      <nav className="nav">
-        <Link to="/about" className="nav-link">
-          About us
+      <div className="header-top">
+        <Link to="/" className="nav-link">
+          Home
         </Link>
-        <div className="basket-container">
-          <Link to="/basket" className="nav-link basket-link">
-            Basket
-            <img src={basketLogo} alt="basket" className="basket-icon" />
-            <span className="basket-count">{countProducts}</span>
+
+        <nav className="nav">
+          <Link to="/about" className="nav-link">
+            About us
           </Link>
-        </div>
-        {!api.loginned ? (
-          <div className="auth-links">
-            <Link to="/login" className="nav-link">
-              Sign In
-            </Link>
-            <Link to="/register" className="nav-link">
-              Register
+          <div className="basket-container">
+            <Link to="/basket" className="nav-link basket-link">
+              Basket
+              <img src={basketLogo} alt="basket" className="basket-icon" />
+              <span className="basket-count">{countProducts}</span>
             </Link>
           </div>
-        ) : (
-          <>
-            <Link to="/userprofile" className="nav-link">
-              User Profile
-            </Link>
-            <button className="logout-button" onClick={() => logout()}>
-              Log Out
-            </button>
-          </>
-        )}
-      </nav>
+          {!api.loginned ? (
+            <div className="auth-links">
+              <Link to="/login" className="nav-link">
+                Sign In
+              </Link>
+              <Link to="/register" className="nav-link">
+                Register
+              </Link>
+            </div>
+          ) : (
+            <>
+              <Link to="/userprofile" className="nav-link">
+                User Profile
+              </Link>
+              <button className="logout-button" onClick={() => logout()}>
+                Log Out
+              </button>
+            </>
+          )}
+        </nav>
+      </div>
+      <div className="header-bottom">
+        <div className="promos-block">
+          <h4>Promo codes:</h4>
+          <ul>
+            {activePromos.map((code) => (
+              <li key={code}>{code}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </header>
   );
 };
