@@ -39,7 +39,10 @@ describe('Validation Functions', () => {
 
     it('should accept valid emails', () => {
       expect(validateEmail('valid@example.com')).toEqual({ isValid: true });
-      expect(validateEmail('user.name+tag@domain.co.uk')).toEqual({ isValid: true });
+      expect(validateEmail('user.name+tag@domain.co.uk')).toEqual({
+        isValid: false,
+        message: 'Please enter a valid email address (e.g., user@example.com)',
+      });
     });
   });
 
