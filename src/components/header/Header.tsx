@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 const Header: React.FC = () => {
   const [countProducts, setCountProducts] = useState(0);
   const [activePromos, setActivePromos] = useState<string[]>([]);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   async function logout() {
@@ -43,17 +44,37 @@ const Header: React.FC = () => {
 
   return (
     <header className="header">
-      <div className="header-top">
-        <Link to="/" className="nav-link">
-          Home
-        </Link>
+      <div
+        className="burger"
+        onClick={() => setIsMenuOpen(!isMenuOpen)}
+        aria-label="Menu"
+        aria-expanded={isMenuOpen}
+        role="button"
+      >
+        <div className={`line ${isMenuOpen ? 'open' : ''}`}></div>
+        <div className={`line ${isMenuOpen ? 'open' : ''}`}></div>
+        <div className={`line ${isMenuOpen ? 'open' : ''}`}></div>
+      </div>
+
+      <div className={`header-top ${isMenuOpen ? 'active' : ''}`}>
+        <div className="container">
+          <Link to="/" className="nav-link" onClick={() => setIsMenuOpen(false)}>
+            Home
+          </Link>
+        </div>
 
         <nav className="nav">
-          <Link to="/about" className="nav-link">
-            About us
-          </Link>
+          <div className="container">
+            <Link to="/about" className="nav-link" onClick={() => setIsMenuOpen(false)}>
+              About us
+            </Link>
+          </div>
           <div className="basket-container">
-            <Link to="/basket" className="nav-link basket-link">
+            <Link
+              to="/basket"
+              className="nav-link basket-link"
+              onClick={() => setIsMenuOpen(false)}
+            >
               Basket
               <img src={basketLogo} alt="basket" className="basket-icon" />
               <span className="basket-count">{countProducts}</span>
@@ -61,19 +82,31 @@ const Header: React.FC = () => {
           </div>
           {!api.loginned ? (
             <div className="auth-links">
-              <Link to="/login" className="nav-link">
-                Sign In
-              </Link>
-              <Link to="/register" className="nav-link">
-                Register
-              </Link>
+              <div className="container">
+                <Link to="/login" className="nav-link" onClick={() => setIsMenuOpen(false)}>
+                  Sign In
+                </Link>
+              </div>
+              <div className="container">
+                <Link to="/register" className="nav-link" onClick={() => setIsMenuOpen(false)}>
+                  Register
+                </Link>
+              </div>
             </div>
           ) : (
             <>
-              <Link to="/userprofile" className="nav-link">
-                User Profile
-              </Link>
-              <button className="logout-button" onClick={() => logout()}>
+              <div className="container">
+                <Link to="/userprofile" className="nav-link" onClick={() => setIsMenuOpen(false)}>
+                  User Profile
+                </Link>
+              </div>
+              <button
+                className="logout-button"
+                onClick={() => {
+                  logout();
+                  setIsMenuOpen(false);
+                }}
+              >
                 Log Out
               </button>
             </>

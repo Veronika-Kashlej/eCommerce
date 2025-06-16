@@ -1,6 +1,7 @@
 .header {
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .header-top {
@@ -11,17 +12,18 @@
   padding: 1rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   height: var(--header-height);
-  /* position: absolute;
-  top: 0;
-  right: 0;
-  left: 0; */
+  position: relative;
+  transition:
+    max-height 0.3s ease,
+    padding 0.3s ease;
+  overflow: hidden;
 }
 
 .header-bottom {
   display: flex;
   justify-content: center;
-  /* position: absolute;
-  top: 62px; */
+  padding: 10px 0;
+  background-color: transparent;
 }
 
 .nav {
@@ -35,7 +37,8 @@
   display: flex;
 }
 
-.nav-link {
+.nav-link,
+.container {
   color: white;
   text-decoration: none;
   font-weight: 500;
@@ -102,7 +105,6 @@
 
 .promos-block {
   display: flex;
-  /* flex-direction: column; */
   background-color: #ff4757;
   color: white;
   border: none;
@@ -112,4 +114,88 @@
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 1.1rem;
+}
+
+.burger {
+  width: 30px;
+  height: 25px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  display: none;
+  z-index: 1000;
+  margin: 10px;
+  position: relative;
+}
+
+.line {
+  height: 3px;
+  background-color: #333;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.line.open:nth-child(1) {
+  transform: rotate(45deg) translate(9px, 9px);
+}
+
+.line.open:nth-child(2) {
+  opacity: 0;
+}
+
+.line.open:nth-child(3) {
+  transform: rotate(-45deg) translate(7px, -7px);
+}
+
+@media (max-width: 768px) {
+  .burger {
+    display: flex;
+    margin: 10px 0 0 10px;
+  }
+
+  .header-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    background-color: #fff;
+    max-height: 0;
+    padding: 0 20px;
+    transition:
+      max-height 0.3s ease,
+      padding 0.3s ease;
+    z-index: 999;
+  }
+
+  .header-top.active {
+    max-height: 2000px;
+    padding: 10px 20px;
+  }
+
+  .nav {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+    background: linear-gradient(135deg, #6e8efb, #a777e3);
+  }
+
+  .nav-link {
+    padding: 10px 0;
+    width: 100%;
+  }
+
+  .promos-block {
+    padding: 10px 0;
+  }
+
+  .container,
+  .basket-container {
+    display: flex;
+    justify-content: center;
+    margin: 0 auto;
+  }
 }
