@@ -14,7 +14,6 @@ const BasketPage: React.FC = () => {
   const [isRemoving, setIsRemoving] = useState<string | null>(null);
   const [isClearing, setIsClearing] = useState(false);
   const [promoCode, setPromoCode] = useState('');
-  //__________________________________
   const [originalTotal, setOriginalTotal] = useState(0);
   const [discountedTotal, setDiscountedTotal] = useState(0);
   const [discountApplied, setDiscountApplied] = useState(false);
@@ -120,7 +119,6 @@ const BasketPage: React.FC = () => {
     if (result.success && result.response) {
       updateCartState(result.response.body.lineItems);
       await updateCartPricing();
-      //console.log('Обновленная корзина:', result.response);
     } else {
       modalWindow.alert(result.message);
     }
@@ -138,23 +136,15 @@ const BasketPage: React.FC = () => {
     }
   };
 
-  //___________________________________________
   const handleApplyPromo = async () => {
     try {
       const result = await api.discountApply(promoCode);
-      console.log(result);
       if (result && result.body) {
         const discountDetails = await api.discountCartGet();
-        //const discountCodes = discountDetails.discountCodes || [];
-        //console.log(discountDetails);
-        //console.log(discountCodes);
-        //console.log(discountCodes[0].discountCode);
-        //______________________________
         if (discountDetails.cart) {
           const totalCents = items.reduce((sum, item) => sum + item.totalPrice.centAmount, 0);
-          const newPriceCents = discountDetails.cart.totalPrice.centAmount; // или подобное поле
+          const newPriceCents = discountDetails.cart.totalPrice.centAmount;
 
-          // Обновляем состояния
           setOriginalTotal(totalCents);
           setDiscountedTotal(newPriceCents);
           setDiscountApplied(true);
@@ -169,8 +159,6 @@ const BasketPage: React.FC = () => {
       alert('Failed to apply promo code. Please try again.');
     }
   };
-
-  //_______________________________________________________________
 
   return (
     <div className="basket-page-container">
@@ -258,22 +246,25 @@ const BasketPage: React.FC = () => {
             <h3 className="summary-title">Order Summary</h3>
             <span className="total-price">{formatPrice(totalPrice * 100)}</span>
           </div> */}
-          {/* ----------------------- */}
           <div className="order-summary">
             <h3 className="summary-title">Order Summary</h3>
             {discountApplied ? (
               <>
-                <span className="original-price" style={{ textDecoration: 'line-through' }}>
+                <span
+                  className="original-price"
+                  style={{ textDecoration: 'line-through', color: 'gray' }}
+                >
                   {formatPrice(originalTotal)}
                 </span>
                 <br />
-                <span className="discounted-price">{formatPrice(discountedTotal)}</span>
+                <span className="discounted-price" style={{ color: 'red', fontSize: '1.2em' }}>
+                  {formatPrice(discountedTotal)}
+                </span>
               </>
             ) : (
               <span className="total-price">{formatPrice(totalPrice * 100)}</span>
             )}
           </div>
-          {/* -------------------------------- */}
           <button className="clear-cart-btn" onClick={handleClearCart} disabled={isClearing}>
             {isClearing ? 'Clearing...' : 'Clear Cart'}
           </button>

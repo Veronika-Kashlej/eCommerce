@@ -164,3 +164,14 @@
   padding: 10px 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+.original-price {
+  font-size: 1em;
+  color: gray;
+  text-decoration: line-through;
+}
+.discounted-price {
+  font-size: 1.3em;
+  color: red;
+  font-weight: bold;
+}
