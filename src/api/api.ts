@@ -17,11 +17,17 @@ import {
   Product,
   ProductProjection,
   CategoryPagedQueryResponse,
+  MyCartUpdate,
+  MyCartDraft,
+  Cart,
 } from '@commercetools/platform-sdk';
 
 import { ChangePasswordResult, ProductProjectionSearchArgs } from './interfaces/types';
 
 import env from './env';
+
+import * as cart from './cart';
+import * as discount from './discount';
 
 import { registerCustomer } from './customers/customer-registration';
 import { getCurrentCustomer } from './customers/customer-get';
@@ -30,6 +36,12 @@ import { changePassword } from './customers/customer-change-password';
 import { CustomerUpdateData } from './interfaces/types';
 import { getProductsList } from './products/product-query';
 import { getProductById, getProductProjectionById } from './products/product-by-id';
+import {
+  AvailabilityResult,
+  CartDiscountsResponse,
+  CartResponse,
+  DiscountCodeResponse,
+} from '@/types/interfaces';
 
 type registeredResponseMessage =
   | Array<{ detailedErrorMessage: string; code: string; error: string; message: string }>
@@ -41,6 +53,8 @@ class Api {
   private anonymClient: Client;
   private anonymApiRoot: ByProjectKeyRequestBuilder;
   private eventTarget = new EventTarget();
+  private cartSubscribers: Array<(isEmpty: boolean) => void> = [];
+  private lastCartState: boolean | undefined = undefined;
 
   private constructor() {
     this.anonymClient = new ClientBuilder()
@@ -70,11 +84,103 @@ class Api {
     });
   }
 
+  private async checkAndNotifyCartState(): Promise<void> {
+    const isEmpty = await this.isCartEmpty();
+
+    if (this.lastCartState !== isEmpty) {
+      this.lastCartState = isEmpty;
+      this.cartSubscribers.forEach((callback) => callback(isEmpty));
+    }
+  }
+
   public static getInstance(): Api {
     if (!Api.instance) {
       Api.instance = new Api();
     }
     return Api.instance;
+  }
+
+  public get getApiRoot(): ByProjectKeyRequestBuilder | undefined {
+    return this.apiRoot;
+  }
+
+  public get getAnonymApiRoot(): ByProjectKeyRequestBuilder {
+    return this.anonymApiRoot;
+  }
+
+  public subscribeToCartChanges(callback: (isEmpty: boolean) => void): () => void {
+    this.cartSubscribers.push(callback);
+    this.checkAndNotifyCartState();
+
+    return () => {
+      this.cartSubscribers = this.cartSubscribers.filter((cb) => cb !== callback);
+    };
+  }
+
+  public async notifyCartSubscribers(): Promise<void> {
+    await this.checkAndNotifyCartState();
+  }
+
+  public async discountGet(): Promise<DiscountCodeResponse> {
+    return await discount.getActiveDiscountCodes();
+  }
+
+  public async discountApply(code: string): Promise<ClientResponse<Cart>> {
+    return await discount.applyDiscountCode(code);
+  }
+
+  public async discountRemove(discountCodeId: string): Promise<ClientResponse<Cart>> {
+    return await discount.removeDiscountCode(discountCodeId);
+  }
+
+  public async discountCartGet(): Promise<CartDiscountsResponse> {
+    return await discount.getCartDiscounts();
+  }
+
+  public async discountCartGetFormatted() {
+    const cart = await this.cartGet();
+    if (!cart.response) throw new Error('Cart not found');
+    return discount.getCartDiscountsFormatted(cart.response.body);
+  }
+
+  public async isCartEmpty(): Promise<boolean> {
+    return await cart.isCartEmpty();
+  }
+
+  public async cartClear(): Promise<CartResponse> {
+    return await cart.clearCart();
+  }
+
+  public async cartCreate(): Promise<CartResponse> {
+    return await cart.createCart();
+  }
+
+  public async cartGet(): Promise<CartResponse> {
+    return await cart.getCart();
+  }
+
+  public async cartAddItem(productId: string, quantity: number = 1): Promise<CartResponse> {
+    return await cart.addToCart(
+      productId,
+      // variantId,
+      quantity
+    );
+  }
+
+  public async cartRemoveItems(lineItemId: string): Promise<CartResponse> {
+    return await cart.removeFromCart(lineItemId);
+  }
+
+  public async cartChangeItems(lineItemId: string, newQuantity: number): Promise<CartResponse> {
+    return await cart.changeItemQuantity(lineItemId, newQuantity);
+  }
+
+  public async cartCheckItem(
+    productId: string,
+    requestedQuantity: number,
+    variantId?: number
+  ): Promise<AvailabilityResult> {
+    return await cart.checkItemAvailability(productId, requestedQuantity, variantId);
   }
 
   public async changePassword(
@@ -105,10 +211,6 @@ class Api {
 
   public offLoginStatusChange(callback: () => void): void {
     this.eventTarget.addEventListener('loginStatusChanged', callback);
-  }
-
-  public get getAnonymApiRoot(): ByProjectKeyRequestBuilder {
-    return this.anonymApiRoot;
   }
 
   public get getTokenCustomer(): TokenStore | undefined {
@@ -205,6 +307,9 @@ class Api {
   }> {
     await this.logout();
 
+    const anonymousCart = await this.cartGet();
+    const anonymousId: string | undefined = anonymousCart.response?.body.anonymousId || undefined;
+
     try {
       const client = createPasswordClient(data.email, data.password);
       this.apiRoot = createApiBuilderFromCtpClient(client).withProjectKey({
@@ -220,6 +325,66 @@ class Api {
       const message = signed ? 'OK' : 'Not Signed';
 
       if (signed) {
+        if (anonymousId) {
+          try {
+            const userCart = await this.apiRoot
+              .me()
+              .activeCart()
+              .get()
+              .execute()
+              .catch(() => null);
+
+            const actions = anonymousCart.response?.body.lineItems.map((item) => ({
+              action: 'addLineItem' as const,
+              productId: item.productId,
+              variantId: item.variant?.id,
+              quantity: item.quantity,
+            }));
+
+            if (userCart) {
+              await this.apiRoot
+                .me()
+                .carts()
+                .withId({ ID: userCart.body.id })
+                .post({
+                  body: {
+                    version: userCart.body.version,
+                    actions,
+                  } as MyCartUpdate,
+                })
+                .execute();
+            } else {
+              await this.apiRoot
+                .me()
+                .carts()
+                .post({
+                  body: {
+                    currency: anonymousCart.response?.body.totalPrice.currencyCode,
+                    lineItems: anonymousCart.response?.body.lineItems.map((item) => ({
+                      productId: item.productId,
+                      variantId: item.variant?.id,
+                      quantity: item.quantity,
+                    })),
+                  } as MyCartDraft,
+                })
+                .execute();
+            }
+
+            if (anonymousCart.response)
+              await this.anonymApiRoot
+                .carts()
+                .withId({ ID: anonymousCart.response.body.id })
+                .delete({
+                  queryArgs: { version: anonymousCart.response.body.version },
+                })
+                .execute();
+
+            localStorage.removeItem('anonymousCartId');
+          } catch (mergeError) {
+            console.error('Error merging carts:', mergeError);
+          }
+        }
+
         this.notifyLoginStatusChange();
         return { response, signed, message };
       } else {
