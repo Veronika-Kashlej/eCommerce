@@ -11,6 +11,7 @@ import UserProfile from './pages/UserProfile/UserProfile';
 import ProductPage from './components/ProductPage/ProductPage';
 import About from './pages/about/About';
 import BasketPage from './pages/basket/BasketPage';
+import Footer from './components/footer/Footer';
 
 function App() {
   const navigate = useNavigate();
@@ -32,6 +33,7 @@ function App() {
         <Route path="/basket" element={<BasketPage />} />
         <Route path="*" element={<Page404 />} />
       </Routes>
+      <Footer />
     </>
   );
 }
