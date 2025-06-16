@@ -14,6 +14,35 @@ const BasketPage: React.FC = () => {
   const [isRemoving, setIsRemoving] = useState<string | null>(null);
   const [isClearing, setIsClearing] = useState(false);
   const [promoCode, setPromoCode] = useState('');
+  //__________________________________
+  const [originalTotal, setOriginalTotal] = useState(0);
+  const [discountedTotal, setDiscountedTotal] = useState(0);
+  const [discountApplied, setDiscountApplied] = useState(false);
+
+  const updateCartPricing = React.useCallback(async () => {
+    const cartData = await api.discountCartGet();
+    if (cartData && cartData.cart) {
+      const totalCents = items.reduce((sum, item) => sum + item.totalPrice.centAmount, 0);
+      const newPriceCents = cartData.cart.totalPrice.centAmount; // итоговая цена с учетом скидки
+      setOriginalTotal(totalCents);
+      setDiscountedTotal(newPriceCents);
+      setDiscountApplied(true);
+    }
+  }, [items, setOriginalTotal, setDiscountedTotal, setDiscountApplied]);
+
+  const updateCartState = React.useCallback(
+    (cartItems: LineItem[]) => {
+      setItems(cartItems);
+      setIsCartEmpty(cartItems.length === 0);
+      updateCartPricing();
+
+      const total = cartItems.reduce((sum: number, item) => {
+        return sum + item.totalPrice.centAmount / 100;
+      }, 0);
+      setTotalPrice(total);
+    },
+    [setItems, setIsCartEmpty, setTotalPrice, updateCartPricing]
+  );
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -27,17 +56,7 @@ const BasketPage: React.FC = () => {
       }
     };
     fetchCart();
-  }, []);
-
-  const updateCartState = (cartItems: LineItem[]) => {
-    setItems(cartItems);
-    setIsCartEmpty(cartItems.length === 0);
-
-    const total = cartItems.reduce((sum: number, item) => {
-      return sum + item.totalPrice.centAmount / 100;
-    }, 0);
-    setTotalPrice(total);
-  };
+  }, [updateCartState]);
 
   const formatPrice = (cents: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -59,6 +78,7 @@ const BasketPage: React.FC = () => {
         if (removedItem) {
           setTotalPrice((prev) => prev - removedItem.totalPrice.centAmount / 100);
         }
+        await updateCartPricing();
 
         window.dispatchEvent(new Event('cartUpdated'));
       }
@@ -99,6 +119,7 @@ const BasketPage: React.FC = () => {
     const result = await api.cartChangeItems(lineItemId, currentQuantity + 1);
     if (result.success && result.response) {
       updateCartState(result.response.body.lineItems);
+      await updateCartPricing();
       //console.log('Обновленная корзина:', result.response);
     } else {
       modalWindow.alert(result.message);
@@ -110,6 +131,7 @@ const BasketPage: React.FC = () => {
     const result = await api.cartChangeItems(lineItemId, newQuantity);
     if (result.success && result.response) {
       updateCartState(result.response.body.lineItems);
+      await updateCartPricing();
       window.dispatchEvent(new Event('cartUpdated'));
     } else {
       modalWindow.alert(result.message);
@@ -123,11 +145,22 @@ const BasketPage: React.FC = () => {
       console.log(result);
       if (result && result.body) {
         const discountDetails = await api.discountCartGet();
-        const discountCodes = discountDetails.discountCodes || [];
-
-        console.log(discountCodes);
-        console.log(discountCodes[0].discountCode);
+        //const discountCodes = discountDetails.discountCodes || [];
+        //console.log(discountDetails);
+        //console.log(discountCodes);
+        //console.log(discountCodes[0].discountCode);
         //______________________________
+        if (discountDetails.cart) {
+          const totalCents = items.reduce((sum, item) => sum + item.totalPrice.centAmount, 0);
+          const newPriceCents = discountDetails.cart.totalPrice.centAmount; // или подобное поле
+
+          // Обновляем состояния
+          setOriginalTotal(totalCents);
+          setDiscountedTotal(newPriceCents);
+          setDiscountApplied(true);
+        } else {
+          alert('Нет обновленной корзины с ценой со скидкой');
+        }
       } else {
         alert('Failed to apply discount code');
       }
@@ -136,6 +169,7 @@ const BasketPage: React.FC = () => {
       alert('Failed to apply promo code. Please try again.');
     }
   };
+
   //_______________________________________________________________
 
   return (
@@ -220,10 +254,26 @@ const BasketPage: React.FC = () => {
             ))}
           </div>
 
-          <div className="order-summary">
+          {/* <div className="order-summary">
             <h3 className="summary-title">Order Summary</h3>
             <span className="total-price">{formatPrice(totalPrice * 100)}</span>
+          </div> */}
+          {/* ----------------------- */}
+          <div className="order-summary">
+            <h3 className="summary-title">Order Summary</h3>
+            {discountApplied ? (
+              <>
+                <span className="original-price" style={{ textDecoration: 'line-through' }}>
+                  {formatPrice(originalTotal)}
+                </span>
+                <br />
+                <span className="discounted-price">{formatPrice(discountedTotal)}</span>
+              </>
+            ) : (
+              <span className="total-price">{formatPrice(totalPrice * 100)}</span>
+            )}
           </div>
+          {/* -------------------------------- */}
           <button className="clear-cart-btn" onClick={handleClearCart} disabled={isClearing}>
             {isClearing ? 'Clearing...' : 'Clear Cart'}
           </button>
