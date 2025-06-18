@@ -17,12 +17,14 @@ const BasketPage: React.FC = () => {
   const [originalTotal, setOriginalTotal] = useState(0);
   const [discountedTotal, setDiscountedTotal] = useState(0);
   const [discountApplied, setDiscountApplied] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [emptyCartMessage, setEmptyCartMessage] = useState('');
 
   const updateCartPricing = React.useCallback(async () => {
     const cartData = await api.discountCartGet();
     if (cartData && cartData.cart) {
       const totalCents = items.reduce((sum, item) => sum + item.totalPrice.centAmount, 0);
-      const newPriceCents = cartData.cart.totalPrice.centAmount; // итоговая цена с учетом скидки
+      const newPriceCents = cartData.cart.totalPrice.centAmount;
       setOriginalTotal(totalCents);
       setDiscountedTotal(newPriceCents);
       setDiscountApplied(true);
@@ -136,7 +138,24 @@ const BasketPage: React.FC = () => {
     }
   };
 
+  const checkLoginStatus = async () => {
+    const loggedIn = await api.loginned;
+    setIsLoggedIn(loggedIn);
+  };
+
+  checkLoginStatus();
+
   const handleApplyPromo = async () => {
+    if (!isLoggedIn) {
+      setEmptyCartMessage('Please log in first');
+      return;
+    }
+    if (isCartEmpty) {
+      setEmptyCartMessage('Your cart is empty, please add items first');
+      return;
+    }
+    setEmptyCartMessage('');
+
     try {
       const result = await api.discountApply(promoCode);
       if (result && result.body) {
@@ -176,6 +195,8 @@ const BasketPage: React.FC = () => {
           Apply
         </button>
       </div>
+
+      {emptyCartMessage && <div style={{ color: 'red', margin: '10px 0' }}>{emptyCartMessage}</div>}
 
       {isCartEmpty ? (
         <EmptyMessage />
