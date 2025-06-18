@@ -271,12 +271,14 @@ const BasketPage: React.FC = () => {
             <h3 className="summary-title">Order Summary</h3>
             {discountApplied ? (
               <>
-                <span
-                  className="original-price"
-                  style={{ textDecoration: 'line-through', color: 'gray' }}
-                >
-                  {formatPrice(originalTotal)}
-                </span>
+                {originalTotal !== discountedTotal && (
+                  <span
+                    className="original-price"
+                    style={{ textDecoration: 'line-through', color: 'gray' }}
+                  >
+                    {formatPrice(originalTotal)}
+                  </span>
+                )}
                 <br />
                 <span className="discounted-price" style={{ color: 'red', fontSize: '1.2em' }}>
                   {formatPrice(discountedTotal)}
