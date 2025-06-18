@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '@/api/api';
+import { Link } from 'react-router-dom';
 
 const EmptyMessage: React.FC<{ onStatusChange?: (isEmpty: boolean) => void }> = ({
   onStatusChange,
@@ -45,9 +46,9 @@ const EmptyMessage: React.FC<{ onStatusChange?: (isEmpty: boolean) => void }> = 
     >
       🛒 Oops! Your bag is empty. Start shopping and add products! 🚀
       <br />
-      <a href="/" style={{ color: '#007bff', textDecoration: 'underline' }}>
+      <Link to="/" style={{ color: '#007bff', textDecoration: 'underline' }}>
         Let's go!
-      </a>
+      </Link>
     </div>
   );
 };

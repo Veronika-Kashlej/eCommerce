@@ -149,7 +149,7 @@ const BasketPage: React.FC = () => {
           setDiscountedTotal(newPriceCents);
           setDiscountApplied(true);
         } else {
-          alert('Нет обновленной корзины с ценой со скидкой');
+          alert('No updated cart with discounted price');
         }
       } else {
         alert('Failed to apply discount code');
